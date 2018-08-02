@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" autoUpload="Always" serverName="lext@localhost:1234" autoUploadExternalChanges="true">
+    <serverData>
+      <paths name="lext@localhost:1234">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/pycharm_project_775" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
+  </component>
+</project>
