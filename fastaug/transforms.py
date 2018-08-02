@@ -1,3 +1,5 @@
+from .core import BasicTransform
+
 def RandomRotate(MatrixTransform):
     def __init__(self, params):
         raise NotImplementedError

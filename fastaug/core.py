@@ -1,4 +1,5 @@
 import numpy as np
+
 img_types = {'I', 'M', 'P','L'}
 
 class DataContainer(object):
@@ -90,4 +91,4 @@ class Selector(object):
         self.n = n
 
     def __call__(self, data):
-        pass
+        return np.random.choice(self.transforms, self.n, replace=False, p=1./self.n)
