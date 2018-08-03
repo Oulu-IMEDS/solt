@@ -1,40 +1,67 @@
-from .core import BasicTransform
+from . import core
+import cv2
 
-def RandomRotate(MatrixTransform):
-    def __init__(self, params):
+class RandomRotate(core.MatrixTransform):
+    def __init__(self, p=0.5, interpolation='bilinear'):
+        super(RandomRotate, self).__init__(p=p, interpolatio=interpolation)
+
+class RandomScale(core.MatrixTransform):
+    def __init__(self, p=0.5):
+        super(RandomScale, self).__init__(p)
+
+
+class RandomShear(core.MatrixTransform):
+    def __init__(self, p=0.5):
+        super(RandomShear, self).__init__(p)
+
+
+class RandomHFlip(core.BasicTransform):
+    def __init__(self, p=0.5):
+        super(RandomHFlip, self).__init__(p)
+        self.params = None
+
+    def sample_transform(self):
+        # TODO: sample coordinates for remap
+        # For now it is just a placeholder
+        self.params = None
+
+    def _apply_img(self, data):
+        # TODO: use remap in the next version
+        img = cv2.flip(data, 0)
+        return img
+
+    def _apply_mask(self, data):
+        # TODO: use remap in the next version
+        img = cv2.flip(data, 0)
+        return img
+
+    def _apply_labels(self, data):
+        # TODO: use remap in the next version
+        return data
+
+    def _apply_pts(self, data):
         raise NotImplementedError
 
-
-def RandomScale(MatrixTransform):
-    def __init__(self, params):
-        raise NotImplementedError
-
-
-def RandomShear(MatrixTransform):
-    def __init__(self, params):
-        raise NotImplementedError
+class RandomVFlip(core.BasicTransform):
+    def __init__(self, p=0.5):
+        super(RandomVFlip, self).__init__(p)
 
 
-def RandomFlip(Transform):
-    def __init__(self, params):
-        raise NotImplementedError
+class RandomCrop(core.BasicTransform):
+    def __init__(self, p=0.5):
+        super(RandomCrop, self).__init__(p)
 
 
-def RandomCrop(Transform):
-    def __init__(self, params):
-        raise NotImplementedError
+class Pad(core.BasicTransform):
+    def __init__(self, p=0.5):
+        super(Pad, self).__init__(p)
 
 
-def Pad(Transform):
-    def __init__(self, params):
-        raise NotImplementedError
+class CenterCrop(core.BasicTransform):
+    def __init__(self, p=0.5):
+        super(CenterCrop, self).__init__(p)
 
 
-def CenterCrop(Transform):
-    def __init__(self, params):
-        raise NotImplementedError
-
-
-def Homography(Transform):
-    def __init__(self, params):
-        raise NotImplementedError
+class RandomHomography(core.BasicTransform):
+    def __init__(self, p=0.5):
+        super(RandomHomography, self).__init__(p)
