@@ -5,17 +5,28 @@ import numpy as np
 img_types = {'I', 'M', 'P','L'}
 
 class DataContainer(object):
-    def __init__(self, data:tuple, fmt:str):
+    def __init__(self, data:tuple, fmt:str, h:int, w:int):
         if len(fmt) == 1 and not isinstance(data, tuple):
             data = (data,)
         self.__data = data
         self.__fmt = fmt
+        # h, w define a coordinate system, mainly for geometric transformations
+        self.__h = h
+        self.__w = w
+
+    @property
+    def w(self):
+        return self.__w
+
+    @property
+    def h(self):
+        return self.__h
 
     def __getitem__(self, idx:int):
         return self.__data[idx], self.__fmt[idx]
 
     def __len__(self):
-        return len(self.data)
+        return len(self.__data)
 
 
 class Pipeline(object):
@@ -69,17 +80,19 @@ class BasicTransform(metaclass=ABCMeta):
         for (item, t) in data:
             if t == 'I':
                 tmp_item = self._apply_img(item)
+                H = item.shape[0]
+                W = item.shape[1]
             elif t == 'M':
                 tmp_item = self._apply_mask(item)
             elif t == 'P':
-                tmp_item = self._apply_pts(item)
+                tmp_item = self._apply_pts(item, data.h, data.w)
             else: # t==L
                 tmp_item = self._apply_labels(item)
 
             types.append(t)
             result.append(tmp_item)
 
-        return DataContainer(data=result, fmt=''.join(types))
+        return DataContainer(data=result, fmt=''.join(types), h=data.h, w=data.w)
 
     def __call__(self, data):
         if self.use_transform():
@@ -93,7 +106,7 @@ class BasicTransform(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _apply_pts(self, data):
+    def _apply_pts(self, data, h, w):
         pass
 
     @abstractmethod

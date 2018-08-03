@@ -26,21 +26,21 @@ class RandomFlip(core.BasicTransform):
         # For now it is just a placeholder
         self.params = None
 
-    def _apply_img(self, data):
+    def _apply_img(self, img):
         # TODO: use remap in the next version
-        img = cv2.flip(data, self.axis)
+        img = cv2.flip(img, self.axis)
         return img
 
-    def _apply_mask(self, data):
+    def _apply_mask(self, mask):
         # TODO: use remap in the next version
-        img = cv2.flip(data, self.axis)
+        img = cv2.flip(mask, self.axis)
         return img
 
-    def _apply_labels(self, data):
+    def _apply_labels(self, labels):
         # TODO: use remap in the next version
-        return data
+        return labels
 
-    def _apply_pts(self, data):
+    def _apply_pts(self, pts, h, w):
         raise NotImplementedError
 
 
