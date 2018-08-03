@@ -15,10 +15,11 @@ class RandomShear(core.MatrixTransform):
         super(RandomShear, self).__init__(p)
 
 
-class RandomHFlip(core.BasicTransform):
-    def __init__(self, p=0.5):
-        super(RandomHFlip, self).__init__(p)
+class RandomFlip(core.BasicTransform):
+    def __init__(self, p=0.5, axis=0):
+        super(RandomFlip, self).__init__(p)
         self.params = None
+        self.axis = axis
 
     def sample_transform(self):
         # TODO: sample coordinates for remap
@@ -27,12 +28,12 @@ class RandomHFlip(core.BasicTransform):
 
     def _apply_img(self, data):
         # TODO: use remap in the next version
-        img = cv2.flip(data, 0)
+        img = cv2.flip(data, self.axis)
         return img
 
     def _apply_mask(self, data):
         # TODO: use remap in the next version
-        img = cv2.flip(data, 0)
+        img = cv2.flip(data, self.axis)
         return img
 
     def _apply_labels(self, data):
@@ -41,10 +42,6 @@ class RandomHFlip(core.BasicTransform):
 
     def _apply_pts(self, data):
         raise NotImplementedError
-
-class RandomVFlip(core.BasicTransform):
-    def __init__(self, p=0.5):
-        super(RandomVFlip, self).__init__(p)
 
 
 class RandomCrop(core.BasicTransform):

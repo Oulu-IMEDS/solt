@@ -79,3 +79,36 @@ def test_img_mask_horizontal_flip():
 
     assert np.array_equal(cv2.flip(img, 0), img_res)
     assert np.array_equal(cv2.flip(mask, 0), mask_res)
+
+@with_setup(img_mask_3x4_generator)
+def test_img_mask_horizontal_flip():
+    img, mask = _globals['img'], _globals['mask']
+    dc = augs_core.DataContainer((img, mask), 'IM')
+
+    pipeline = augs_core.Pipeline([
+        trf.RandomFlip(p=1, axis=0)
+    ])
+
+    dc = pipeline(dc)
+    img_res, _ = dc[0]
+    mask_res, _ = dc[1]
+
+    assert np.array_equal(cv2.flip(img, 0), img_res)
+    assert np.array_equal(cv2.flip(mask, 0), mask_res)
+
+
+@with_setup(img_mask_3x4_generator)
+def test_img_mask_vertical_flip():
+    img, mask = _globals['img'], _globals['mask']
+    dc = augs_core.DataContainer((img, mask), 'IM')
+
+    pipeline = augs_core.Pipeline([
+        trf.RandomFlip(p=1, axis=1)
+    ])
+
+    dc = pipeline(dc)
+    img_res, _ = dc[0]
+    mask_res, _ = dc[1]
+
+    assert np.array_equal(cv2.flip(img, 1), img_res)
+    assert np.array_equal(cv2.flip(mask, 1), mask_res)
