@@ -5,6 +5,12 @@
     <orderEntry type="jdk" jdkName="Remote Python 3.6.6 (sftp://root@localhost:1234/root/anaconda/envs/py36-dev_env/bin/python3)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
+  <component name="PackageRequirementsSettings">
+    <option name="requirementsPath" value="" />
+  </component>
+  <component name="PyDocumentationSettings">
+    <option name="myDocStringFormat" value="NumPy" />
+  </component>
   <component name="TestRunnerService">
     <option name="PROJECT_TEST_RUNNER" value="Unittests" />
   </component>

@@ -1,7 +1,7 @@
 from . import core
 import cv2
 
-class RandomFlip(core.BasicTransform):
+class RandomFlip(core.BaseTransform):
     def __init__(self, p=0.5, axis=0):
         super(RandomFlip, self).__init__(p)
         self.params = None
@@ -92,7 +92,7 @@ class RandomShear(core.MatrixTransform):
         raise NotImplementedError
 
 
-class RandomCrop(core.BasicTransform):
+class RandomCrop(core.BaseTransform):
     def __init__(self, p=0.5):
         super(RandomCrop, self).__init__(p)
 
@@ -112,7 +112,7 @@ class RandomCrop(core.BasicTransform):
     def _apply_pts(self, pts):
         raise NotImplementedError
 
-class Pad(core.BasicTransform):
+class Pad(core.BaseTransform):
     def __init__(self, p=0.5):
         super(Pad, self).__init__(p)
 
@@ -133,7 +133,7 @@ class Pad(core.BasicTransform):
         raise NotImplementedError
 
 
-class CenterCrop(core.BasicTransform):
+class CenterCrop(core.BaseTransform):
     def __init__(self, p=0.5):
         super(CenterCrop, self).__init__(p)
 
@@ -153,7 +153,7 @@ class CenterCrop(core.BasicTransform):
     def _apply_pts(self, pts):
         raise NotImplementedError
 
-class RandomPerspective(core.BasicTransform):
+class RandomPerspective(core.BaseTransform):
     def __init__(self, p=0.5):
         super(RandomPerspective, self).__init__(p)
 

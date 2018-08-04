@@ -6,10 +6,20 @@ import numpy as np
 img_types = {'I', 'M', 'P','L'}
 
 
-def img_shape_checker(transform):
-    @wraps(transform)
+def img_shape_checker(method):
+    """
+
+    Parameters
+    ----------
+    transform : _apply_img method of BaseTransform
+
+    Returns
+    -------
+
+    """
+    @wraps(method)
     def wrapper(self, *args, **kwargs):
-        res = transform(self, *args, **kwargs)
+        res = method(self, *args, **kwargs)
         assert 1 < len(res.shape) <= 3
         if len(res.shape) == 2:
             h, w = res.shape
@@ -49,7 +59,7 @@ class Pipeline(object):
     @staticmethod
     def exec_pipeline(transforms, data):
         for trf in transforms:
-            assert isinstance(trf, Pipeline) or isinstance(trf, BasicTransform)
+            assert isinstance(trf, Pipeline) or isinstance(trf, BaseTransform)
             data = trf(data)
 
         return data
@@ -68,7 +78,7 @@ class SelectivePipeline(Pipeline):
         return data
 
 
-class BasicTransform(metaclass=ABCMeta):
+class BaseTransform(metaclass=ABCMeta):
     def __init__(self, p=0.5):
         self.p = p
 
@@ -123,7 +133,7 @@ class BasicTransform(metaclass=ABCMeta):
         pass
 
 
-class MatrixTransform(BasicTransform):
+class MatrixTransform(BaseTransform):
     def __init__(self, interpolation='bilinear', p=0.5):
         super(MatrixTransform, self).__init__(p)
         self.interpolation = interpolation

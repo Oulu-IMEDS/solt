@@ -138,7 +138,7 @@ def test_img_mask_hoizontal_vertical_flip():
     assert np.array_equal(cv2.flip(cv2.flip(mask, 0), 1), mask_res)
 
 @with_setup(img_3x4_generator)
-def test_image_shape_equal_3_after_nested():
+def test_image_shape_equal_3_after_nested_flip():
     img = _globals['img']
     dc = augs_core.DataContainer((img), 'I')
 
