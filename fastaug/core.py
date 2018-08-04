@@ -1,8 +1,25 @@
 from abc import ABCMeta, abstractmethod
+from functools import wraps
 
 import numpy as np
 
 img_types = {'I', 'M', 'P','L'}
+
+
+def img_shape_checker(transform):
+    @wraps(transform)
+    def wrapper(self, *args, **kwargs):
+        res = transform(self, *args, **kwargs)
+        assert 1 < len(res.shape) <= 3
+        if len(res.shape) == 2:
+            h, w = res.shape
+            c = 1
+        else:
+            h, w, c = res.shape
+
+        return res.reshape((h, w, c))
+    return wrapper
+
 
 class DataContainer(object):
     def __init__(self, data:tuple, fmt:str):
@@ -10,7 +27,6 @@ class DataContainer(object):
             data = (data,)
         self.__data = data
         self.__fmt = fmt
-        # h, w define a coordinate system, mainly for geometric transformations
 
     def __getitem__(self, idx:int):
         return self.__data[idx], self.__fmt[idx]
@@ -26,13 +42,14 @@ class Pipeline(object):
         self.transforms = transforms
 
     def __call__(self, data:DataContainer):
-        # We can combine some of the transforms using stack, e.g Matrix transforms
-        # In the future version of the pipeline
+        # TODO: We can combine some of the transforms using stack, e.g Matrix transforms by precomputig them
+        # Each transform has sample_transform method
         return Pipeline.exec_pipeline(self.transforms, data)
 
     @staticmethod
     def exec_pipeline(transforms, data):
         for trf in transforms:
+            assert isinstance(trf, Pipeline) or isinstance(trf, BasicTransform)
             data = trf(data)
 
         return data
@@ -80,7 +97,7 @@ class BasicTransform(metaclass=ABCMeta):
             types.append(t)
             result.append(tmp_item)
 
-        return DataContainer(data=result, fmt=''.join(types))
+        return DataContainer(data=tuple(result), fmt=''.join(types))
 
     def __call__(self, data):
         if self.use_transform():
@@ -112,6 +129,7 @@ class MatrixTransform(BasicTransform):
         self.interpolation = interpolation
 
     @abstractmethod
+    @img_shape_checker
     def _apply_img(self, pts):
         pass
 
@@ -126,3 +144,5 @@ class MatrixTransform(BasicTransform):
     @abstractmethod
     def _apply_labels(self, labels):
         pass
+
+

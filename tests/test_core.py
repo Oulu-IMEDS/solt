@@ -12,7 +12,7 @@ _globals = {'img': None, 'mask':None}
 
 def img_2x2_generator():
     img = np.array([[1, 1],
-                    [1, 1]]).reshape((2,2)).astype(np.uint8)
+                    [1, 1]]).reshape((2, 2, 1)).astype(np.uint8)
     for key in _globals:
         _globals[key] = None
     _globals['img'] = img
@@ -20,7 +20,7 @@ def img_2x2_generator():
 def img_mask_2x2_generator():
     img_2x2_generator() # generating image 2x2
     mask = np.array([[1, 0],
-                     [0, 1]]).reshape((2,2)).astype(np.uint8) # Generating the mask
+                     [0, 1]]).reshape((2, 2)).astype(np.uint8) # Generating the mask
     _globals['mask'] = mask
 
 
@@ -38,7 +38,7 @@ def img_mask_3x4_generator():
     mask = np.array([[0, 1, 1, 1],
                     [0, 1, 1, 0],
                     [0, 1, 1, 0]
-                    ]).reshape((3, 4, 1)).astype(np.uint8)
+                    ]).reshape((3, 4)).astype(np.uint8)
     _globals['mask'] = mask
 
 
@@ -79,7 +79,8 @@ def test_img_mask_horizontal_flip():
     img_res, _ = dc[0]
     mask_res, _ = dc[1]
 
-    assert np.array_equal(cv2.flip(img, 0), img_res)
+    h, w = mask.shape
+    assert np.array_equal(cv2.flip(img, 0).reshape(h, w, 1), img_res)
     assert np.array_equal(cv2.flip(mask, 0), mask_res)
 
 @with_setup(img_mask_3x4_generator)
@@ -95,7 +96,8 @@ def test_img_mask_mask_horizontal_flip():
     img_res, _ = dc[0]
     mask_res, _ = dc[1]
 
-    assert np.array_equal(cv2.flip(img, 0), img_res)
+    h, w = mask.shape
+    assert np.array_equal(cv2.flip(img, 0).reshape(h, w, 1), img_res)
     assert np.array_equal(cv2.flip(mask, 0), mask_res)
 
 
@@ -112,7 +114,8 @@ def test_img_mask_vertical_flip():
     img_res, _ = dc[0]
     mask_res, _ = dc[1]
 
-    assert np.array_equal(cv2.flip(img, 1), img_res)
+    h, w = mask.shape
+    assert np.array_equal(cv2.flip(img, 1).reshape(h, w, 1), img_res)
     assert np.array_equal(cv2.flip(mask, 1), mask_res)
 
 
@@ -130,6 +133,48 @@ def test_img_mask_hoizontal_vertical_flip():
     img_res, _ = dc[0]
     mask_res, _ = dc[1]
 
-    assert np.array_equal(cv2.flip(cv2.flip(img, 0), 1), img_res)
+    h, w = mask.shape
+    assert np.array_equal(cv2.flip(cv2.flip(img, 0), 1).reshape(h, w, 1), img_res)
     assert np.array_equal(cv2.flip(cv2.flip(mask, 0), 1), mask_res)
+
+@with_setup(img_3x4_generator)
+def test_image_shape_equal_3_after_nested():
+    img = _globals['img']
+    dc = augs_core.DataContainer((img), 'I')
+
+    pipeline = augs_core.Pipeline([
+        trf.RandomFlip(p=1, axis=0),
+        trf.RandomFlip(p=1, axis=1),
+        augs_core.Pipeline([
+            trf.RandomFlip(p=1, axis=1),
+            trf.RandomFlip(p=1, axis=0),
+        ])
+    ])
+
+    dc = pipeline(dc)
+    img_res, _ = dc[0]
+
+    assert np.array_equal(len(img.shape), 3)
+
+@with_setup(img_mask_3x4_generator)
+def test_nested_pipeline():
+    img, mask = _globals['img'], _globals['mask']
+    dc = augs_core.DataContainer((img, mask), 'IM')
+
+    pipeline = augs_core.Pipeline([
+        trf.RandomFlip(p=1, axis=0),
+        trf.RandomFlip(p=1, axis=1),
+        augs_core.Pipeline([
+            trf.RandomFlip(p=1, axis=1),
+            trf.RandomFlip(p=1, axis=0),
+        ])
+    ])
+
+    dc = pipeline(dc)
+    img_res, t0 = dc[0]
+    mask_res, t1 = dc[1]
+
+    assert np.array_equal(img, img_res)
+    assert np.array_equal(mask, mask_res)
+
 
