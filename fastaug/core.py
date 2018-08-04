@@ -5,22 +5,12 @@ import numpy as np
 img_types = {'I', 'M', 'P','L'}
 
 class DataContainer(object):
-    def __init__(self, data:tuple, fmt:str, h:int, w:int):
+    def __init__(self, data:tuple, fmt:str):
         if len(fmt) == 1 and not isinstance(data, tuple):
             data = (data,)
         self.__data = data
         self.__fmt = fmt
         # h, w define a coordinate system, mainly for geometric transformations
-        self.__h = h
-        self.__w = w
-
-    @property
-    def w(self):
-        return self.__w
-
-    @property
-    def h(self):
-        return self.__h
 
     def __getitem__(self, idx:int):
         return self.__data[idx], self.__fmt[idx]
@@ -77,22 +67,20 @@ class BasicTransform(metaclass=ABCMeta):
     def apply(self, data):
         result = []
         types = []
-        for (item, t) in data:
+        for i, (item, t) in enumerate(data):
             if t == 'I':
                 tmp_item = self._apply_img(item)
-                H = item.shape[0]
-                W = item.shape[1]
             elif t == 'M':
                 tmp_item = self._apply_mask(item)
             elif t == 'P':
-                tmp_item = self._apply_pts(item, data.h, data.w)
+                tmp_item = self._apply_pts(item)
             else: # t==L
                 tmp_item = self._apply_labels(item)
 
             types.append(t)
             result.append(tmp_item)
 
-        return DataContainer(data=result, fmt=''.join(types), h=data.h, w=data.w)
+        return DataContainer(data=result, fmt=''.join(types))
 
     def __call__(self, data):
         if self.use_transform():
@@ -102,19 +90,19 @@ class BasicTransform(metaclass=ABCMeta):
             return data
 
     @abstractmethod
-    def _apply_img(self, data):
+    def _apply_img(self, img):
         pass
 
     @abstractmethod
-    def _apply_pts(self, data, h, w):
+    def _apply_mask(self, mask):
         pass
 
     @abstractmethod
-    def _apply_mask(self, data):
+    def _apply_labels(self, labels):
         pass
 
     @abstractmethod
-    def _apply_labels(self, data):
+    def _apply_pts(self, pts):
         pass
 
 
@@ -122,3 +110,19 @@ class MatrixTransform(BasicTransform):
     def __init__(self, interpolation='bilinear', p=0.5):
         super(MatrixTransform, self).__init__(p)
         self.interpolation = interpolation
+
+    @abstractmethod
+    def _apply_img(self, pts):
+        pass
+
+    @abstractmethod
+    def _apply_pts(self, pts):
+        pass
+
+    @abstractmethod
+    def _apply_mask(self, mask):
+        pass
+
+    @abstractmethod
+    def _apply_labels(self, labels):
+        pass
