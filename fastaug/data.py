@@ -85,3 +85,50 @@ class DataContainer(object):
 
     def __len__(self):
         return len(self.__data)
+
+
+class KeyPoints(object):
+    """
+    Keypoints class.
+
+    """
+    def __init__(self, pts=None, H=None, W=None):
+        """
+        Constructor
+
+        Parameters
+        ----------
+        pts : ndarray
+            Key points as an ndarray
+        H : int
+            Height of the coordinate frame.
+        W : int
+            Width of the coordinate frame.
+        """
+        self._pts = pts
+        self._H = H
+        self._W = W
+
+    @property
+    def pts(self):
+        return self._pts
+
+    @pts.setter
+    def pts(self, value):
+        self._pts = value
+
+    @property
+    def H(self):
+        return self._H
+
+    @property
+    def W(self):
+        return self._W
+
+    @H.setter
+    def H(self, value):
+        self._H = value
+
+    @W.setter
+    def W(self, value):
+        self._W = value
