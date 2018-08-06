@@ -3,18 +3,20 @@ from functools import wraps
 
 import numpy as np
 
-img_types = {'I', 'M', 'P','L'}
+allowed_types = {'I', 'M', 'P', 'L'}
 
 
 def img_shape_checker(method):
     """
+    Decorator to ensure that the image has always 3 dimensions: WxHC
 
     Parameters
     ----------
-    transform : _apply_img method of BaseTransform
+    method : _apply_img method of BaseTransform
 
     Returns
     -------
+    out : method of a class
 
     """
     @wraps(method)
@@ -32,13 +34,56 @@ def img_shape_checker(method):
 
 
 class DataContainer(object):
-    def __init__(self, data:tuple, fmt:str):
+    """
+    Data container to encapsulate different types of data, such as images, bounding boxes, etc.
+    The container itself is iterable according to the format.
+
+    """
+    def __init__(self, data, fmt):
+        """
+        Constructor
+
+        Parameters
+        ----------
+        data : tuple
+            Data items stored in a tuple
+        fmt : str
+            Data format. Example: 'IMMM' - image and three masks.
+
+        """
         if len(fmt) == 1 and not isinstance(data, tuple):
             data = (data,)
+        if isinstance(data, list):
+            data = tuple(data)
+        for t in fmt:
+            assert t in allowed_types
+
         self.__data = data
         self.__fmt = fmt
 
-    def __getitem__(self, idx:int):
+    @property
+    def data_format(self):
+        return self.__fmt
+
+    @property
+    def data(self):
+        return self.__data
+
+    def __getitem__(self, idx):
+        """
+
+        Parameters
+        ----------
+        idx : int
+            Index of an element to return according to the specified format
+
+        Returns
+        -------
+        out : tuple
+            Data item (e.g. ndarray) and its type, e.g. 'I' - image.
+
+        """
+        assert isinstance(idx, int)
         return self.__data[idx], self.__fmt[idx]
 
     def __len__(self):
@@ -46,32 +91,105 @@ class DataContainer(object):
 
 
 class Pipeline(object):
+    """
+    Pipeline class. Executes the list of transformations
+
+    """
     def __init__(self, transforms=None):
+        """
+        Class constructor.
+
+        Parameters
+        ----------
+        transforms : list or None
+            List of transforms to execute
+        """
         if transforms is None:
             transforms = []
         self.transforms = transforms
 
-    def __call__(self, data:DataContainer):
-        # TODO: We can combine some of the transforms using stack, e.g Matrix transforms by precomputig them
+    def __call__(self, data):
+        """
+        Executes the list of the pre-defined transformations for a given data container.
+
+        Parameters
+        ----------
+        data : DataContainer
+            Data to be augmented
+
+        Returns
+        -------
+        out : DataContainer
+            Result
+
+        """
+        # TODO: We can combine some of the transforms using stack, e.g Matrix transforms by pre-computig them
         # Each transform has sample_transform method
         return Pipeline.exec_pipeline(self.transforms, data)
 
     @staticmethod
     def exec_pipeline(transforms, data):
+        """
+        Static method, executes the list of transformations for a given data point.
+
+        Parameters
+        ----------
+        transforms : list
+            List of transformations to execute
+        data : DataContainer
+            Data to be augmented
+
+        Returns
+        -------
+        out : DataContainer
+            Result
+        """
         for trf in transforms:
             assert isinstance(trf, Pipeline) or isinstance(trf, BaseTransform)
-            data = trf(data)
+            if isinstance(trf, BaseTransform):
+                if trf.use_transform():
+                    trf.sample_transform()
+                    data = trf.apply(data)
+            else:
+                data = trf(data)  # It means that the transform is actually a nested pipeline
 
         return data
 
 
 class SelectivePipeline(Pipeline):
+    """
+    Pipeline, which uniformly selects n out of k given transforms.
+
+    """
     def __init__(self, transforms=None, n=1):
+        """
+        Constructor.
+
+        Parameters
+        ----------
+        transforms : list
+            List of k transforms to sample from
+        n : int
+            How many transform to sample
+        """
         super(SelectivePipeline, self).__init__(transforms)
-        assert n > 0
+        assert 0 < n <= len(self.transforms)
         self.n = n
 
     def __call__(self, data):
+        """
+        Applies randomly selected n transforms to the given data item
+
+        Parameters
+        ----------
+        data : DataContainer
+            Data to be augmented
+
+        Returns
+        -------
+        out : DataContainer
+            Result
+        """
         if len(self.transforms) > 0:
             trfs = np.random.choice(self.transforms, self.n, replace=False, p=1./self.n)
             return Pipeline.exec_pipeline(trfs, data)
@@ -79,29 +197,75 @@ class SelectivePipeline(Pipeline):
 
 
 class BaseTransform(metaclass=ABCMeta):
+    """
+    Transformation abstract class.
+
+    """
     def __init__(self, p=0.5):
+        """
+        Constructor.
+
+        Parameters
+        ----------
+        p : probability of executing this transform
+
+        """
         self.p = p
+        self.use = False  # Initially we do not use the transform
 
     def use_transform(self):
+        """
+        Method to randomly determine whether to use this transform.
+
+        Returns
+        -------
+        out : bool
+            Boolean flag. True if the transform is used.
+        """
         if np.random.rand() < self.p:
+            self.use = True
             return True
+
+        self.use = False
         return False
 
     @abstractmethod
     def sample_transform(self):
+        """
+        Abstract method. Must be implemented in the child classes
+
+        Returns
+        -------
+        None
+
+        """
         pass
 
     def apply(self, data):
+        """
+        Applies transformation to a DataContainer items depending on the type.
+
+        Parameters
+        ----------
+        data : DataContainer
+            Data to be augmented
+
+        Returns
+        -------
+        out : DataContainer
+            Result
+
+        """
         result = []
         types = []
         for i, (item, t) in enumerate(data):
-            if t == 'I':
+            if t == 'I':  # Image
                 tmp_item = self._apply_img(item)
-            elif t == 'M':
+            elif t == 'M':  # Mask
                 tmp_item = self._apply_mask(item)
-            elif t == 'P':
+            elif t == 'P':  # Points
                 tmp_item = self._apply_pts(item)
-            else: # t==L
+            else:  # Labels
                 tmp_item = self._apply_labels(item)
 
             types.append(t)
@@ -110,49 +274,176 @@ class BaseTransform(metaclass=ABCMeta):
         return DataContainer(data=tuple(result), fmt=''.join(types))
 
     def __call__(self, data):
-        if self.use_transform():
-            self.sample_transform()
+        """
+        Applies the transform to a DataContainer
+
+        Parameters
+        ----------
+        data : DataContainer
+            Data to be augmented
+
+        Returns
+        -------
+        out : DataContainer
+            Result
+
+        """
+        self.use_transform()
+        self.sample_transform()
+
+        if self.use:
             return self.apply(data)
         else:
             return data
 
     @abstractmethod
     def _apply_img(self, img):
+        """
+        Abstract method, which determines the transform's behaviour when it is applied to images HxWxC.
+
+        Parameters
+        ----------
+        img : ndarray
+            Image to be augmented
+
+        Returns
+        -------
+        out : ndarray
+
+        """
         pass
 
     @abstractmethod
     def _apply_mask(self, mask):
+        """
+        Abstract method, which determines the transform's behaviour when it is applied to masks HxW.
+
+        Parameters
+        ----------
+        mask : mdarray
+            Mask to be augmented
+
+        Returns
+        -------
+        out : ndarray
+            Result
+
+        """
         pass
 
     @abstractmethod
     def _apply_labels(self, labels):
+        """
+        Abstract method, which determines the transform's behaviour when it is applied to labels (e.g. label smoothing)
+
+        Parameters
+        ----------
+        labels : ndarray
+            Array of labels.
+
+        Returns
+        -------
+        out : ndarray
+            Result
+
+        """
         pass
 
     @abstractmethod
     def _apply_pts(self, pts):
+        """
+        Abstract method, which determines the transform's behaviour when it is applied to keypoints.
+
+        Parameters
+        ----------
+        pts : KeyPoints
+            Keypoints object
+
+        Returns
+        -------
+        out : KeyPoints
+            Result
+
+        """
         pass
 
 
 class MatrixTransform(BaseTransform):
+    """
+    Matrix Transform abstract class. (Affine and Homography)
+    """
     def __init__(self, interpolation='bilinear', p=0.5):
         super(MatrixTransform, self).__init__(p)
         self.interpolation = interpolation
 
-    @abstractmethod
-    @img_shape_checker
-    def _apply_img(self, pts):
-        pass
 
     @abstractmethod
-    def _apply_pts(self, pts):
+    def _apply_img(self, img):
+        """
+        Abstract method, which determines the transform's behaviour when it is applied to images HxWxC.
+
+        Parameters
+        ----------
+        img : ndarray
+            Image to be augmented
+
+        Returns
+        -------
+        out : ndarray
+
+        """
         pass
 
     @abstractmethod
     def _apply_mask(self, mask):
+        """
+        Abstract method, which determines the transform's behaviour when it is applied to masks HxW.
+
+        Parameters
+        ----------
+        mask : mdarray
+            Mask to be augmented
+
+        Returns
+        -------
+        out : ndarray
+            Result
+
+        """
         pass
 
     @abstractmethod
     def _apply_labels(self, labels):
+        """
+        Abstract method, which determines the transform's behaviour when it is applied to labels (e.g. label smoothing)
+
+        Parameters
+        ----------
+        labels : ndarray
+            Array of labels.
+
+        Returns
+        -------
+        out : ndarray
+            Result
+
+        """
         pass
 
+    @abstractmethod
+    def _apply_pts(self, pts):
+        """
+        Abstract method, which determines the transform's behaviour when it is applied to keypoints.
 
+        Parameters
+        ----------
+        pts : KeyPoints
+            Keypoints object
+
+        Returns
+        -------
+        out : KeyPoints
+            Result
+
+        """
+        pass

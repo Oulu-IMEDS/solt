@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="lext@localhost:1234" autoUploadExternalChanges="true">
+  <component name="PublishConfigData" autoUpload="Always" serverName="lext@lext-devbox.local:1231" autoUploadExternalChanges="true">
     <serverData>
-      <paths name="lext@localhost:1234">
+      <paths name="lext@89.40.6.56:1231">
         <serverdata>
           <mappings>
-            <mapping deploy="/tmp/pycharm_project_680" local="$PROJECT_DIR$" />
+            <mapping deploy="/home/lext/fastaug" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
