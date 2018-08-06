@@ -227,6 +227,7 @@ def test_create_4_keypoints_change_frame():
     assert kpts.W == 2
     assert np.array_equal(kpts_data, kpts.pts)
 
+
 def test_create_4_keypoints_change_grid_and_frame():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
     kpts = augs_data.KeyPoints(kpts_data, 3, 4)

@@ -4,7 +4,6 @@ from .data import DataContainer
 import numpy as np
 
 
-
 class Pipeline(object):
     """
     Pipeline class. Executes the list of transformations
