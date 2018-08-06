@@ -1,4 +1,5 @@
 import fastaug.core as augs_core
+import fastaug.data as augs_data
 import fastaug.transforms as trf
 import numpy as np
 import cv2
@@ -71,7 +72,7 @@ def img_mask_3x4():
 
 def test_data_item_create_img(img_2x2):
     img = img_2x2
-    dc = augs_core.DataContainer((img,), 'I')
+    dc = augs_data.DataContainer((img,), 'I')
     assert len(dc) == 1
     assert np.array_equal(img, dc[0][0])
     assert dc[0][1] == 'I'
@@ -79,7 +80,7 @@ def test_data_item_create_img(img_2x2):
 
 def test_pipeline_empty(img_2x2):
     img = img_2x2
-    dc = augs_core.DataContainer((img,), 'I')
+    dc = augs_data.DataContainer((img,), 'I')
     pipeline = augs_core.Pipeline()
     res, _ = pipeline(dc)[0]
     assert np.all(res == img)
@@ -93,7 +94,7 @@ def test_empty_pipeline_selective():
 
 def test_img_mask_horizontal_flip(img_mask_3x4):
     img, mask = img_mask_3x4
-    dc = augs_core.DataContainer((img, mask), 'IM')
+    dc = augs_data.DataContainer((img, mask), 'IM')
 
     pipeline = augs_core.Pipeline([
         trf.RandomFlip(p=1)
@@ -110,7 +111,7 @@ def test_img_mask_horizontal_flip(img_mask_3x4):
 
 def test_img_mask_mask_horizontal_flip(img_mask_3x4):
     img, mask = img_mask_3x4
-    dc = augs_core.DataContainer((img, mask, mask), 'IMM')
+    dc = augs_data.DataContainer((img, mask, mask), 'IMM')
 
     pipeline = augs_core.Pipeline([
         trf.RandomFlip(p=1, axis=0)
@@ -127,7 +128,7 @@ def test_img_mask_mask_horizontal_flip(img_mask_3x4):
 
 def test_img_mask_vertical_flip(img_mask_3x4):
     img, mask = img_mask_3x4
-    dc = augs_core.DataContainer((img, mask), 'IM')
+    dc = augs_data.DataContainer((img, mask), 'IM')
 
     pipeline = augs_core.Pipeline([
         trf.RandomFlip(p=1, axis=1)
@@ -145,7 +146,7 @@ def test_img_mask_vertical_flip(img_mask_3x4):
 
 def test_img_mask_hoizontal_vertical_flip(img_mask_3x4):
     img, mask = img_mask_3x4
-    dc = augs_core.DataContainer((img, mask), 'IM')
+    dc = augs_data.DataContainer((img, mask), 'IM')
 
     pipeline = augs_core.Pipeline([
         trf.RandomFlip(p=1, axis=0),
@@ -163,7 +164,7 @@ def test_img_mask_hoizontal_vertical_flip(img_mask_3x4):
 
 def test_image_shape_equal_3_after_nested_flip(img_3x4):
     img = img_3x4
-    dc = augs_core.DataContainer((img), 'I')
+    dc = augs_data.DataContainer((img), 'I')
 
     pipeline = augs_core.Pipeline([
         trf.RandomFlip(p=1, axis=0),
@@ -182,7 +183,7 @@ def test_image_shape_equal_3_after_nested_flip(img_3x4):
 
 def test_nested_pipeline(img_mask_3x4):
     img, mask = img_mask_3x4
-    dc = augs_core.DataContainer((img, mask), 'IM')
+    dc = augs_data.DataContainer((img, mask), 'IM')
 
     pipeline = augs_core.Pipeline([
         trf.RandomFlip(p=1, axis=0),

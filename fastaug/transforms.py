@@ -1,5 +1,6 @@
-from . import core
+from . import core, data
 import cv2
+
 
 class RandomFlip(core.BaseTransform):
     def __init__(self, p=0.5, axis=0):
@@ -15,7 +16,7 @@ class RandomFlip(core.BaseTransform):
         # TODO: sample coordinates for remap, which will be used to fuse the transforms
         self.params = None
 
-    @core.img_shape_checker
+    @data.img_shape_checker
     def _apply_img(self, img):
         img = cv2.flip(img, self.axis)
         return img
@@ -38,7 +39,7 @@ class RandomRotate(core.MatrixTransform):
     def sample_transform(self):
         raise NotImplementedError
 
-    @core.img_shape_checker
+    @data.img_shape_checker
     def _apply_img(self, img):
         raise NotImplementedError
 
@@ -51,6 +52,7 @@ class RandomRotate(core.MatrixTransform):
     def _apply_pts(self, pts):
         raise NotImplementedError
 
+
 class RandomScale(core.MatrixTransform):
     def __init__(self, p=0.5):
         super(RandomScale, self).__init__(p)
@@ -58,7 +60,7 @@ class RandomScale(core.MatrixTransform):
     def sample_transform(self):
         raise NotImplementedError
 
-    @core.img_shape_checker
+    @data.img_shape_checker
     def _apply_img(self, img):
         raise NotImplementedError
 
@@ -78,7 +80,7 @@ class RandomShear(core.MatrixTransform):
     def sample_transform(self):
         raise NotImplementedError
 
-    @core.img_shape_checker
+    @data.img_shape_checker
     def _apply_img(self, img):
         raise NotImplementedError
 
@@ -99,7 +101,7 @@ class RandomCrop(core.BaseTransform):
     def sample_transform(self):
         raise NotImplementedError
 
-    @core.img_shape_checker
+    @data.img_shape_checker
     def _apply_img(self, img):
         raise NotImplementedError
 
@@ -119,7 +121,7 @@ class Pad(core.BaseTransform):
     def sample_transform(self):
         raise NotImplementedError
 
-    @core.img_shape_checker
+    @data.img_shape_checker
     def _apply_img(self, img):
         raise NotImplementedError
 
@@ -140,7 +142,7 @@ class CenterCrop(core.BaseTransform):
     def sample_transform(self):
         raise NotImplementedError
 
-    @core.img_shape_checker
+    @data.img_shape_checker
     def _apply_img(self, img):
         raise NotImplementedError
 
@@ -152,6 +154,7 @@ class CenterCrop(core.BaseTransform):
 
     def _apply_pts(self, pts):
         raise NotImplementedError
+
 
 class RandomPerspective(core.BaseTransform):
     def __init__(self, p=0.5):
