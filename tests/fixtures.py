@@ -59,3 +59,36 @@ def img_mask_3x4():
                     [0, 1, 1, 0],
                     [0, 1, 1, 0]]).reshape((3, 4)).astype(np.uint8)
     return img, mask
+
+
+@pytest.fixture
+def img_3x3():
+    """
+    Generates a grayscale image 3x4
+
+    Returns
+    -------
+    out : ndarray
+        3x4x1 uint8 image
+    """
+    img = np.array([[0, 1, 1],
+                    [1, 0, 1],
+                    [1, 1, 1]]).reshape((3, 3, 1)).astype(np.uint8)
+    return img
+
+
+@pytest.fixture
+def img_mask_3x3():
+    """
+    Generates a mask  3x4
+
+    Returns
+    -------
+    out : ndarray
+        3x4 uint8 image
+    """
+    img = img_3x3()
+    mask = np.array([[1, 1, 1],
+                    [1, 1, 1],
+                    [0, 1, 1]]).reshape((3, 3)).astype(np.uint8)
+    return img, mask

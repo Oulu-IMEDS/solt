@@ -301,7 +301,7 @@ class MatrixTransform(BaseTransform):
 
         """
         H, W, _ = img.shape
-        origin  = [H // 2, W // 2]
+        origin = (W // 2, H // 2)
 
         T_origin = np.array([1, 0, -origin[0],
                              0, 1, -origin[1],
@@ -340,6 +340,7 @@ class MatrixTransform(BaseTransform):
         T_origin_back = np.array([1, 0, origin[0],
                                   0, 1, origin[1],
                                   0, 0, 1]).reshape((3, 3))
+
         return T_origin_back @ M @ T_origin
 
     def _apply_mask(self, mask):
@@ -357,7 +358,7 @@ class MatrixTransform(BaseTransform):
             Result
 
         """
-        H, W, _ = mask.shape
+        H, W = mask.shape
         # X, Y coordinates
         M = self.params['transform_matrix']
         origin = (W // 2, H // 2)
@@ -396,7 +397,8 @@ class MatrixTransform(BaseTransform):
 
         """
         pts_data = pts.data
-        origin = [pts.W // 2, pts.H // 2]
+        H, W = pts.H, pts.W
+        origin = (W // 2, H // 2)
         M = self.params['transform_matrix']
         M = MatrixTransform.change_transform_origin(M, origin)
 
@@ -406,6 +408,6 @@ class MatrixTransform(BaseTransform):
         pts_data[:, 0] /= pts_data[:, 2]
         pts_data[:, 1] /= pts_data[:, 2]
 
-        pts.data = pts_data
+        pts.data = pts_data[:, :-1]
 
         return pts

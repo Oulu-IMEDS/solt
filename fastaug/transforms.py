@@ -56,8 +56,8 @@ class RandomRotate(core.MatrixTransform):
 
         """
         rot = np.random.uniform(self.__range[0], self.__range[1])
-        M = np.array([np.cos(np.deg2rad(rot)), np.sin(np.deg2rad(rot)), 0,
-                     -np.sin(np.deg2rad(rot)), np.cos(np.deg2rad(rot)), 0,
+        M = np.array([np.cos(np.deg2rad(rot)), -np.sin(np.deg2rad(rot)), 0,
+                     np.sin(np.deg2rad(rot)), np.cos(np.deg2rad(rot)), 0,
                      0, 0, 1
                      ]).reshape((3, 3)).astype(np.float32)
 
