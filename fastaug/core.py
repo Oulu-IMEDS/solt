@@ -4,6 +4,7 @@ from .data import DataContainer, img_shape_checker
 import numpy as np
 import cv2
 
+
 class Pipeline(object):
     """
     Pipeline class. Executes the list of transformations
@@ -293,7 +294,6 @@ class MatrixTransform(BaseTransform):
         super(MatrixTransform, self).__init__(p)
         self.interpolation = interpolation
 
-
     @img_shape_checker
     def _apply_img(self, img):
         """
@@ -380,7 +380,6 @@ class MatrixTransform(BaseTransform):
         """
         return labels
 
-    @abstractmethod
     def _apply_pts(self, pts):
         """
         Abstract method, which determines the transform's behaviour when it is applied to keypoints.
