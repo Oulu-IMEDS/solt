@@ -62,12 +62,21 @@ class DataContainer(object):
     def data_format(self):
         return self.__fmt
 
+    @data_format.setter
+    def data_format(self, value):
+        self.__fmt = value
+
     @property
     def data(self):
         return self.__data
 
+    @data.setter
+    def data(self, value):
+        self.__fmt = value
+
     def __getitem__(self, idx):
         """
+        Returns a data item and its type using index.
 
         Parameters
         ----------
@@ -105,30 +114,30 @@ class KeyPoints(object):
         W : int
             Width of the coordinate frame.
         """
-        self._pts = pts
-        self._H = H
-        self._W = W
+        self.__data = pts
+        self.__H = H
+        self.__W = W
 
     @property
-    def pts(self):
-        return self._pts
+    def data(self):
+        return self.__data
 
-    @pts.setter
-    def pts(self, value):
-        self._pts = value
+    @data.setter
+    def data(self, value):
+        self.__data = value
 
     @property
     def H(self):
-        return self._H
+        return self.__H
 
     @property
     def W(self):
-        return self._W
+        return self.__W
 
     @H.setter
     def H(self, value):
-        self._H = value
+        self.__H = value
 
     @W.setter
     def W(self, value):
-        self._W = value
+        self.__W = value

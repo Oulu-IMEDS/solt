@@ -8,7 +8,6 @@ class RandomFlip(core.BaseTransform):
         self.params = None
         self.__axis = axis
 
-
     def sample_transform(self):
         # TODO: sample coordinates for remap, which will be used to fuse the transforms
         self.params = None
@@ -19,17 +18,19 @@ class RandomFlip(core.BaseTransform):
         return img
 
     def _apply_mask(self, mask):
-        img = cv2.flip(mask, self.__axis)
-        return img
+        mask_new = cv2.flip(mask, self.__axis)
+        return mask_new
 
     def _apply_labels(self, labels):
         return labels
 
     def _apply_pts(self, pts):
-        if self.__axis == 0:
-            pts.pts[:, 1] = pts.H - pts.pts[:, 1]
         if self.__axis == 1:
-            pts.pts[:, 0] = pts.W - pts.pts[:, 0]
+            pts.data[:, 1] = pts.H - 1 - pts.data[:, 1]
+        if self.__axis == 0:
+            pts.data[:, 0] = pts.W - 1 - pts.data[:, 0]
+
+        return pts
 
 
 class RandomRotate(core.MatrixTransform):
@@ -73,6 +74,7 @@ class RandomScale(core.MatrixTransform):
     def _apply_pts(self, pts):
         raise NotImplementedError
 
+
 class RandomShear(core.MatrixTransform):
     def __init__(self, p=0.5):
         super(RandomShear, self).__init__(p)
@@ -113,6 +115,7 @@ class RandomCrop(core.BaseTransform):
 
     def _apply_pts(self, pts):
         raise NotImplementedError
+
 
 class Pad(core.BaseTransform):
     def __init__(self, p=0.5):
