@@ -98,7 +98,7 @@ class DataContainer(object):
 
 class KeyPoints(object):
     """
-    Keypoints class.
+    Keypoints class
 
     """
     def __init__(self, pts=None, H=None, W=None):
@@ -108,7 +108,7 @@ class KeyPoints(object):
         Parameters
         ----------
         pts : ndarray
-            Key points as an ndarray
+            Key points as an ndarray, (x, y) format.
         H : int
             Height of the coordinate frame.
         W : int

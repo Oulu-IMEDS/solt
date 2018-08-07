@@ -1,6 +1,6 @@
 from . import core, data
 import cv2
-
+import numpy as np
 
 class RandomFlip(core.BaseTransform):
     def __init__(self, p=0.5, axis=0):
@@ -10,7 +10,7 @@ class RandomFlip(core.BaseTransform):
 
     def sample_transform(self):
         # TODO: sample coordinates for remap, which will be used to fuse the transforms
-        self.params = None
+        pass
 
     @data.img_shape_checker
     def _apply_img(self, img):
@@ -34,24 +34,26 @@ class RandomFlip(core.BaseTransform):
 
 
 class RandomRotate(core.MatrixTransform):
-    def __init__(self, p=0.5, interpolation='bilinear'):
+    """
+    Random rotation around the center
+    """
+    def __init__(self, range, p=0.5, interpolation='bilinear'):
         super(RandomRotate, self).__init__(p=p, interpolatio=interpolation)
+        self.__range = range
 
     def sample_transform(self):
-        raise NotImplementedError
+        """
+        Samples random rotation within specified range and saves it as an object state.
 
-    @data.img_shape_checker
-    def _apply_img(self, img):
-        raise NotImplementedError
+        """
+        rot = np.random.uniform(self.__range[0], self.__range[1])
+        M = np.array([np.cos(np.deg2rad(rot)), np.sin(np.deg2rad(rot)), 0,
+                     -np.sin(np.deg2rad(rot)), np.cos(np.deg2rad(rot)), 0,
+                     0, 0, 1
+                     ]).reshape((3, 3)).astype(np.float32)
 
-    def _apply_mask(self, mask):
-        raise NotImplementedError
-
-    def _apply_labels(self, labels):
-        raise NotImplementedError
-
-    def _apply_pts(self, pts):
-        raise NotImplementedError
+        self.params = {'rot': rot,
+                       'transform_matrix': M}
 
 
 class RandomScale(core.MatrixTransform):

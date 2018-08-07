@@ -7,6 +7,7 @@ import pytest
 
 from .fixtures import img_2x2, img_3x4, img_mask_2x2, img_mask_3x4
 
+
 def test_img_mask_horizontal_flip(img_mask_3x4):
     img, mask = img_mask_3x4
     dc = augs_data.DataContainer((img, mask), 'IM')

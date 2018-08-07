@@ -1,8 +1,8 @@
 from abc import ABCMeta, abstractmethod
-from .data import DataContainer
+from .data import DataContainer, img_shape_checker
 
 import numpy as np
-
+import cv2
 
 class Pipeline(object):
     """
@@ -126,6 +126,7 @@ class BaseTransform(metaclass=ABCMeta):
         """
         self.p = p
         self.use = False  # Initially we do not use the transform
+        self.params = None
 
     def use_transform(self):
         """
@@ -284,38 +285,70 @@ class BaseTransform(metaclass=ABCMeta):
 
 class MatrixTransform(BaseTransform):
     """
-    Matrix Transform abstract class. (Affine and Homography)
+    Matrix Transform abstract class. (Affine and Homography).
+    Does all the transforms around the image /  center.
+
     """
     def __init__(self, interpolation='bilinear', p=0.5):
         super(MatrixTransform, self).__init__(p)
         self.interpolation = interpolation
 
 
-    @abstractmethod
+    @img_shape_checker
     def _apply_img(self, img):
         """
-        Abstract method, which determines the transform's behaviour when it is applied to images HxWxC.
+        Applies a matrix transform to an image.
+
+        """
+        H, W, _ = img.shape
+        origin  = [H // 2, W // 2]
+
+        T_origin = np.array([1, 0, -origin[0],
+                             0, 1, -origin[1],
+                             0, 0, 1]).reshape((3, 3))
+
+        T_origin_back = np.array([1, 0, origin[0],
+                                  0, 1, origin[1],
+                                  0, 0, 1]).reshape((3, 3))
+
+        M = self.params['transform_matrix']
+
+        return cv2.warpPerspective(img, T_origin_back @ M @ T_origin, (W, H))
+
+    @staticmethod
+    def change_transform_origin(M, origin):
+        """
+        Method takes a matrix transform, and modifies its origin.
 
         Parameters
         ----------
-        img : ndarray
-            Image to be augmented
+        M : ndarray
+            Transform (3x3) matrix
+        origin : tuple or list
+            Origin, around which the transform needs to be applied
 
         Returns
         -------
         out : ndarray
+            Modified Transform matrix
 
         """
-        pass
+        T_origin = np.array([1, 0, -origin[0],
+                             0, 1, -origin[1],
+                             0, 0, 1]).reshape((3, 3))
 
-    @abstractmethod
+        T_origin_back = np.array([1, 0, origin[0],
+                                  0, 1, origin[1],
+                                  0, 0, 1]).reshape((3, 3))
+        return T_origin_back @ M @ T_origin
+
     def _apply_mask(self, mask):
         """
         Abstract method, which determines the transform's behaviour when it is applied to masks HxW.
 
         Parameters
         ----------
-        mask : mdarray
+        mask : ndarray
             Mask to be augmented
 
         Returns
@@ -324,12 +357,15 @@ class MatrixTransform(BaseTransform):
             Result
 
         """
-        pass
+        H, W, _ = mask.shape
+        # X, Y coordinates
+        M = self.params['transform_matrix']
+        origin = (W // 2, H // 2)
+        return cv2.warpPerspective(mask, MatrixTransform.change_transform_origin(M, origin), (W, H))
 
-    @abstractmethod
     def _apply_labels(self, labels):
         """
-        Abstract method, which determines the transform's behaviour when it is applied to labels (e.g. label smoothing)
+        Transform application to labels. Simply returns them.
 
         Parameters
         ----------
@@ -342,7 +378,7 @@ class MatrixTransform(BaseTransform):
             Result
 
         """
-        pass
+        return labels
 
     @abstractmethod
     def _apply_pts(self, pts):
@@ -360,4 +396,17 @@ class MatrixTransform(BaseTransform):
             Result
 
         """
-        pass
+        pts_data = pts.data
+        origin = [pts.W // 2, pts.H // 2]
+        M = self.params['transform_matrix']
+        M = MatrixTransform.change_transform_origin(M, origin)
+
+        pts_data = np.hstack((pts_data, np.ones((pts_data.shape[0], 1))))
+        pts_data = np.dot(M, pts_data.T).T
+
+        pts_data[:, 0] /= pts_data[:, 2]
+        pts_data[:, 1] /= pts_data[:, 2]
+
+        pts.data = pts_data
+
+        return pts
