@@ -122,3 +122,29 @@ def test_rotate_90_img_mask_keypoints(img_mask_3x3):
     assert np.array_equal(expected_img_res, img_res)
     assert np.array_equal(expected_mask_res, mask_res)
     np.testing.assert_array_almost_equal(expected_kpts_res, kpts_res.data)
+
+
+def test_rotate_90_img_mask_keypoints(img_mask_3x3):
+    # Setting up the data
+    kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
+    kpts = augs_data.KeyPoints(kpts_data, 3, 3)
+    img, mask = img_mask_3x3
+    H, W = mask.shape
+
+    dc = augs_data.DataContainer((img, mask, kpts,), 'IMP')
+    # Defining the 90 degrees transform (clockwise)
+    pipeline = trf.RandomRotate(rotation_range=(90, 90), p=1)
+    dc_res = pipeline(dc)
+
+    img_res, _ = dc_res[0]
+    mask_res, _ = dc_res[1]
+    kpts_res, _ = dc_res[2]
+
+    M = cv2.getRotationMatrix2D((W // 2, H // 2), -90, 1)
+    expected_img_res = cv2.warpAffine(img, M, (W, H)).reshape((H, W, 1))
+    expected_mask_res = cv2.warpAffine(mask, M, (W, H))
+    expected_kpts_res = np.array([[2, 0], [0, 0], [0, 2], [2, 2]]).reshape((4, 2))
+
+    assert np.array_equal(expected_img_res, img_res)
+    assert np.array_equal(expected_mask_res, mask_res)
+    np.testing.assert_array_almost_equal(expected_kpts_res, kpts_res.data)

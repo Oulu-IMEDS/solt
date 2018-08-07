@@ -290,9 +290,25 @@ class MatrixTransform(BaseTransform):
     Does all the transforms around the image /  center.
 
     """
-    def __init__(self, interpolation='bilinear', p=0.5):
+    def __init__(self, interpolation='bilinear', padding='zeros', p=0.5):
+        assert padding in ['zeros', 'reflective']
+        assert interpolation in ['bilinear', 'bicubic']
+
         super(MatrixTransform, self).__init__(p)
         self.interpolation = interpolation
+        self.padding = padding
+
+    @abstractmethod
+    def sample_transform(self):
+        """
+        Abstract method. Must be implemented in the child classes
+
+        Returns
+        -------
+        None
+
+        """
+        pass
 
     @img_shape_checker
     def _apply_img(self, img):
@@ -312,7 +328,7 @@ class MatrixTransform(BaseTransform):
                                   0, 0, 1]).reshape((3, 3))
 
         M = self.params['transform_matrix']
-
+        # TODO: re-calculate the size
         return cv2.warpPerspective(img, T_origin_back @ M @ T_origin, (W, H))
 
     @staticmethod
@@ -333,6 +349,7 @@ class MatrixTransform(BaseTransform):
             Modified Transform matrix
 
         """
+        # TODO: re-calculate the size
         T_origin = np.array([1, 0, -origin[0],
                              0, 1, -origin[1],
                              0, 0, 1]).reshape((3, 3))
@@ -362,6 +379,7 @@ class MatrixTransform(BaseTransform):
         # X, Y coordinates
         M = self.params['transform_matrix']
         origin = (W // 2, H // 2)
+        # TODO: re-calculate the size
         return cv2.warpPerspective(mask, MatrixTransform.change_transform_origin(M, origin), (W, H))
 
     def _apply_labels(self, labels):
@@ -396,6 +414,7 @@ class MatrixTransform(BaseTransform):
             Result
 
         """
+        # TODO: re-calculate the size
         pts_data = pts.data
         H, W = pts.H, pts.W
         origin = (W // 2, H // 2)
