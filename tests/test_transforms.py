@@ -3,6 +3,7 @@ import fastaug.data as augs_data
 import fastaug.transforms as trf
 import numpy as np
 import cv2
+import pytest
 
 from .fixtures import img_2x2, img_3x4, img_mask_2x2, img_mask_3x4, img_mask_3x3, img_5x5, img_6x6
 
@@ -146,7 +147,8 @@ def test_zoom_x_axis_odd(img_5x5):
     img_res = pipeline(dc)[0][0]
     assert img_res.shape[0] == H, img_res.shape[1] == W // 2
 
-def test_zoom_x_axis_even(img_6x6):
+
+def test_scale_x_axis_even(img_6x6):
     pipeline = trf.RandomScale((0.5, 0.5), (1, 1), p=1)
     dc = augs_data.DataContainer((img_6x6, ), 'I')
     H, W = img_6x6.shape[0], img_6x6.shape[1]
@@ -154,7 +156,7 @@ def test_zoom_x_axis_even(img_6x6):
     assert img_res.shape[0] == H, img_res.shape[1] == W // 2
 
 
-def test_zoom_xy_axis_odd(img_5x5):
+def test_scale_xy_axis_odd(img_5x5):
     pipeline = trf.RandomScale((0.5, 0.5), (3, 3), p=1)
     dc = augs_data.DataContainer((img_5x5, ), 'I')
     H, W = img_5x5.shape[0], img_5x5.shape[1]
@@ -162,9 +164,33 @@ def test_zoom_xy_axis_odd(img_5x5):
     assert H * 3 == img_res.shape[0], W // 2 == img_res.shape[1]
 
 
-def test_zoom_x_axis_even(img_6x6):
+def test_scale_x_axis_even(img_6x6):
     pipeline = trf.RandomScale((0.5, 0.5), (2, 2), p=1)
     dc = augs_data.DataContainer((img_6x6, ), 'I')
     H, W = img_6x6.shape[0], img_6x6.shape[1]
     img_res = pipeline(dc)[0][0]
     assert H * 2 == img_res.shape[0],  W // 2 == img_res.shape[1]
+
+
+def test_scale_img_mask(img_mask_3x4):
+    pipeline = trf.RandomScale((0.5, 0.5), (2, 2), p=1)
+    dc = augs_data.DataContainer(img_mask_3x4, 'IM')
+    H, W = img_mask_3x4[0].shape[0], img_mask_3x4[0].shape[1]
+    img_res = pipeline(dc)[0][0]
+    mask_res = pipeline(dc)[1][0]
+    assert H * 2 == img_res.shape[0],  W // 2 == img_res.shape[1]
+    assert H * 2 == mask_res.shape[0],  W // 2 == mask_res.shape[1]
+
+
+def test_keypoints_assert_reflective(img_mask_3x3):
+    # Setting up the data
+    kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
+    kpts = augs_data.KeyPoints(kpts_data, 3, 3)
+    img, mask = img_mask_3x3
+    H, W = mask.shape
+
+    dc = augs_data.DataContainer((img, mask, kpts,), 'IMP')
+    # Defining the 90 degrees transform (clockwise)
+    pipeline = trf.RandomRotate(rotation_range=(20, 20), p=1, padding='reflect')
+    with pytest.raises(ValueError):
+        dc_res = pipeline(dc)

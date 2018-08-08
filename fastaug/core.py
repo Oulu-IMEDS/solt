@@ -454,10 +454,10 @@ class MatrixTransform(BaseTransform):
             Result
 
         """
-        if self.padding == 'reflective':
+        if self.padding == 'reflect':
             raise ValueError('Cannot apply transform to keypoints with reflective padding!')
 
-        # TODO: re-calculate the size
+
         pts_data = pts.data
         M = self.params['transform_matrix']
         M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, pts.W, pts.H)
