@@ -3,15 +3,35 @@ import cv2
 import numpy as np
 
 
-class RandomFlip(core.BaseTransform):
-    def __init__(self, p=0.5, axis=0):
-        super(RandomFlip, self).__init__(p)
+class RandomFlip(core.MatrixTransform):
+    """
+    Performs a random flip of an image.
+
+    Note, this is a matrix transform with a re-defined methods.
+
+    """
+    def __init__(self, p=0.5, axis=1):
+        super(RandomFlip, self).__init__(p=p, interpolation='bilinear')
         self.params = None
         self.__axis = axis
 
     def sample_transform(self):
-        # TODO: sample coordinates for remap, which will be used to fuse the transforms
-        pass
+        """
+        Returns a  flip matrix
+
+        """
+        if self.__axis == 0:
+            M = np.array([1, 0, 0,
+                          0, -1, 0,
+                          0, 0, 1
+                          ]).reshape((3, 3)).astype(np.float32)
+        if self.__axis == 1:
+            M = np.array([-1, 0, 0,
+                          0, 1, 0,
+                          0, 0, 1
+                          ]).reshape((3, 3)).astype(np.float32)
+
+        self.params = {'transform_matrix': M}
 
     @data.img_shape_checker
     def _apply_img(self, img):
@@ -144,7 +164,7 @@ class RandomScale(core.MatrixTransform):
 
 
 class RandomCrop(core.BaseTransform):
-    def __init__(self, crop_size):
+    def __init__(self, crop_size, pad=None):
         super(RandomCrop, self).__init__(p=1)
         self.crop_size = crop_size
 
@@ -164,6 +184,14 @@ class RandomCrop(core.BaseTransform):
     def _apply_pts(self, pts):
         raise NotImplementedError
 
+
+class RandomPerspective(core.MatrixTransform):
+    def __init__(self, tilt_range, p=0.5):
+        super(RandomPerspective, self).__init__(p)
+        self.__tilt_range = tilt_range
+
+    def sample_transform(self):
+        raise NotImplementedError
 
 class Pad(core.BaseTransform):
     def __init__(self, pad_to):
@@ -206,14 +234,5 @@ class CenterCrop(core.BaseTransform):
         raise NotImplementedError
 
     def _apply_pts(self, pts):
-        raise NotImplementedError
-
-
-class RandomPerspective(core.MatrixTransform):
-    def __init__(self, tilt_range, p=0.5):
-        super(RandomPerspective, self).__init__(p)
-        self.__tilt_range = tilt_range
-
-    def sample_transform(self):
         raise NotImplementedError
 
