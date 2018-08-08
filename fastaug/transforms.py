@@ -38,7 +38,7 @@ class RandomRotate(core.MatrixTransform):
     """
     Random rotation around the center.
     """
-    def __init__(self, rotation_range, padding='zeros', p=0.5):
+    def __init__(self, rotation_range, padding='zeros', interpolation='bilinear', p=0.5):
         """
         Constructor.
 
@@ -47,7 +47,7 @@ class RandomRotate(core.MatrixTransform):
         rotation_range : rotation range
         p : probability of using this transform
         """
-        super(RandomRotate, self).__init__(p=p,  padding=padding)
+        super(RandomRotate, self).__init__( interpolation=interpolation, padding=padding, p=p)
 
         self.__range = rotation_range
 
@@ -103,8 +103,19 @@ class RandomScale(core.MatrixTransform):
     Random scale transform.
 
     """
-    def __init__(self, range_x, range_y, p=0.5):
-        super(RandomScale, self).__init__(p)
+    def __init__(self, range_x=None, range_y=None, interpolation='bilinear', p=0.5):
+        super(RandomScale, self).__init__(p=p, interpolation=interpolation)
+        if range_x is None:
+            range_x = 1
+        if range_y is None:
+            range_y = 1
+
+        if str(range_x).isdigit():
+            range_x = (range_x, range_x)
+
+        if str(range_y).isdigit():
+            range_y = (range_x, range_y)
+
         self.__range_x = range_x
         self.__range_y = range_y
 
