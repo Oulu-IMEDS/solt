@@ -71,7 +71,7 @@ class RandomShear(core.MatrixTransform):
     Random shear around the center.
 
     """
-    def __init__(self, range_x, range_y, p=0.5):
+    def __init__(self, range_x, range_y, interpolation='bilinear', padding='zeros', p=0.5):
         """
         Constructor.
 
@@ -81,7 +81,18 @@ class RandomShear(core.MatrixTransform):
         range_y : shearing range along Y-axis
         p : probability of using the transform
         """
-        super(RandomShear, self).__init__(p)
+        super(RandomShear, self).__init__(p=p, padding=padding, interpolation=interpolation)
+        if range_x is None:
+            range_x = 1
+        if range_y is None:
+            range_y = 1
+
+        if str(range_x).isdigit():
+            range_x = (range_x, range_x)
+
+        if str(range_y).isdigit():
+            range_y = (range_x, range_y)
+
         self.__range_x = range_x
         self.__range_y = range_y
 
