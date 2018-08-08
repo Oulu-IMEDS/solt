@@ -319,29 +319,18 @@ class MatrixTransform(BaseTransform):
         Applies a matrix transform to an image.
 
         """
-        H, W, _ = img.shape
-        origin = (W // 2, H // 2)
-
-        T_origin = np.array([1, 0, -origin[0],
-                             0, 1, -origin[1],
-                             0, 0, 1]).reshape((3, 3))
-
-        T_origin_back = np.array([1, 0, origin[0],
-                                  0, 1, origin[1],
-                                  0, 0, 1]).reshape((3, 3))
-
         M = self.params['transform_matrix']
-        # TODO: re-calculate the size
+        M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, img.shape[1], img.shape[0])
 
         if self.padding == 'zeros':
-            return cv2.warpPerspective(img, T_origin_back @ M @ T_origin, (W, H),
+            return cv2.warpPerspective(img, M , (W_new, H_new),
                                        borderMode=cv2.BORDER_CONSTANT, borderValue=0)
         else:
-            return cv2.warpPerspective(img, T_origin_back @ M @ T_origin, (W, H), borderMode=cv2.BORDER_REFLECT)
-
+            return cv2.warpPerspective(img, M, (W_new, H_new),
+                                       borderMode=cv2.BORDER_REFLECT)
 
     @staticmethod
-    def change_transform_origin(M, origin):
+    def correct_for_frame_change(M, W, H):
         """
         Method takes a matrix transform, and modifies its origin.
 
@@ -358,7 +347,8 @@ class MatrixTransform(BaseTransform):
             Modified Transform matrix
 
         """
-        # TODO: re-calculate the size
+        # First we correct the transformation so that it is performed around the origin
+        origin = [W // 2, H // 2]
         T_origin = np.array([1, 0, -origin[0],
                              0, 1, -origin[1],
                              0, 0, 1]).reshape((3, 3))
@@ -367,7 +357,36 @@ class MatrixTransform(BaseTransform):
                                   0, 1, origin[1],
                                   0, 0, 1]).reshape((3, 3))
 
-        return T_origin_back @ M @ T_origin
+        # We will use this later
+        T_initial = np.array([1, 0, M[0, 2],
+                             0, 1, M[1, 2],
+                             0, 0, 1]).reshape((3, 3))
+
+        M = T_origin_back @ M @ T_origin
+
+        # Now, if we think of scaling, rotation and translation, the image gets increased when we
+        # apply any transform.
+
+        # This is needed to recalculate the size of the image after the transformation.
+        # The core idea is to transform the coordinate grid
+        # left top, left bottom, right bottom, right top
+        coord_frame = np.array([[0, 0, 1], [0, H-1, 1], [W-1, H-1, 1], [W-1, 0, 1]])
+        new_frame = np.dot(M, coord_frame.T).T
+        new_frame[:, 0] /= new_frame[:, -1]
+        new_frame[:, 1] /= new_frame[:, -1]
+        new_frame = new_frame[:, :-1]
+        # Computing the new coordinates
+        new_frame[:, 0] += abs(new_frame[:, 0].min())
+        new_frame[:, 1] += abs(new_frame[:, 1].min())
+        assert np.all(new_frame >= 0)
+
+        W_new = int(new_frame[:, 0].max()+1)
+        H_new = int(new_frame[:, 1].max()+1)
+
+        M[0, -1] += W_new//2-origin[0]
+        M[1, -1] += H_new//2-origin[1]
+
+        return M, W_new, H_new
 
     def _apply_mask(self, mask):
         """
@@ -384,12 +403,16 @@ class MatrixTransform(BaseTransform):
             Result
 
         """
-        H, W = mask.shape
         # X, Y coordinates
         M = self.params['transform_matrix']
-        origin = (W // 2, H // 2)
-        # TODO: re-calculate the size
-        return cv2.warpPerspective(mask, MatrixTransform.change_transform_origin(M, origin), (W, H))
+        M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, mask.shape[1], mask.shape[0])
+
+        if self.padding == 'zeros':
+            return cv2.warpPerspective(mask, M , (W_new, H_new),
+                                       borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+        else:
+            return cv2.warpPerspective(mask, M, (W_new, H_new),
+                                       borderMode=cv2.BORDER_REFLECT)
 
     def _apply_labels(self, labels):
         """
@@ -428,10 +451,8 @@ class MatrixTransform(BaseTransform):
 
         # TODO: re-calculate the size
         pts_data = pts.data
-        H, W = pts.H, pts.W
-        origin = (W // 2, H // 2)
         M = self.params['transform_matrix']
-        M = MatrixTransform.change_transform_origin(M, origin)
+        M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, pts.W, pts.H)
 
         pts_data = np.hstack((pts_data, np.ones((pts_data.shape[0], 1))))
         pts_data = np.dot(M, pts_data.T).T
@@ -440,5 +461,7 @@ class MatrixTransform(BaseTransform):
         pts_data[:, 1] /= pts_data[:, 2]
 
         pts.data = pts_data[:, :-1]
+        pts.W = W_new
+        pts.H = H_new
 
         return pts
