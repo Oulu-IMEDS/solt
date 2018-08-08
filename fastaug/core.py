@@ -350,7 +350,7 @@ class MatrixTransform(BaseTransform):
 
         """
         # First we correct the transformation so that it is performed around the origin
-        origin = [W // 2, H // 2]
+        origin = [(W-1) // 2, (H-1) // 2]
         T_origin = np.array([1, 0, -origin[0],
                              0, 1, -origin[1],
                              0, 0, 1]).reshape((3, 3))
@@ -372,18 +372,24 @@ class MatrixTransform(BaseTransform):
         # This is needed to recalculate the size of the image after the transformation.
         # The core idea is to transform the coordinate grid
         # left top, left bottom, right bottom, right top
-        coord_frame = np.array([[0, 0, 1], [0, H-1, 1], [W-1, H-1, 1], [W-1, 0, 1]])
+        coord_frame = np.array([[0, 0, 1], [0, H, 1], [W, H, 1], [W, 0, 1]])
         new_frame = np.dot(M, coord_frame.T).T
         new_frame[:, 0] /= new_frame[:, -1]
         new_frame[:, 1] /= new_frame[:, -1]
         new_frame = new_frame[:, :-1]
         # Computing the new coordinates
-        new_frame[:, 0] += abs(new_frame[:, 0].min())
-        new_frame[:, 1] += abs(new_frame[:, 1].min())
-        assert np.all(new_frame >= 0)
 
-        W_new = int(new_frame[:, 0].max()+1)
-        H_new = int(new_frame[:, 1].max()+1)
+        # If during the transform, we obtained negativa coordinates, we have to move to the origin
+        if np.any(new_frame[:, 0] < 0):
+            new_frame[:, 0] += abs(new_frame[:, 0].min())
+        if np.any(new_frame[:, 1] < 0):
+            new_frame[:, 1] += abs(new_frame[:, 1].min())
+        # In case of scaling the coordinate_frame, we need to move back to the origin
+        new_frame[:, 0] -= new_frame[:, 0].min()
+        new_frame[:, 1] -= new_frame[:, 1].min()
+
+        W_new = int(np.round(new_frame[:, 0].max()))
+        H_new = int(np.round(new_frame[:, 1].max()))
 
         M[0, -1] += W_new//2-origin[0]
         M[1, -1] += H_new//2-origin[1]
@@ -413,7 +419,7 @@ class MatrixTransform(BaseTransform):
             return cv2.warpPerspective(mask, M , (W_new, H_new),interp,
                                        borderMode=cv2.BORDER_CONSTANT, borderValue=0)
         else:
-            return cv2.warpPerspective(mask, M, (W_new, H_new),interp,
+            return cv2.warpPerspective(mask, M, (W_new, H_new), interp,
                                        borderMode=cv2.BORDER_REFLECT)
 
     def _apply_labels(self, labels):

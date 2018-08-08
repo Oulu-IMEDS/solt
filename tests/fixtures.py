@@ -80,7 +80,7 @@ def img_3x3():
 @pytest.fixture
 def img_mask_3x3():
     """
-    Generates a mask  3x4
+    Generates a image+mask  3x4
 
     Returns
     -------
@@ -92,3 +92,40 @@ def img_mask_3x3():
                     [1, 1, 1],
                     [0, 1, 1]]).reshape((3, 3)).astype(np.uint8)
     return img, mask
+
+
+@pytest.fixture
+def img_5x5():
+    """
+    Generates a gs image 5x5. It is all ones, besides the edges
+
+    Returns
+    -------
+    out : ndarray
+        3x4 uint8 image
+    """
+    img = np.ones((5,5,1))
+
+    img[:, 0] = 2
+    img[:, -1] = 2
+    img[0, :] = 2
+    img[-1, :] = 2
+    return img
+
+
+@pytest.fixture
+def img_6x6():
+    """
+    Generates a gs image 5x5. It is all ones, besides the edges
+
+    Returns
+    -------
+    out : ndarray
+        3x4 uint8 image
+    """
+    img = np.ones((6, 6, 1))
+    img[:, 0] = 2
+    img[:, -1] = 2
+    img[0, :] = 2
+    img[-1, :] = 2
+    return img
