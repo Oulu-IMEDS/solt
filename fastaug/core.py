@@ -4,6 +4,9 @@ from .data import DataContainer, img_shape_checker
 import numpy as np
 import cv2
 
+allowed_paddings = ['zeros', 'reflect']
+allowed_interpolations = ['bilinear', 'bicubic']
+
 
 class Pipeline(object):
     """
@@ -291,10 +294,10 @@ class MatrixTransform(BaseTransform):
 
     """
     def __init__(self, interpolation='bilinear', padding='zeros', p=0.5):
-        assert padding in ['zeros', 'reflective']
-        assert interpolation in ['bilinear', 'bicubic']
+        assert padding in allowed_paddings
+        assert interpolation in allowed_interpolations
 
-        super(MatrixTransform, self).__init__(p)
+        super(MatrixTransform, self).__init__(p=p)
         self.interpolation = interpolation
         self.padding = padding
 
@@ -329,7 +332,13 @@ class MatrixTransform(BaseTransform):
 
         M = self.params['transform_matrix']
         # TODO: re-calculate the size
-        return cv2.warpPerspective(img, T_origin_back @ M @ T_origin, (W, H))
+
+        if self.padding == 'zeros':
+            return cv2.warpPerspective(img, T_origin_back @ M @ T_origin, (W, H),
+                                       borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+        else:
+            return cv2.warpPerspective(img, T_origin_back @ M @ T_origin, (W, H), borderMode=cv2.BORDER_REFLECT)
+
 
     @staticmethod
     def change_transform_origin(M, origin):
@@ -414,6 +423,9 @@ class MatrixTransform(BaseTransform):
             Result
 
         """
+        if self.padding == 'reflective':
+            raise ValueError('Cannot apply transform to keypoints with reflective padding!')
+
         # TODO: re-calculate the size
         pts_data = pts.data
         H, W = pts.H, pts.W

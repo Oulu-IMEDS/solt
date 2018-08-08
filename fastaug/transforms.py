@@ -38,7 +38,7 @@ class RandomRotate(core.MatrixTransform):
     """
     Random rotation around the center.
     """
-    def __init__(self, rotation_range, p=0.5):
+    def __init__(self, rotation_range, padding='zeros', p=0.5):
         """
         Constructor.
 
@@ -47,7 +47,8 @@ class RandomRotate(core.MatrixTransform):
         rotation_range : rotation range
         p : probability of using this transform
         """
-        super(RandomRotate, self).__init__(p=p)
+        super(RandomRotate, self).__init__(p=p,  padding=padding)
+
         self.__range = rotation_range
 
     def sample_transform(self):
