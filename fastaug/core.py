@@ -46,12 +46,24 @@ class Pipeline(object):
             Result
 
         """
-        # TODO: We can combine some of the transforms using stack, e.g Matrix transforms by pre-computig them
-        # Each transform has sample_transform method
         return Pipeline.exec_pipeline(self.__transforms, data)
 
     @staticmethod
     def optimize_stack(transforms):
+        """
+        Static method which fuses the transformations
+
+        Parameters
+        ----------
+        transforms : list
+            A list of transforms
+
+        Returns
+        -------
+        out : list
+            An optimized list of transforms
+
+        """
         # First we should create a stack
         transforms_stack = []
         for trf in transforms:
@@ -138,6 +150,7 @@ class SelectivePipeline(Pipeline):
         """
         if len(self.transforms) > 0:
             trfs = np.random.choice(self.transforms, self.n, replace=False, p=1./self.n)
+            trfs = Pipeline.optimize_stack(trfs)
             return Pipeline.exec_pipeline(trfs, data)
         return data
 

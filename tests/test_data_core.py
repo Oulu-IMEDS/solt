@@ -3,6 +3,7 @@ import fastaug.data as augs_data
 import fastaug.transforms as imtrf
 import numpy as np
 import pytest
+import cv2
 
 from .fixtures import img_2x2, img_3x4, img_mask_2x2, img_mask_3x4, img_5x5
 
@@ -115,9 +116,60 @@ def test_fusion_happens(img_5x5):
     ppl = augs_core.Pipeline([
         imtrf.RandomScale((0.5, 1.5), (0.5, 1.5), p=1),
         imtrf.RandomRotate((-50, 50), padding='z', p=1),
-        imtrf.RandomFlip(p=0.5, axis=1),
-        imtrf.RandomShear((-0.5, 0.5), (-0.5, 0.5),padding='z',p=1)
+        imtrf.RandomShear((-0.5, 0.5), (-0.5, 0.5),padding='z', p=1),
+        imtrf.RandomFlip(p=1, axis=1),
     ])
 
     st = ppl.optimize_stack(ppl.transforms)
-    len(st) == 1
+    assert len(st) == 2
+
+
+def test_fusion_rotate_360(img_5x5):
+    img = img_5x5
+    dc = augs_data.DataContainer((img,), 'I')
+
+    ppl = augs_core.Pipeline([
+        imtrf.RandomRotate((45, 45), padding='z', p=1),
+        imtrf.RandomRotate((45, 45), padding='z', p=1),
+        imtrf.RandomRotate((45, 45), padding='z', p=1),
+        imtrf.RandomRotate((45, 45), padding='z', p=1),
+        imtrf.RandomRotate((45, 45), padding='z', p=1),
+        imtrf.RandomRotate((45, 45), padding='z', p=1),
+        imtrf.RandomRotate((45, 45), padding='z', p=1),
+        imtrf.RandomRotate((45, 45), padding='z', p=1),
+    ])
+
+    img_res = ppl(dc)[0][0]
+
+    np.testing.assert_array_almost_equal(img, img_res)
+
+
+def test_fusion_rotate_360_flip_rotate_360(img_5x5):
+    img = img_5x5
+    dc = augs_data.DataContainer((img,), 'I')
+
+    ppl = augs_core.Pipeline([
+        imtrf.RandomRotate((45, 45), padding='z', p=1),
+        imtrf.RandomRotate((45, 45), padding='z', p=1),
+        imtrf.RandomRotate((45, 45), padding='z', p=1),
+        imtrf.RandomRotate((45, 45), padding='z', p=1),
+        imtrf.RandomRotate((45, 45), padding='z', p=1),
+        imtrf.RandomRotate((45, 45), padding='z', p=1),
+        imtrf.RandomRotate((45, 45), padding='z', p=1),
+        imtrf.RandomRotate((45, 45), padding='z', p=1),
+        imtrf.RandomFlip(p=1, axis=1),
+        augs_core.Pipeline([
+            imtrf.RandomRotate((45, 45), padding='z', p=1),
+            imtrf.RandomRotate((45, 45), padding='z', p=1),
+            imtrf.RandomRotate((45, 45), padding='z', p=1),
+            imtrf.RandomRotate((45, 45), padding='z', p=1),
+            imtrf.RandomRotate((45, 45), padding='z', p=1),
+            imtrf.RandomRotate((45, 45), padding='z', p=1),
+            imtrf.RandomRotate((45, 45), padding='z', p=1),
+            imtrf.RandomRotate((45, 45), padding='z', p=1),
+        ])
+    ])
+
+    img_res = ppl(dc)[0][0]
+
+    np.testing.assert_array_almost_equal(cv2.flip(img, 1).reshape(5, 5, 1), img_res)
