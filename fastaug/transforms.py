@@ -190,7 +190,6 @@ class MatrixTransform(BaseTransform):
         assert padding in allowed_paddings
         # TODO: interpolation for each item within data container
         assert interpolation in allowed_interpolations
-
         super(MatrixTransform, self).__init__(p=p)
         self.padding = padding
         self.interpolation = interpolation
@@ -210,9 +209,9 @@ class MatrixTransform(BaseTransform):
 
         if not isinstance(trf, RandomScale):
             self.padding = trf.padding
+        self.interpolation = trf.interpolation
 
         self.params['transform_matrix'] = self.params['transform_matrix'] @ trf.params['transform_matrix']
-
 
     @abstractmethod
     def sample_transform(self):
@@ -235,9 +234,10 @@ class MatrixTransform(BaseTransform):
         ----------
         M : ndarray
             Transform (3x3) matrix
-        origin : tuple or list
-            Origin, around which the transform needs to be applied
-
+        W : int
+            Width of the coordinate frame
+        H : int
+            Height of the coordinate frame
         Returns
         -------
         out : ndarray
@@ -433,7 +433,7 @@ class RandomRotate(MatrixTransform):
         rotation_range : rotation range
         p : probability of using this transform
         """
-        super(RandomRotate, self).__init__( interpolation=interpolation, padding=padding, p=p)
+        super(RandomRotate, self).__init__(interpolation=interpolation, padding=padding, p=p)
 
         self.__range = rotation_range
 
