@@ -1,5 +1,5 @@
 from .data import DataContainer
-from .transforms import BaseTransform
+from .transforms import BaseTransform, MatrixTransform
 
 import numpy as np
 
@@ -10,6 +10,7 @@ class Pipeline(object):
 
     """
     def __init__(self, transforms=None):
+        # TODO: pipeline-wide interpolation and padding methods
         """
         Class constructor.
 
@@ -20,7 +21,15 @@ class Pipeline(object):
         """
         if transforms is None:
             transforms = []
-        self.transforms = transforms
+        self.__transforms = transforms
+
+    @property
+    def transforms(self):
+        return self.__transforms
+
+    @transforms.setter
+    def transforms(self, value):
+        self.__transforms = value
 
     def __call__(self, data):
         """
@@ -39,7 +48,29 @@ class Pipeline(object):
         """
         # TODO: We can combine some of the transforms using stack, e.g Matrix transforms by pre-computig them
         # Each transform has sample_transform method
-        return Pipeline.exec_pipeline(self.transforms, data)
+        return Pipeline.exec_pipeline(self.__transforms, data)
+
+    @staticmethod
+    def optimize_stack(transforms):
+        # First we should create a stack
+        transforms_stack = []
+        for trf in transforms:
+            assert isinstance(trf, Pipeline) or isinstance(trf, BaseTransform)
+            if isinstance(trf, BaseTransform):
+                if trf.use_transform():
+                    trf.sample_transform()
+                    if isinstance(trf, MatrixTransform):
+                        if len(transforms_stack) == 0:
+                            transforms_stack.append(trf)
+                        else:
+                            if isinstance(transforms_stack[-1], MatrixTransform):
+                                transforms_stack[-1].fuse_with(trf)
+                    else:
+                        transforms_stack.append(trf)
+            else:
+                transforms_stack.append(trf)  # It means that the transform is actually a nested pipeline
+
+        return transforms_stack
 
     @staticmethod
     def exec_pipeline(transforms, data):
@@ -59,15 +90,15 @@ class Pipeline(object):
             Result
         """
 
+        # Performing the transforms using the optimized stack
+        transforms = Pipeline.optimize_stack(transforms)
         for trf in transforms:
-            assert isinstance(trf, Pipeline) or isinstance(trf, BaseTransform)
             if isinstance(trf, BaseTransform):
-                if trf.use_transform():
-                    trf.sample_transform()
-                    data = trf.apply(data)
+                data = trf.apply(data)
+            elif isinstance(trf, Pipeline):
+                data = trf(data)
             else:
-                data = trf(data)  # It means that the transform is actually a nested pipeline
-
+                raise NotImplementedError
         return data
 
 

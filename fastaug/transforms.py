@@ -6,6 +6,7 @@ from .data import img_shape_checker
 from .data import DataContainer
 from .constants import allowed_interpolations, allowed_paddings
 
+
 class BaseTransform(metaclass=ABCMeta):
     """
     Transformation abstract class.
@@ -131,7 +132,7 @@ class BaseTransform(metaclass=ABCMeta):
 
         Parameters
         ----------
-        mask : mdarray
+        mask : ndarray
             Mask to be augmented
 
         Returns
@@ -193,6 +194,7 @@ class MatrixTransform(BaseTransform):
         super(MatrixTransform, self).__init__(p=p)
         self.padding = padding
         self.interpolation = interpolation
+        self.params = {'transform_matrix': np.eye(3)}
 
     def fuse_with(self, trf):
         """
@@ -205,7 +207,12 @@ class MatrixTransform(BaseTransform):
         """
         assert self.params is not None
         assert trf.params is not None
+
+        if not isinstance(trf, RandomScale):
+            self.padding = trf.padding
+
         self.params['transform_matrix'] = self.params['transform_matrix'] @ trf.params['transform_matrix']
+
 
     @abstractmethod
     def sample_transform(self):
@@ -218,23 +225,6 @@ class MatrixTransform(BaseTransform):
 
         """
         pass
-
-    @img_shape_checker
-    def _apply_img(self, img):
-        """
-        Applies a matrix transform to an image.
-
-        """
-        M = self.params['transform_matrix']
-        M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, img.shape[1], img.shape[0])
-
-        interp = allowed_interpolations[self.interpolation]
-        if self.padding == 'z':
-            return cv2.warpPerspective(img, M , (W_new, H_new), interp,
-                                       borderMode=cv2.BORDER_CONSTANT, borderValue=0)
-        else:
-            return cv2.warpPerspective(img, M, (W_new, H_new), interp,
-                                       borderMode=cv2.BORDER_REFLECT)
 
     @staticmethod
     def correct_for_frame_change(M, W, H):
@@ -301,6 +291,23 @@ class MatrixTransform(BaseTransform):
 
         return M, W_new, H_new
 
+    @img_shape_checker
+    def _apply_img(self, img):
+        """
+        Applies a matrix transform to an image.
+
+        """
+        M = self.params['transform_matrix']
+        M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, img.shape[1], img.shape[0])
+
+        interp = allowed_interpolations[self.interpolation]
+        if self.padding == 'z':
+            return cv2.warpPerspective(img, M , (W_new, H_new), interp,
+                                       borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+        else:
+            return cv2.warpPerspective(img, M, (W_new, H_new), interp,
+                                       borderMode=cv2.BORDER_REFLECT)
+
     def _apply_mask(self, mask):
         """
         Abstract method, which determines the transform's behaviour when it is applied to masks HxW.
@@ -319,7 +326,7 @@ class MatrixTransform(BaseTransform):
         # X, Y coordinates
         M = self.params['transform_matrix']
         M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, mask.shape[1], mask.shape[0])
-        interp = cv2.INTER_CUBIC if self.interpolation == 'bicubic' else cv2.INTER_LINEAR_EXACT
+        interp = allowed_interpolations[self.interpolation]
         if self.padding == 'z':
             return cv2.warpPerspective(mask, M , (W_new, H_new), interp,
                                        borderMode=cv2.BORDER_CONSTANT, borderValue=0)
@@ -379,21 +386,9 @@ class MatrixTransform(BaseTransform):
         return pts
 
 
-class EmptyMatrixTransform(MatrixTransform):
-    def __init__(self):
-        # TODO: make interpolation and padding the same as in the last fused transform
-        super(EmptyMatrixTransform, self).__init__(p=1)
-        self.params = {'transform_matrix': np.ones((3, 3))}
-
-    def sample_transform(self):
-        self.params = {'transform_matrix': np.ones((3, 3))}
-
-
-class RandomFlip(MatrixTransform):
+class RandomFlip(BaseTransform):
     """
     Performs a random flip of an image.
-
-    Note, this is a matrix transform with a re-defined methods.
 
     """
     def __init__(self, p=0.5, axis=1):
@@ -402,22 +397,7 @@ class RandomFlip(MatrixTransform):
         self.__axis = axis
 
     def sample_transform(self):
-        """
-        Returns a  flip matrix
-
-        """
-        if self.__axis == 0:
-            M = np.array([1, 0, 0,
-                          0, -1, 0,
-                          0, 0, 1
-                          ]).reshape((3, 3)).astype(np.float32)
-        if self.__axis == 1:
-            M = np.array([-1, 0, 0,
-                          0, 1, 0,
-                          0, 0, 1
-                          ]).reshape((3, 3)).astype(np.float32)
-
-        self.params = {'transform_matrix': M}
+        pass
 
     @img_shape_checker
     def _apply_img(self, img):
@@ -578,6 +558,7 @@ class RandomPerspective(MatrixTransform):
 
     def sample_transform(self):
         raise NotImplementedError
+
 
 class Pad(BaseTransform):
     def __init__(self, pad_to):
