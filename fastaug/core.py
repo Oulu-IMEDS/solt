@@ -4,8 +4,8 @@ from .data import DataContainer, img_shape_checker
 import numpy as np
 import cv2
 
-allowed_paddings = ['zeros', 'reflect']
-allowed_interpolations = ['bilinear', 'bicubic']
+allowed_paddings = ['z', 'r']
+allowed_interpolations = {'bilinear':cv2.INTER_LINEAR_EXACT, 'bicubic':cv2.INTER_CUBIC, 'nearest':cv2.INTER_NEAREST}
 
 
 class Pipeline(object):
@@ -293,7 +293,7 @@ class MatrixTransform(BaseTransform):
     Does all the transforms around the image /  center.
 
     """
-    def __init__(self, interpolation='bilinear', padding='zeros', p=0.5):
+    def __init__(self, interpolation='bilinear', padding='z', p=0.5):
         assert padding in allowed_paddings
         # TODO: interpolation for each item within data container
         assert interpolation in allowed_interpolations
@@ -323,8 +323,8 @@ class MatrixTransform(BaseTransform):
         M = self.params['transform_matrix']
         M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, img.shape[1], img.shape[0])
 
-        interp = cv2.INTER_CUBIC if self.interpolation == 'bicubic' else cv2.INTER_LINEAR_EXACT
-        if self.padding == 'zeros':
+        interp = allowed_interpolations[self.interpolation]
+        if self.padding == 'z':
             return cv2.warpPerspective(img, M , (W_new, H_new), interp,
                                        borderMode=cv2.BORDER_CONSTANT, borderValue=0)
         else:
@@ -415,8 +415,8 @@ class MatrixTransform(BaseTransform):
         M = self.params['transform_matrix']
         M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, mask.shape[1], mask.shape[0])
         interp = cv2.INTER_CUBIC if self.interpolation == 'bicubic' else cv2.INTER_LINEAR_EXACT
-        if self.padding == 'zeros':
-            return cv2.warpPerspective(mask, M , (W_new, H_new),interp,
+        if self.padding == 'z':
+            return cv2.warpPerspective(mask, M , (W_new, H_new), interp,
                                        borderMode=cv2.BORDER_CONSTANT, borderValue=0)
         else:
             return cv2.warpPerspective(mask, M, (W_new, H_new), interp,
@@ -454,7 +454,7 @@ class MatrixTransform(BaseTransform):
             Result
 
         """
-        if self.padding == 'reflect':
+        if self.padding == 'r':
             raise ValueError('Cannot apply transform to keypoints with reflective padding!')
 
 

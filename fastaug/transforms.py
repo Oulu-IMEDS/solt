@@ -58,7 +58,7 @@ class RandomRotate(core.MatrixTransform):
     """
     Random rotation around the center.
     """
-    def __init__(self, rotation_range, padding='zeros', interpolation='bilinear', p=0.5):
+    def __init__(self, rotation_range, padding='z', interpolation='bilinear', p=0.5):
         """
         Constructor.
 
@@ -91,7 +91,7 @@ class RandomShear(core.MatrixTransform):
     Random shear around the center.
 
     """
-    def __init__(self, range_x, range_y, interpolation='bilinear', padding='zeros', p=0.5):
+    def __init__(self, range_x, range_y, interpolation='bilinear', padding='z', p=0.5):
         """
         Constructor.
 

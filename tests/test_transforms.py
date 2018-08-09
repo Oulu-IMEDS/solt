@@ -191,6 +191,6 @@ def test_keypoints_assert_reflective(img_mask_3x3):
 
     dc = augs_data.DataContainer((img, mask, kpts,), 'IMP')
     # Defining the 90 degrees transform (clockwise)
-    pipeline = trf.RandomRotate(rotation_range=(20, 20), p=1, padding='reflect')
+    pipeline = trf.RandomRotate(rotation_range=(20, 20), p=1, padding='r')
     with pytest.raises(ValueError):
         pipeline(dc)
