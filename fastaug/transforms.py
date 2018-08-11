@@ -368,7 +368,7 @@ class MatrixTransform(BaseTransform):
         if self.padding == 'r':
             raise ValueError('Cannot apply transform to keypoints with reflective padding!')
 
-        pts_data = pts.data
+        pts_data = pts.data.copy()
         M = self.params['transform_matrix']
         M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, pts.W, pts.H)
 
@@ -378,11 +378,7 @@ class MatrixTransform(BaseTransform):
         pts_data[:, 0] /= pts_data[:, 2]
         pts_data[:, 1] /= pts_data[:, 2]
 
-        pts.data = pts_data[:, :-1]
-        pts.W = W_new
-        pts.H = H_new
-
-        return pts
+        return KeyPoints(pts_data[:, :-1], H_new, W_new)
 
 
 class RandomFlip(BaseTransform):
