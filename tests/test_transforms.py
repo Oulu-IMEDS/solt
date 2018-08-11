@@ -92,7 +92,7 @@ def test_keypoints_horizontal_flip_within_pipeline():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
     kpts = augs_data.KeyPoints(kpts_data, 2, 2)
     pipeline = augs_core.Pipeline([
-        trf.RandomFlip(p=1, axis=0)
+        trf.RandomFlip(p=1, axis=1)
         ])
     dc = augs_data.DataContainer((kpts, ), 'P')
 
@@ -105,7 +105,7 @@ def test_keypoints_vertical_flip():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
     kpts = augs_data.KeyPoints(kpts_data, 2, 2)
     pipeline = augs_core.Pipeline([
-        trf.RandomFlip(p=1, axis=1)
+        trf.RandomFlip(p=1, axis=0)
         ])
     dc = augs_data.DataContainer((kpts, ), 'P')
 

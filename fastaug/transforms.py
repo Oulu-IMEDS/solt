@@ -412,9 +412,9 @@ class RandomFlip(BaseTransform):
         return labels
 
     def _apply_pts(self, pts):
-        if self.__axis == 1:
-            pts.data[:, 1] = pts.H - 1 - pts.data[:, 1]
         if self.__axis == 0:
+            pts.data[:, 1] = pts.H - 1 - pts.data[:, 1]
+        if self.__axis == 1:
             pts.data[:, 0] = pts.W - 1 - pts.data[:, 0]
 
         return pts
