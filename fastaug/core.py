@@ -21,6 +21,10 @@ class Pipeline(object):
         if transforms is None:
             transforms = []
         self.__transforms = transforms
+        d = {}
+        for trf in transforms:
+            d[trf.__repr__().split('.')[-1].split()[0]] = trf.__dict__
+        self.__dict__ = {'transforms': d}
 
     @property
     def transforms(self):
