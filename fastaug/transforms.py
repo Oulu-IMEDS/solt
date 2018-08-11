@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 import cv2
 
 from .data import img_shape_checker
-from .data import DataContainer
+from .data import DataContainer, KeyPoints
 from .constants import allowed_interpolations, allowed_paddings
 
 
@@ -102,7 +102,6 @@ class BaseTransform(metaclass=ABCMeta):
         """
         self.use_transform()
         self.sample_transform()
-
         if self.use:
             return self.apply(data)
         else:
@@ -412,12 +411,13 @@ class RandomFlip(BaseTransform):
         return labels
 
     def _apply_pts(self, pts):
+        # We should guarantee that we do not change the original data.
+        pts_data = pts.data.copy()
         if self.__axis == 0:
-            pts.data[:, 1] = pts.H - 1 - pts.data[:, 1]
+            pts_data[:, 1] = pts.H - 1 - pts_data[:, 1]
         if self.__axis == 1:
-            pts.data[:, 0] = pts.W - 1 - pts.data[:, 0]
-
-        return pts
+            pts_data[:, 0] = pts.W - 1 - pts_data[:, 0]
+        return KeyPoints(pts=pts_data, H=pts.H, W=pts.W)
 
 
 class RandomRotate(MatrixTransform):

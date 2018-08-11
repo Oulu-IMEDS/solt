@@ -1,6 +1,5 @@
 from .data import DataContainer
 from .transforms import BaseTransform, MatrixTransform
-
 import numpy as np
 
 
@@ -69,7 +68,8 @@ class Pipeline(object):
         for trf in transforms:
             assert isinstance(trf, Pipeline) or isinstance(trf, BaseTransform)
             if isinstance(trf, BaseTransform):
-                if trf.use_transform():
+                trf.use_transform()
+                if trf.use:
                     trf.sample_transform()
                     if isinstance(trf, MatrixTransform):
                         if len(transforms_stack) == 0:
@@ -77,6 +77,8 @@ class Pipeline(object):
                         else:
                             if isinstance(transforms_stack[-1], MatrixTransform):
                                 transforms_stack[-1].fuse_with(trf)
+                            else:
+                                transforms_stack.append(trf)
                     else:
                         transforms_stack.append(trf)
             else:

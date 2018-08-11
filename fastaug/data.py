@@ -1,5 +1,5 @@
 from functools import wraps
-
+from copy import deepcopy
 allowed_types = {'I', 'M', 'P', 'L'}
 
 
@@ -55,7 +55,7 @@ class DataContainer(object):
         for t in fmt:
             assert t in allowed_types
 
-        self.__data = data
+        self.__data = deepcopy(data)
         self.__fmt = fmt
 
     @property
