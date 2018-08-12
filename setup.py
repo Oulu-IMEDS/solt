@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 
 requirements = [ ]
 
-setup_requirements = [ ]
+setup_requirements = ['numpy', 'opencv-python']
 
 test_requirements = ['pytest', ]
 

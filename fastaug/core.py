@@ -1,7 +1,9 @@
+import numpy as np
+
 from collections import OrderedDict
 from .data import DataContainer
 from .transforms import BaseTransform, MatrixTransform
-import numpy as np
+
 
 
 class Pipeline(object):
