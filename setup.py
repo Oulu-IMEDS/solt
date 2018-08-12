@@ -6,11 +6,11 @@
 from setuptools import setup, find_packages
 
 
-requirements = [ ]
+requirements = ('numpy', 'opencv-python')
 
-setup_requirements = ['numpy', 'opencv-python']
+setup_requirements = ('numpy', 'opencv-python')
 
-test_requirements = ['pytest', ]
+test_requirements = ('pytest',)
 
 setup(
     author="Aleksei Tiulpin",

@@ -67,7 +67,7 @@ class RandomRotate(MatrixTransform):
         if rotation_range is None:
             rotation_range = (0, 0)
 
-        if str(rotation_range).isdigit():
+        if isinstance(rotation_range, (int, float)):
             rotation_range = (-rotation_range, rotation_range)
 
         self.__range = rotation_range
@@ -117,10 +117,10 @@ class RandomShear(MatrixTransform):
         if range_y is None:
             range_y = (0, 0)
 
-        if str(range_x).isdigit():
+        if isinstance(range_y, (int, float)):
             range_x = (-range_x, range_x)
 
-        if str(range_y).isdigit():
+        if isinstance(range_y, (int, float)):
             range_y = (-range_y, range_y)
 
         self.__range_x = range_x
@@ -163,13 +163,13 @@ class RandomScale(MatrixTransform):
         p : float
             Probability of using this transform
         """
-        super(RandomScale, self).__init__(p=p, interpolation=interpolation, padding=None)
+        super(RandomScale, self).__init__(interpolation=interpolation, padding=None, p=p)
 
-        if str(range_x).isdigit():
+        if isinstance(range_y, (int, float)):
             range_x = (-range_x, range_x)
 
-        if str(range_y).isdigit():
-            range_y = (-range_x, range_y)
+        if isinstance(range_y, (int, float)):
+            range_y = (-range_y, range_y)
 
         self.__same = same
         self.__range_x = range_x
@@ -197,6 +197,40 @@ class RandomScale(MatrixTransform):
                       0, 0, 1]).reshape((3, 3)).astype(np.float32)
 
         self.state_dict = {'scale_x': scale_x, 'scale_y': scale_y, 'transform_matrix': M}
+
+
+class RandomTranslate(MatrixTransform):
+    """
+    Random Translate transform.
+
+    """
+    def __init__(self, range_x=None, range_y=None,  interpolation='bilinear', padding='z', p=0.5):
+        super(RandomTranslate, self).__init__(interpolation=interpolation, padding=padding, p=p)
+        if isinstance(range_y, (int, float)):
+            range_x = (-range_x, range_x)
+
+        if isinstance(range_y, (int, float)):
+            range_y = (-range_y, range_y)
+
+        self.__range_x = range_x
+        self.__range_y = range_y
+
+    def sample_transform(self):
+        if self.__range_x is None:
+            tx = 0
+        else:
+            tx = np.random.uniform(self.__range_x[0], self.__range_x[1])
+
+        if self.__range_y is None:
+            ty = 0
+        else:
+            ty = np.random.uniform(self.__range_y[0], self.__range_y[1])
+
+        M = np.array([0, 0, tx,
+                      0, 0, ty,
+                      0, 0, 1]).reshape((3, 3)).astype(np.float32)
+
+        self.state_dict = {'scale_x': tx, 'scale_y': ty, 'transform_matrix': M}
 
 
 class RandomCrop(BaseTransform):
@@ -227,10 +261,15 @@ class RandomCrop(BaseTransform):
         raise NotImplementedError
 
 
-class RandomPerspective(MatrixTransform):
-    def __init__(self, tilt_range, p=0.5):
-        super(RandomPerspective, self).__init__(p=p)
-        self.__tilt_range = tilt_range
+class RandomProjective(MatrixTransform):
+    """
+    Generates random Perspective transform. Takes a set of affine transforms and generates a projective
+    transform according to the eq. 2.13 from A. Zisserman's book: Multiple View Geometry in Computer Vision.
+
+    """
+    def __init__(self, affine_transforms, v_range, p=0.5):
+        super(RandomProjective, self).__init__(p=p)
+        self.affine_transforms = affine_transforms
 
     def sample_transform(self):
         raise NotImplementedError
