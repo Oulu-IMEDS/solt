@@ -415,7 +415,6 @@ class RandomFlip(BaseTransform):
     """
     def __init__(self, p=0.5, axis=1):
         super(RandomFlip, self).__init__(p=p)
-        self.state_dict = {}
         self.__axis = axis
 
     def sample_transform(self):
