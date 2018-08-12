@@ -44,15 +44,23 @@ class RandomFlip(BaseTransform):
 class RandomRotate(MatrixTransform):
     """
     Random rotation around the center.
+
     """
-    def __init__(self, rotation_range, padding='z', interpolation='bilinear', p=0.5):
+    def __init__(self, rotation_range, interpolation='bilinear', padding='z', p=0.5):
         """
         Constructor.
 
         Parameters
         ----------
-        rotation_range : rotation range
-        p : probability of using this transform
+        rotation_range : tuple or float
+            Range of rotation.
+            If float, then (-rotation_range, rotation_range) will be used for transformation sampling.
+        interpolation : str
+            Interpolation type. Check the allowed interpolation types.
+        padding : str
+            Padding mode. Check the allowed padding modes.
+        p : float
+            Probability of using this transform
         """
         super(RandomRotate, self).__init__(interpolation=interpolation, padding=padding, p=p)
 
@@ -77,15 +85,22 @@ class RandomShear(MatrixTransform):
     Random shear around the center.
 
     """
-    def __init__(self, range_x, range_y, interpolation='bilinear', padding='z', p=0.5):
+    def __init__(self, range_x=None, range_y=None, interpolation='bilinear', padding='z', p=0.5):
         """
         Constructor.
 
         Parameters
         ----------
-        range_x : shearing range along X-axis
-        range_y : shearing range along Y-axis
-        p : probability of using the transform
+        range_x : tuple or float
+            Shearing range along X-axis. If float, then (-range_x, range_x) will be used.
+        range_y : tuple or float
+            Shearing range along Y-axis.If float, then (-range_y, range_y) will be used.
+        interpolation : str
+            Interpolation type. Check the allowed interpolation types.
+        padding : str
+            Padding mode. Check the allowed padding modes.
+        p : float
+            Probability of using this transform
         """
         super(RandomShear, self).__init__(p=p, padding=padding, interpolation=interpolation)
         if range_x is None:
@@ -94,10 +109,10 @@ class RandomShear(MatrixTransform):
             range_y = 1
 
         if str(range_x).isdigit():
-            range_x = (range_x, range_x)
+            range_x = (-range_x, range_x)
 
         if str(range_y).isdigit():
-            range_y = (range_x, range_y)
+            range_y = (-range_x, range_y)
 
         self.__range_x = range_x
         self.__range_y = range_y
@@ -119,6 +134,24 @@ class RandomScale(MatrixTransform):
 
     """
     def __init__(self, range_x=None, range_y=None, interpolation='bilinear', p=0.5):
+        """
+        Constructor.
+
+        Parameters
+        ----------
+        range_x : tuple or float or None
+            Scaling range along X-axis.
+            If float, then (-range_x, range_x) will be used.
+            If None, then range_x = 1 by default.
+        range_y : tuple or float
+            Scaling range along Y-axis.
+            If float, then (-range_y, range_y) will be used.
+            If None, then range_y = 1 by default.
+        interpolation : str
+            Interpolation type. Check the allowed interpolation types.
+        p : float
+            Probability of using this transform
+        """
         super(RandomScale, self).__init__(p=p, interpolation=interpolation, padding=None)
         if range_x is None:
             range_x = 1
@@ -126,10 +159,10 @@ class RandomScale(MatrixTransform):
             range_y = 1
 
         if str(range_x).isdigit():
-            range_x = (range_x, range_x)
+            range_x = (-range_x, range_x)
 
         if str(range_y).isdigit():
-            range_y = (range_x, range_y)
+            range_y = (-range_x, range_y)
 
         self.__range_x = range_x
         self.__range_y = range_y
@@ -146,7 +179,7 @@ class RandomScale(MatrixTransform):
 
 
 class RandomCrop(BaseTransform):
-    def __init__(self, crop_size, pad=None):
+    def __init__(self, crop_size, pad=True):
         super(RandomCrop, self).__init__(p=1)
         self.crop_size = crop_size
 
@@ -169,7 +202,7 @@ class RandomCrop(BaseTransform):
 
 class RandomPerspective(MatrixTransform):
     def __init__(self, tilt_range, p=0.5):
-        super(RandomPerspective, self).__init__(p)
+        super(RandomPerspective, self).__init__(p=p)
         self.__tilt_range = tilt_range
 
     def sample_transform(self):
