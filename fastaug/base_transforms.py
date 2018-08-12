@@ -48,8 +48,14 @@ class BaseTransform(metaclass=ABCMeta):
         else:
             d = dict(map(lambda item: (item[0].split('__')[-1], item[1]), self.__dict__.items()))
 
+        res = {}
+        for item in d.items():
+            if hasattr(item[1], "serialize"):
+                res[item[0]] = item[1].serialize()
+            else:
+                res[item[0]] = item[1]
         # the method must return the result always in the same order
-        return OrderedDict(sorted(d.items()))
+        return OrderedDict(sorted(res.items()))
 
     def use_transform(self):
         """
@@ -270,6 +276,7 @@ class MatrixTransform(BaseTransform):
 
         """
         # First we correct the transformation so that it is performed around the origin
+        M = M.copy()
         origin = [(W-1) // 2, (H-1) // 2]
         T_origin = np.array([1, 0, -origin[0],
                              0, 1, -origin[1],
@@ -278,12 +285,6 @@ class MatrixTransform(BaseTransform):
         T_origin_back = np.array([1, 0, origin[0],
                                   0, 1, origin[1],
                                   0, 0, 1]).reshape((3, 3))
-
-        # TODO: Check whether translation works and use this matrix if possible
-        T_initial = np.array([1, 0, M[0, 2],
-                             0, 1, M[1, 2],
-                             0, 0, 1]).reshape((3, 3))
-
         M = T_origin_back @ M @ T_origin
 
         # Now, if we think of scaling, rotation and translation, the image gets increased when we
@@ -299,7 +300,7 @@ class MatrixTransform(BaseTransform):
         new_frame = new_frame[:, :-1]
         # Computing the new coordinates
 
-        # If during the transform, we obtained negativa coordinates, we have to move to the origin
+        # If during the transform, we obtained negative coordinates, we have to move to the origin
         if np.any(new_frame[:, 0] < 0):
             new_frame[:, 0] += abs(new_frame[:, 0].min())
         if np.any(new_frame[:, 1] < 0):
@@ -307,7 +308,6 @@ class MatrixTransform(BaseTransform):
         # In case of scaling the coordinate_frame, we need to move back to the origin
         new_frame[:, 0] -= new_frame[:, 0].min()
         new_frame[:, 1] -= new_frame[:, 1].min()
-
         W_new = int(np.round(new_frame[:, 0].max()))
         H_new = int(np.round(new_frame[:, 1].max()))
 

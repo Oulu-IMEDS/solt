@@ -5,6 +5,7 @@ import cv2
 from .data import img_shape_checker
 from .data import KeyPoints
 from .base_transforms import BaseTransform, MatrixTransform
+from .core import Pipeline
 
 
 class RandomFlip(BaseTransform):
@@ -117,7 +118,7 @@ class RandomShear(MatrixTransform):
         if range_y is None:
             range_y = (0, 0)
 
-        if isinstance(range_y, (int, float)):
+        if isinstance(range_x, (int, float)):
             range_x = (-range_x, range_x)
 
         if isinstance(range_y, (int, float)):
@@ -165,11 +166,16 @@ class RandomScale(MatrixTransform):
         """
         super(RandomScale, self).__init__(interpolation=interpolation, padding=None, p=p)
 
-        if isinstance(range_y, (int, float)):
+        if isinstance(range_x, (int, float)):
             range_x = (-range_x, range_x)
 
         if isinstance(range_y, (int, float)):
             range_y = (-range_y, range_y)
+
+        if range_x is not None:
+            assert (range_x[0] > 0 and range_x[0] > 0)
+        if range_y is not None:
+            assert (range_y[0] > 0 and range_y[0] > 0)
 
         self.__same = same
         self.__range_x = range_x
@@ -202,11 +208,12 @@ class RandomScale(MatrixTransform):
 class RandomTranslate(MatrixTransform):
     """
     Random Translate transform.
+    This transform does not change the original frame where the transform is applied.
 
     """
     def __init__(self, range_x=None, range_y=None,  interpolation='bilinear', padding='z', p=0.5):
         super(RandomTranslate, self).__init__(interpolation=interpolation, padding=padding, p=p)
-        if isinstance(range_y, (int, float)):
+        if isinstance(range_x, (int, float)):
             range_x = (-range_x, range_x)
 
         if isinstance(range_y, (int, float)):
@@ -226,8 +233,8 @@ class RandomTranslate(MatrixTransform):
         else:
             ty = np.random.uniform(self.__range_y[0], self.__range_y[1])
 
-        M = np.array([0, 0, tx,
-                      0, 0, ty,
+        M = np.array([1, 0, tx,
+                      0, 1, ty,
                       0, 0, 1]).reshape((3, 3)).astype(np.float32)
 
         self.state_dict = {'scale_x': tx, 'scale_y': ty, 'transform_matrix': M}
@@ -261,18 +268,49 @@ class RandomCrop(BaseTransform):
         raise NotImplementedError
 
 
-class RandomProjective(MatrixTransform):
+class RandomProjection(MatrixTransform):
     """
     Generates random Perspective transform. Takes a set of affine transforms and generates a projective
     transform according to the eq. 2.13 from A. Zisserman's book: Multiple View Geometry in Computer Vision.
 
     """
-    def __init__(self, affine_transforms, v_range, p=0.5):
-        super(RandomProjective, self).__init__(p=p)
-        self.affine_transforms = affine_transforms
+    def __init__(self, affine_transforms=None, v_range=None, p=0.5):
+        """
+        Constructor.
+
+        Parameters
+        ----------
+        affine_transforms : Pipeline or None
+            Pipeline object, which has a parameterized Affine Transform. If it is None, then empty pipeline is created.
+        v_range : tuple or None.
+            Projective parameters range. If None, then v_range = (0, 0)
+        p : float
+            Probability of using this transform
+        """
+        super(RandomProjection, self).__init__(p=p)
+
+        if affine_transforms is None:
+            affine_transforms = Pipeline()
+
+        if v_range is None:
+            v_range = (0, 0)
+        assert isinstance(affine_transforms, Pipeline)
+        for trf in affine_transforms.transforms:
+            assert isinstance(trf, MatrixTransform)
+
+        assert isinstance(v_range, tuple)
+        for limit in v_range:
+            assert isinstance(limit, (int, float))
+
+        self.__affine_transforms = affine_transforms
+        self.__vrange = v_range  # projection components.
 
     def sample_transform(self):
-        raise NotImplementedError
+        trf = Pipeline.optimize_stack(self.__affine_transforms.transforms)[0]
+        M = trf.state_dict['transform_matrix'].copy()
+        M[-1, 0] = np.random.uniform(self.__vrange[0], self.__vrange[1])
+        M[-1, 1] = np.random.uniform(self.__vrange[0], self.__vrange[1])
+        self.state_dict['transform_matrix'] = M
 
 
 class Pad(BaseTransform):
