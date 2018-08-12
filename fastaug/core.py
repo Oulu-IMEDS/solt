@@ -135,7 +135,7 @@ class SelectivePipeline(Pipeline):
     Pipeline, which uniformly selects n out of k given transforms.
 
     """
-    def __init__(self, transforms=None, n=1):
+    def __init__(self, transforms=None, n=1, probs=None):
         """
         Constructor.
 
@@ -148,7 +148,10 @@ class SelectivePipeline(Pipeline):
         """
         super(SelectivePipeline, self).__init__(transforms)
         assert 0 < n <= len(self.transforms)
+        if probs is not None:
+            assert len(probs) == n
         self.n = n
+        self.probs = probs
 
     def __call__(self, data):
         """
@@ -165,8 +168,8 @@ class SelectivePipeline(Pipeline):
             Result
         """
         if len(self.transforms) > 0:
-            trfs = np.random.choice(self.transforms, self.n, replace=False, p=1./self.n)
+            trfs = np.random.choice(self.transforms, self.n, replace=False, p=self.probs)
             trfs = Pipeline.optimize_stack(trfs)
-            return Pipeline.exec_pipeline(trfs, data)
+            data = Pipeline.exec_pipeline(trfs, data)
         return data
 
