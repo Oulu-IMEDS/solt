@@ -83,8 +83,7 @@ class Pipeline(object):
         for trf in transforms:
             assert isinstance(trf, Pipeline) or isinstance(trf, BaseTransform)
             if isinstance(trf, BaseTransform):
-                trf.use_transform()
-                if trf.state_dict['use']:
+                if trf.use_transform():
                     trf.sample_transform()
                     if isinstance(trf, MatrixTransform):
                         if len(transforms_stack) == 0:
