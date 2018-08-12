@@ -46,15 +46,16 @@ class RandomRotate(MatrixTransform):
     Random rotation around the center.
 
     """
-    def __init__(self, rotation_range, interpolation='bilinear', padding='z', p=0.5):
+    def __init__(self, rotation_range=None, interpolation='bilinear', padding='z', p=0.5):
         """
         Constructor.
 
         Parameters
         ----------
-        rotation_range : tuple or float
+        rotation_range : tuple or float or None
             Range of rotation.
             If float, then (-rotation_range, rotation_range) will be used for transformation sampling.
+            if None, then rotation_range=(0,0).
         interpolation : str
             Interpolation type. Check the allowed interpolation types.
         padding : str
@@ -63,6 +64,11 @@ class RandomRotate(MatrixTransform):
             Probability of using this transform
         """
         super(RandomRotate, self).__init__(interpolation=interpolation, padding=padding, p=p)
+        if rotation_range is None:
+            rotation_range = (0, 0)
+
+        if str(rotation_range).isdigit():
+            rotation_range = (-rotation_range, rotation_range)
 
         self.__range = rotation_range
 
@@ -92,9 +98,12 @@ class RandomShear(MatrixTransform):
         Parameters
         ----------
         range_x : tuple or float
-            Shearing range along X-axis. If float, then (-range_x, range_x) will be used.
-        range_y : tuple or float
-            Shearing range along Y-axis.If float, then (-range_y, range_y) will be used.
+            Shearing range along X-axis.
+            If float, then (-range_x, range_x) will be used.
+            If None, then range_x=(0, 0)
+        range_y : tuple or float or None
+            Shearing range along Y-axis. If float, then (-range_y, range_y) will be used.
+            If None, then range_y=(0, 0)
         interpolation : str
             Interpolation type. Check the allowed interpolation types.
         padding : str
@@ -104,9 +113,9 @@ class RandomShear(MatrixTransform):
         """
         super(RandomShear, self).__init__(p=p, padding=padding, interpolation=interpolation)
         if range_x is None:
-            range_x = 1
+            range_x = (0, 0)
         if range_y is None:
-            range_y = 1
+            range_y = (0, 0)
 
         if str(range_x).isdigit():
             range_x = (-range_x, range_x)
@@ -142,11 +151,11 @@ class RandomScale(MatrixTransform):
         range_x : tuple or float or None
             Scaling range along X-axis.
             If float, then (-range_x, range_x) will be used.
-            If None, then range_x = 1 by default.
+            If None, then range_x =(1,1) by default.
         range_y : tuple or float
             Scaling range along Y-axis.
             If float, then (-range_y, range_y) will be used.
-            If None, then range_y = 1 by default.
+            If None, then range_y=(1,1) by default.
         interpolation : str
             Interpolation type. Check the allowed interpolation types.
         p : float
@@ -154,9 +163,9 @@ class RandomScale(MatrixTransform):
         """
         super(RandomScale, self).__init__(p=p, interpolation=interpolation, padding=None)
         if range_x is None:
-            range_x = 1
+            range_x = (1, 1)
         if range_y is None:
-            range_y = 1
+            range_y = (1, 1)
 
         if str(range_x).isdigit():
             range_x = (-range_x, range_x)
