@@ -121,7 +121,7 @@ class RandomShear(MatrixTransform):
             range_x = (-range_x, range_x)
 
         if str(range_y).isdigit():
-            range_y = (-range_x, range_y)
+            range_y = (-range_y, range_y)
 
         self.__range_x = range_x
         self.__range_y = range_y
@@ -130,8 +130,8 @@ class RandomShear(MatrixTransform):
         shear_x = np.random.uniform(self.__range_x[0], self.__range_x[1])
         shear_y = np.random.uniform(self.__range_y[0], self.__range_y[1])
 
-        M = np.array([1, shear_y, 0,
-                     shear_x, 1, 0,
+        M = np.array([1, shear_x, 0,
+                     shear_y, 1, 0,
                      0, 0, 1]).reshape((3, 3)).astype(np.float32)
 
         self.state_dict = {'shear_x': shear_x, 'shear_y': shear_y, 'transform_matrix': M}
@@ -142,7 +142,7 @@ class RandomScale(MatrixTransform):
     Random scale transform.
 
     """
-    def __init__(self, range_x=None, range_y=None, interpolation='bilinear', p=0.5):
+    def __init__(self, range_x=None, range_y=None, same=True, interpolation='bilinear', p=0.5):
         """
         Constructor.
 
@@ -156,16 +156,14 @@ class RandomScale(MatrixTransform):
             Scaling range along Y-axis.
             If float, then (-range_y, range_y) will be used.
             If None, then range_y=(1,1) by default.
+        same: bool
+            Indicates whether to use the same scaling factor for width and height.
         interpolation : str
             Interpolation type. Check the allowed interpolation types.
         p : float
             Probability of using this transform
         """
         super(RandomScale, self).__init__(p=p, interpolation=interpolation, padding=None)
-        if range_x is None:
-            range_x = (1, 1)
-        if range_y is None:
-            range_y = (1, 1)
 
         if str(range_x).isdigit():
             range_x = (-range_x, range_x)
@@ -173,12 +171,26 @@ class RandomScale(MatrixTransform):
         if str(range_y).isdigit():
             range_y = (-range_x, range_y)
 
+        self.__same = same
         self.__range_x = range_x
         self.__range_y = range_y
 
     def sample_transform(self):
-        scale_x = np.random.uniform(self.__range_x[0], self.__range_x[1])
-        scale_y = np.random.uniform(self.__range_y[0], self.__range_y[1])
+        if self.__range_x is None:
+            scale_x = 1
+        else:
+            scale_x = np.random.uniform(self.__range_x[0], self.__range_x[1])
+
+        if self.__range_y is None:
+            scale_y = 1
+        else:
+            scale_y = np.random.uniform(self.__range_y[0], self.__range_y[1])
+
+        if self.__same:
+            if self.__range_x is None:
+                scale_x = scale_y
+            else:
+                scale_y = scale_x
 
         M = np.array([scale_x, 0, 0,
                       0, scale_y, 0,
@@ -188,24 +200,30 @@ class RandomScale(MatrixTransform):
 
 
 class RandomCrop(BaseTransform):
-    def __init__(self, crop_size, pad=True):
+    def __init__(self, crop_size):
         super(RandomCrop, self).__init__(p=1)
-        self.crop_size = crop_size
+        self.__crop_size = crop_size
 
     def sample_transform(self):
         raise NotImplementedError
 
     @img_shape_checker
     def _apply_img(self, img):
+        assert self.__crop_size[0] < img.shape[1]
+        assert self.__crop_size[1] < img.shape[0]
         raise NotImplementedError
 
     def _apply_mask(self, mask):
+        assert self.__crop_size[0] < mask.shape[1]
+        assert self.__crop_size[1] < mask.shape[0]
         raise NotImplementedError
 
     def _apply_labels(self, labels):
         return labels
 
     def _apply_pts(self, pts):
+        assert self.__crop_size[0] < pts.W
+        assert self.__crop_size[1] < pts.H
         raise NotImplementedError
 
 

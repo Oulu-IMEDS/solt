@@ -4,8 +4,6 @@ from collections import OrderedDict
 from .data import DataContainer
 from .transforms import BaseTransform, MatrixTransform
 
-
-
 class Pipeline(object):
     """
     Pipeline class. Executes the list of transformations

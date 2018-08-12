@@ -141,11 +141,12 @@ def test_rotate_90_img_mask_keypoints(img_mask_3x3):
 
 
 def test_zoom_x_axis_odd(img_5x5):
-    pipeline = trf.RandomScale((0.5, 0.5), (1, 1), p=1)
+    pipeline = trf.RandomScale(range_x=(0.5, 0.5), range_y=(1, 1), same=False, p=1)
     dc = augs_data.DataContainer((img_5x5, ), 'I')
     H, W = img_5x5.shape[0], img_5x5.shape[1]
     img_res = pipeline(dc)[0][0]
-    assert img_res.shape[0] == H, img_res.shape[1] == W // 2
+    assert H == img_res.shape[0]
+    assert W // 2 == img_res.shape[1]
 
 
 def test_scale_x_axis_even(img_6x6):
@@ -157,23 +158,25 @@ def test_scale_x_axis_even(img_6x6):
 
 
 def test_scale_xy_axis_odd(img_5x5):
-    pipeline = trf.RandomScale((0.5, 0.5), (3, 3), p=1)
+    pipeline = trf.RandomScale((0.5, 0.5), (3, 3), same=False, p=1)
     dc = augs_data.DataContainer((img_5x5, ), 'I')
     H, W = img_5x5.shape[0], img_5x5.shape[1]
     img_res = pipeline(dc)[0][0]
-    assert H * 3 == img_res.shape[0], W // 2 == img_res.shape[1]
+    assert H * 3 == img_res.shape[0]
+    assert W // 2 == img_res.shape[1]
 
 
 def test_scale_x_axis_even(img_6x6):
-    pipeline = trf.RandomScale((0.5, 0.5), (2, 2), p=1)
+    pipeline = trf.RandomScale((0.5, 0.5), (2, 2), same=False, p=1)
     dc = augs_data.DataContainer((img_6x6, ), 'I')
     H, W = img_6x6.shape[0], img_6x6.shape[1]
     img_res = pipeline(dc)[0][0]
-    assert H * 2 == img_res.shape[0],  W // 2 == img_res.shape[1]
+    assert H * 2 == img_res.shape[0]
+    assert W // 2 == img_res.shape[1]
 
 
 def test_scale_img_mask(img_mask_3x4):
-    pipeline = trf.RandomScale((0.5, 0.5), (2, 2), p=1)
+    pipeline = trf.RandomScale((0.5, 0.5), (2, 2), same=False, p=1)
     dc = augs_data.DataContainer(img_mask_3x4, 'IM')
     H, W = img_mask_3x4[0].shape[0], img_mask_3x4[0].shape[1]
     img_res = pipeline(dc)[0][0]

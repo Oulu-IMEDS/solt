@@ -236,7 +236,7 @@ class MatrixTransform(BaseTransform):
             self.padding = trf.padding
         self.interpolation = trf.interpolation
 
-        self.state_dict['transform_matrix'] = self.state_dict['transform_matrix'] @ self.state_dict ['transform_matrix']
+        self.state_dict['transform_matrix'] = trf.state_dict['transform_matrix'] @ self.state_dict ['transform_matrix']
 
     @abstractmethod
     def sample_transform(self):
