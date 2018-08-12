@@ -1,4 +1,6 @@
 import numpy as np
+from collections import OrderedDict
+
 from abc import ABCMeta, abstractmethod
 import cv2
 
@@ -22,8 +24,34 @@ class BaseTransform(metaclass=ABCMeta):
 
         """
         self.p = p
-        self.use = False  # Initially we do not use the transform
-        self.params = None
+        self.state_dict = {'use': False}
+
+    def serialize(self, include_state=False):
+        """
+        Method returns an ordered dict, describing the object.
+
+        Parameters
+        ----------
+        include_state : bool
+            Whether to include a self.state_dict into the result. Mainly useful for debug.
+        Returns
+        -------
+        out : OrderedDict
+            OrderedDict, ready for json serialization.
+
+        """
+        if not include_state:
+            d = dict(
+                map(lambda item: (item[0].split('__')[-1], item[1]),
+                    filter(lambda item: item[0] != 'state_dict',
+                           self.__dict__.items())
+                    )
+            )
+        else:
+            d = dict(map(lambda item: (item[0].split('__')[-1], item[1]), self.__dict__.items()))
+
+        # the method must return the result always in the same order
+        return OrderedDict(sorted(d.items()))
 
     def use_transform(self):
         """
@@ -35,10 +63,10 @@ class BaseTransform(metaclass=ABCMeta):
             Boolean flag. True if the transform is used.
         """
         if np.random.rand() < self.p:
-            self.use = True
+            self.state_dict['use'] = True
             return True
 
-        self.use = False
+        self.state_dict['use'] = False
         return False
 
     @abstractmethod
@@ -100,9 +128,8 @@ class BaseTransform(metaclass=ABCMeta):
             Result
 
         """
-        self.use_transform()
-        self.sample_transform()
-        if self.use:
+        if self.use_transform():
+            self.sample_transform()
             return self.apply(data)
         else:
             return data
@@ -192,7 +219,7 @@ class MatrixTransform(BaseTransform):
         super(MatrixTransform, self).__init__(p=p)
         self.padding = padding
         self.interpolation = interpolation
-        self.params = {'transform_matrix': np.eye(3)}
+        self.state_dict = {'transform_matrix': np.eye(3)}
 
     def fuse_with(self, trf):
         """
@@ -203,14 +230,14 @@ class MatrixTransform(BaseTransform):
         trf : MatrixTransform
 
         """
-        assert self.params is not None
-        assert trf.params is not None
+        assert self.state_dict is not None
+        assert trf.state_dict is not None
 
         if not isinstance(trf, RandomScale):
             self.padding = trf.padding
         self.interpolation = trf.interpolation
 
-        self.params['transform_matrix'] = self.params['transform_matrix'] @ trf.params['transform_matrix']
+        self.state_dict['transform_matrix'] = self.state_dict['transform_matrix'] @ self.state_dict ['transform_matrix']
 
     @abstractmethod
     def sample_transform(self):
@@ -296,7 +323,7 @@ class MatrixTransform(BaseTransform):
         Applies a matrix transform to an image.
 
         """
-        M = self.params['transform_matrix']
+        M = self.state_dict['transform_matrix']
         M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, img.shape[1], img.shape[0])
 
         interp = allowed_interpolations[self.interpolation]
@@ -323,7 +350,7 @@ class MatrixTransform(BaseTransform):
 
         """
         # X, Y coordinates
-        M = self.params['transform_matrix']
+        M = self.state_dict['transform_matrix']
         M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, mask.shape[1], mask.shape[0])
         interp = allowed_interpolations[self.interpolation]
         if self.padding == 'z':
@@ -369,7 +396,7 @@ class MatrixTransform(BaseTransform):
             raise ValueError('Cannot apply transform to keypoints with reflective padding!')
 
         pts_data = pts.data.copy()
-        M = self.params['transform_matrix']
+        M = self.state_dict['transform_matrix']
         M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, pts.W, pts.H)
 
         pts_data = np.hstack((pts_data, np.ones((pts_data.shape[0], 1))))
@@ -444,8 +471,7 @@ class RandomRotate(MatrixTransform):
                      0, 0, 1
                      ]).reshape((3, 3)).astype(np.float32)
 
-        self.params = {'rot': rot,
-                       'transform_matrix': M}
+        self.state_dict = {'rot': rot, 'transform_matrix': M}
 
 
 class RandomShear(MatrixTransform):
@@ -486,9 +512,7 @@ class RandomShear(MatrixTransform):
                      shear_x, 1, 0,
                      0, 0, 1]).reshape((3, 3)).astype(np.float32)
 
-        self.params = {'shear_x': shear_x,
-                       'shear_y': shear_y,
-                       'transform_matrix': M}
+        self.state_dict = {'shear_x': shear_x, 'shear_y': shear_y, 'transform_matrix': M}
 
 
 class RandomScale(MatrixTransform):
@@ -520,9 +544,7 @@ class RandomScale(MatrixTransform):
                       0, scale_y, 0,
                       0, 0, 1]).reshape((3, 3)).astype(np.float32)
 
-        self.params = {'scale_x': scale_x,
-                       'scale_y': scale_y,
-                       'transform_matrix': M}
+        self.state_dict = {'scale_x': scale_x, 'scale_y': scale_y, 'transform_matrix': M}
 
 
 class RandomCrop(BaseTransform):

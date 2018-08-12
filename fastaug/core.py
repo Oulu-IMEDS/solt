@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from .data import DataContainer
 from .transforms import BaseTransform, MatrixTransform
 import numpy as np
@@ -21,10 +22,20 @@ class Pipeline(object):
         if transforms is None:
             transforms = []
         self.__transforms = transforms
-        d = {}
-        for trf in transforms:
-            d[trf.__repr__().split('.')[-1].split()[0]] = trf.__dict__
-        self.__dict__ = {'transforms': d}
+
+    def serialize(self):
+        """
+        Serializes a pipeline into an OrderedDict
+        Returns
+        -------
+        out : OrderedDict
+
+        """
+        res = OrderedDict()
+        for t in self.__transforms:
+            res[t.__class__.__name__] = t.serialize()
+
+        return res
 
     @property
     def transforms(self):
@@ -73,7 +84,7 @@ class Pipeline(object):
             assert isinstance(trf, Pipeline) or isinstance(trf, BaseTransform)
             if isinstance(trf, BaseTransform):
                 trf.use_transform()
-                if trf.use:
+                if trf.state_dict['use']:
                     trf.sample_transform()
                     if isinstance(trf, MatrixTransform):
                         if len(transforms_stack) == 0:
