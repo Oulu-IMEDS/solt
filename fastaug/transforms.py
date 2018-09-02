@@ -57,9 +57,9 @@ class RandomRotate(MatrixTransform):
             Range of rotation.
             If float, then (-rotation_range, rotation_range) will be used for transformation sampling.
             if None, then rotation_range=(0,0).
-        interpolation : str
+        interpolation : str or tuple or None.
             Interpolation type. Check the allowed interpolation types.
-        padding : str
+        padding : str or tuple or None.
             Padding mode. Check the allowed padding modes.
         p : float
             Probability of using this transform
@@ -105,7 +105,7 @@ class RandomShear(MatrixTransform):
         range_y : tuple or float or None
             Shearing range along Y-axis. If float, then (-range_y, range_y) will be used.
             If None, then range_y=(0, 0)
-        interpolation : str
+        interpolation : str or tuple or None. or tuple or None.
             Interpolation type. Check the allowed interpolation types.
         padding : str
             Padding mode. Check the allowed padding modes.
@@ -159,8 +159,9 @@ class RandomScale(MatrixTransform):
             If None, then range_y=(1,1) by default.
         same: bool
             Indicates whether to use the same scaling factor for width and height.
-        interpolation : str
-            Interpolation type. Check the allowed interpolation types.
+        interpolation : str or tuple or None.
+            Interpolation type. Check the allowed interpolation types. 
+            one indicates default behavior - bilinear mode.
         p : float
             Probability of using this transform
         """

@@ -10,8 +10,7 @@ class Pipeline(object):
     Pipeline class. Executes the list of transformations
 
     """
-    def __init__(self, transforms=None, interpolation=None):
-        # TODO: pipeline-wide interpolation and padding methods
+    def __init__(self, transforms=None, interpolation=None, padding=None):
         """
         Class constructor.
 
@@ -19,11 +18,63 @@ class Pipeline(object):
         ----------
         transforms : list or None
             List of transforms to execute
+        interpolation : str or None
+            Pipeline-wide settings for interpolation. If for some particular transform your would like
+            to still use its own mode, simply pass (<interpolation_value>, 'strict')
+            in the constructor of that transform.
+        padding : str or None
+            Pipeline-wide settings for padding. If for some particular transform your would like
+            to still use its own mode, simply pass (<padding_value>, 'strict')
+            in the constructor of that transform.
+
         """
         if transforms is None:
             transforms = []
-        self.__transforms = transforms
+
         self.__interpolation = interpolation
+        self.__padding = padding
+        self.__transforms = transforms
+        self._reset_pipeline_settings()
+
+    @property
+    def interpolation(self):
+        return self.__interpolation
+
+    @interpolation.setter
+    def interpolation(self, value):
+        self.__interpolation = value
+        self._reset_pipeline_settings()
+
+    @property
+    def padding(self):
+        return self.__padding
+
+    @padding.setter
+    def padding(self, value):
+        self.__padding = value
+        self._reset_pipeline_settings()
+
+    def _reset_pipeline_settings(self):
+        """
+        Protected method, resets pipeline's settings
+
+        """
+        for trf in self.__transforms:
+            if self.__interpolation is not None and hasattr(trf, 'interpolation'):
+                if isinstance(trf, BaseTransform):
+                    if trf.interpolation[1] != 'strict':
+                        trf.interpolation = (self.__interpolation, trf.interpolation[1])
+                elif isinstance(trf, Pipeline):
+                    trf.interpolation = self.interpolation
+
+            if self.__padding is not None and hasattr(trf, 'padding'):
+                if isinstance(trf, BaseTransform):
+                    if trf.padding[1] != 'strict':
+                        trf.padding = (self.__padding, trf.padding[1])
+                elif isinstance(trf, Pipeline):
+                    trf.padding = self.__padding
+                else:
+                    raise NotImplementedError
 
     def serialize(self):
         """

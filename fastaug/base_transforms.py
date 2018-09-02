@@ -7,6 +7,22 @@ from .data import DataContainer, img_shape_checker, KeyPoints
 from .constants import allowed_interpolations, allowed_paddings
 
 
+def validate_parameter(parameter, allowed_modes, default_value):
+    if parameter is None:
+        parameter = default_value
+
+    if isinstance(parameter, str):
+        parameter = (parameter, 'inherit')
+
+    if isinstance(parameter, tuple):
+        assert len(parameter) == 2
+        assert parameter[0] in allowed_modes
+    else:
+        raise NotImplementedError
+
+    return parameter
+
+
 class BaseTransform(metaclass=ABCMeta):
     """
     Transformation abstract class.
@@ -217,10 +233,9 @@ class MatrixTransform(BaseTransform):
 
     """
     def __init__(self, interpolation='bilinear', padding='z', p=0.5):
-        if padding is not None:
-            assert padding in allowed_paddings
-        # TODO: interpolation for each item within data container
-        assert interpolation in allowed_interpolations
+        interpolation = validate_parameter(interpolation, allowed_interpolations, 'bilinear')
+        padding = validate_parameter(padding, allowed_paddings, 'z')
+
         super(MatrixTransform, self).__init__(p=p)
         self.__padding = padding
         self.__interpolation = interpolation
@@ -352,11 +367,11 @@ class MatrixTransform(BaseTransform):
         M = self.state_dict['transform_matrix']
         M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, img.shape[1], img.shape[0])
 
-        interp = allowed_interpolations[self.__interpolation]
-        if self.__padding == 'z' or self.__padding is None:
+        interp = allowed_interpolations[self.__interpolation[0]]
+        if self.__padding[0] == 'z':
             return cv2.warpPerspective(img, M , (W_new, H_new), interp,
                                        borderMode=cv2.BORDER_CONSTANT, borderValue=0)
-        elif self.__padding == 'r':
+        elif self.__padding[0] == 'r':
             return cv2.warpPerspective(img, M, (W_new, H_new), interp,
                                        borderMode=cv2.BORDER_REFLECT)
         else:
@@ -381,11 +396,11 @@ class MatrixTransform(BaseTransform):
         # X, Y coordinates
         M = self.state_dict['transform_matrix']
         M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, mask.shape[1], mask.shape[0])
-        interp = allowed_interpolations[self.interpolation]
-        if self.padding == 'z' or self.padding is None:
+        interp = allowed_interpolations[self.interpolation[0]]
+        if self.padding[0] == 'z' or self.padding is None:
             return cv2.warpPerspective(mask, M , (W_new, H_new), interp,
                                        borderMode=cv2.BORDER_CONSTANT, borderValue=0)
-        elif self.padding == 'r':
+        elif self.padding[0] == 'r':
             return cv2.warpPerspective(mask, M, (W_new, H_new), interp,
                                        borderMode=cv2.BORDER_REFLECT)
         else:
@@ -423,7 +438,7 @@ class MatrixTransform(BaseTransform):
             Result
 
         """
-        if self.padding == 'r':
+        if self.padding[0] == 'r':
             raise ValueError('Cannot apply transform to keypoints with reflective padding!')
 
         pts_data = pts.data.copy()

@@ -173,3 +173,80 @@ def test_fusion_rotate_360_flip_rotate_360(img_5x5):
     img_res = ppl(dc)[0][0]
 
     np.testing.assert_array_almost_equal(cv2.flip(img, 1).reshape(5, 5, 1), img_res)
+
+
+def test_pipeline_settings():
+    ppl = augs_core.Pipeline([
+        imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
+        imtrf.RandomRotate((45, 45), padding='r', p=1),
+        imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
+        imtrf.RandomShear(0.1, 0.1, interpolation='bilinear', padding='z'),
+        ],
+        interpolation='nearest',
+        padding='z'
+    )
+
+    for trf in ppl.transforms:
+        assert trf.interpolation[0] == 'nearest'
+        assert trf.padding[0] == 'z'
+
+
+def test_pipeline_settings_replacement():
+    ppl = augs_core.Pipeline([
+        imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
+        imtrf.RandomRotate((45, 45), padding='r', p=1),
+        imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
+        imtrf.RandomShear(0.1, 0.1, interpolation='bilinear', padding='z'),
+    ],
+        interpolation='nearest',
+        padding='z'
+    )
+
+    ppl.interpolation = 'bilinear'
+    ppl.padding = 'r'
+
+    for trf in ppl.transforms:
+        assert trf.interpolation[0] == 'bilinear'
+        assert trf.padding[0] == 'r'
+
+
+def test_pipeline_settings_strict():
+    ppl = augs_core.Pipeline([
+        imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
+        imtrf.RandomRotate((45, 45), padding='r', p=1),
+        imtrf.RandomRotate((45, 45), interpolation=('bicubic', 'strict'), padding=('r', 'strict'), p=1),
+        imtrf.RandomShear(0.1, 0.1, interpolation='bilinear', padding='z'),
+        ],
+        interpolation='nearest',
+        padding='z'
+    )
+
+    for idx, trf in enumerate(ppl.transforms):
+        if idx == 2:
+            assert trf.interpolation[0] == 'bicubic'
+            assert trf.padding[0] == 'r'
+        else:
+            assert trf.interpolation[0] == 'nearest'
+            assert trf.padding[0] == 'z'
+
+
+def test_pipeline_nested_settings():
+    ppl = augs_core.Pipeline([
+        imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
+        imtrf.RandomRotate((45, 45), padding='r', p=1),
+        augs_core.Pipeline([
+            imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
+            imtrf.RandomRotate((45, 45), padding='r', p=1),
+        ], interpolation='bicubic', padding='r'
+        )
+        ],
+        interpolation='nearest',
+        padding='z'
+    )
+
+    trfs = ppl.transforms[:2] + ppl.transforms[-1].transforms
+
+    for idx, trf in enumerate(trfs):
+        assert trf.interpolation[0] == 'nearest'
+        assert trf.padding[0] == 'z'
+
