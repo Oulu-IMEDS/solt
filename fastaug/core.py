@@ -10,7 +10,7 @@ class Pipeline(object):
     Pipeline class. Executes the list of transformations
 
     """
-    def __init__(self, transforms=None):
+    def __init__(self, transforms=None, interpolation=None):
         # TODO: pipeline-wide interpolation and padding methods
         """
         Class constructor.
@@ -23,10 +23,12 @@ class Pipeline(object):
         if transforms is None:
             transforms = []
         self.__transforms = transforms
+        self.__interpolation = interpolation
 
     def serialize(self):
         """
         Serializes a pipeline into an OrderedDict
+
         Returns
         -------
         out : OrderedDict

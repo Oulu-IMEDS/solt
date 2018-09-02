@@ -222,8 +222,8 @@ class MatrixTransform(BaseTransform):
         # TODO: interpolation for each item within data container
         assert interpolation in allowed_interpolations
         super(MatrixTransform, self).__init__(p=p)
-        self.padding = padding
-        self.interpolation = interpolation
+        self.__padding = padding
+        self.__interpolation = interpolation
         self.state_dict = {'transform_matrix': np.eye(3)}
 
     def fuse_with(self, trf):
@@ -239,10 +239,26 @@ class MatrixTransform(BaseTransform):
         assert trf.state_dict is not None
 
         if trf.padding is not None:
-            self.padding = trf.padding
-        self.interpolation = trf.interpolation
+            self.__padding = trf.padding
+        self.__interpolation = trf.interpolation
 
         self.state_dict['transform_matrix'] = trf.state_dict['transform_matrix'] @ self.state_dict ['transform_matrix']
+
+    @property
+    def interpolation(self):
+        return self.__interpolation
+
+    @interpolation.setter
+    def interpolation(self, value):
+        self.__interpolation = value
+
+    @property
+    def padding(self):
+        return self.__padding
+
+    @padding.setter
+    def padding(self, value):
+        self.__padding = value
 
     @abstractmethod
     def sample_transform(self):
@@ -336,11 +352,11 @@ class MatrixTransform(BaseTransform):
         M = self.state_dict['transform_matrix']
         M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, img.shape[1], img.shape[0])
 
-        interp = allowed_interpolations[self.interpolation]
-        if self.padding == 'z' or self.padding is None:
+        interp = allowed_interpolations[self.__interpolation]
+        if self.__padding == 'z' or self.__padding is None:
             return cv2.warpPerspective(img, M , (W_new, H_new), interp,
                                        borderMode=cv2.BORDER_CONSTANT, borderValue=0)
-        elif self.padding == 'r':
+        elif self.__padding == 'r':
             return cv2.warpPerspective(img, M, (W_new, H_new), interp,
                                        borderMode=cv2.BORDER_REFLECT)
         else:
