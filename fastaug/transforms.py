@@ -1,10 +1,10 @@
 import numpy as np
 import cv2
 
-
+from .constants import allowed_paddings
 from .data import img_shape_checker
 from .data import KeyPoints
-from .base_transforms import BaseTransform, MatrixTransform
+from .base_transforms import BaseTransform, MatrixTransform, PaddingPropertyHolder
 from .core import Pipeline
 
 
@@ -14,6 +14,16 @@ class RandomFlip(BaseTransform):
 
     """
     def __init__(self, p=0.5, axis=1):
+        """
+        Constructor.
+
+        Parameters
+        ----------
+        p : float
+            Probability of flip
+        axis : int
+            Axis of flip. Here, 0 stands for horizontal flipping, 1 stands for the vertical one.
+        """
         super(RandomFlip, self).__init__(p=p)
         self.__axis = axis
 
@@ -241,33 +251,6 @@ class RandomTranslate(MatrixTransform):
         self.state_dict = {'scale_x': tx, 'scale_y': ty, 'transform_matrix': M}
 
 
-class RandomCrop(BaseTransform):
-    def __init__(self, crop_size):
-        super(RandomCrop, self).__init__(p=1)
-        self.__crop_size = crop_size
-
-    def sample_transform(self):
-        raise NotImplementedError
-
-    @img_shape_checker
-    def _apply_img(self, img):
-        assert self.__crop_size[0] < img.shape[1]
-        assert self.__crop_size[1] < img.shape[0]
-        raise NotImplementedError
-
-    def _apply_mask(self, mask):
-        assert self.__crop_size[0] < mask.shape[1]
-        assert self.__crop_size[1] < mask.shape[0]
-        raise NotImplementedError
-
-    def _apply_labels(self, labels):
-        return labels
-
-    def _apply_pts(self, pts):
-        assert self.__crop_size[0] < pts.W
-        assert self.__crop_size[1] < pts.H
-        raise NotImplementedError
-
 
 class RandomProjection(MatrixTransform):
     """
@@ -313,11 +296,38 @@ class RandomProjection(MatrixTransform):
         M[-1, 1] = np.random.uniform(self.__vrange[0], self.__vrange[1])
         self.state_dict['transform_matrix'] = M
 
+class RandomCrop(BaseTransform):
+    def __init__(self, crop_size):
+        super(RandomCrop, self).__init__(p=1)
+        self.__crop_size = crop_size
 
-class Pad(BaseTransform):
-    def __init__(self, pad_to):
-        super(Pad, self).__init__(p=1)
-        self.__pad_to = pad_to
+    def sample_transform(self):
+        raise NotImplementedError
+
+    @img_shape_checker
+    def _apply_img(self, img):
+        assert self.__crop_size[0] < img.shape[1]
+        assert self.__crop_size[1] < img.shape[0]
+        raise NotImplementedError
+
+    def _apply_mask(self, mask):
+        assert self.__crop_size[0] < mask.shape[1]
+        assert self.__crop_size[1] < mask.shape[0]
+        raise NotImplementedError
+
+    def _apply_labels(self, labels):
+        return labels
+
+    def _apply_pts(self, pts):
+        assert self.__crop_size[0] < pts.W
+        assert self.__crop_size[1] < pts.H
+        raise NotImplementedError
+
+class Pad(BaseTransform, PaddingPropertyHolder):
+    def __init__(self, pad_to, padding=None):
+        BaseTransform.__init__(self, p=1)
+        PaddingPropertyHolder.__init__(self, padding)
+        self._pad_to = pad_to
 
     def sample_transform(self):
         pass

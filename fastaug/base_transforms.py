@@ -8,6 +8,28 @@ from .constants import allowed_interpolations, allowed_paddings
 
 
 def validate_parameter(parameter, allowed_modes, default_value):
+    """
+    Validates the parameter and wraps it into a tuple with the inheritance option (if parameter is not a tuple already).
+    In this case the parameter will become a tuple (parameter, 'inherit'),
+    which will indicate that the pipeline settings will override this parameter.
+    In case if the parameter is already a tuple specified as parameter=(value, 'strict'), then the parameter
+    will not be overrided.
+
+    Parameters
+    ----------
+    parameter : object
+        The value of the parameter
+    allowed_modes : dict or set
+        Allowed values for the parameter
+    default_value : object
+        Default value to substitute if the parameter is None
+
+    Returns
+    -------
+    out : object
+        New parameter value wrapped into a tuple.
+
+    """
     if parameter is None:
         parameter = default_value
 
@@ -226,19 +248,45 @@ class BaseTransform(metaclass=ABCMeta):
         pass
 
 
-class MatrixTransform(BaseTransform):
+class PaddingPropertyHolder(object):
+    def __init__(self, padding=None):
+        super(PaddingPropertyHolder, self).__init__()
+        self._padding = validate_parameter(padding, allowed_paddings, 'z')
+
+    @property
+    def padding(self):
+        return self._padding
+
+    @padding.setter
+    def padding(self, value):
+        self._padding = validate_parameter(value, allowed_paddings, 'z')
+
+
+class InterpolationPropertyHolder(object):
+    def __init__(self, interpolation=None):
+        super(InterpolationPropertyHolder, self).__init__()
+        self._interpolation = validate_parameter(interpolation, allowed_interpolations, 'bilinear')
+
+    @property
+    def interpolation(self):
+        return self._interpolation
+
+    @interpolation.setter
+    def interpolation(self, value):
+        self._interpolation = validate_parameter(value, allowed_interpolations, 'bilinear')
+
+
+class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropertyHolder):
     """
     Matrix Transform abstract class. (Affine and Homography).
     Does all the transforms around the image /  center.
 
     """
     def __init__(self, interpolation='bilinear', padding='z', p=0.5):
-        interpolation = validate_parameter(interpolation, allowed_interpolations, 'bilinear')
-        padding = validate_parameter(padding, allowed_paddings, 'z')
+        BaseTransform.__init__(self, p=p)
+        InterpolationPropertyHolder.__init__(self, interpolation=interpolation)
+        PaddingPropertyHolder.__init__(self, padding=padding)
 
-        super(MatrixTransform, self).__init__(p=p)
-        self.__padding = padding
-        self.__interpolation = interpolation
         self.state_dict = {'transform_matrix': np.eye(3)}
 
     def fuse_with(self, trf):
@@ -254,26 +302,10 @@ class MatrixTransform(BaseTransform):
         assert trf.state_dict is not None
 
         if trf.padding is not None:
-            self.__padding = trf.padding
-        self.__interpolation = trf.interpolation
+            self.padding = trf.padding
+        self.interpolation = trf.interpolation
 
         self.state_dict['transform_matrix'] = trf.state_dict['transform_matrix'] @ self.state_dict ['transform_matrix']
-
-    @property
-    def interpolation(self):
-        return self.__interpolation
-
-    @interpolation.setter
-    def interpolation(self, value):
-        self.__interpolation = value
-
-    @property
-    def padding(self):
-        return self.__padding
-
-    @padding.setter
-    def padding(self, value):
-        self.__padding = value
 
     @abstractmethod
     def sample_transform(self):
@@ -347,6 +379,28 @@ class MatrixTransform(BaseTransform):
 
         return M, W_new, H_new
 
+    def _apply_img_or_mask(self, img):
+        """
+        Applies a transform to an image or mask without controlling the shapes.
+
+        Parameters
+        ----------
+        img : ndarray
+            Image or mask
+
+        Returns
+        -------
+        out : ndarray
+            Warped image
+
+        """
+        M = self.state_dict['transform_matrix']
+        M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, img.shape[1], img.shape[0])
+
+        interp = allowed_interpolations[self.interpolation[0]]
+        padding = allowed_paddings[self.padding[0]]
+        return cv2.warpPerspective(img, M, (W_new, H_new), interp, padding, borderValue=0)
+
     @img_shape_checker
     def _apply_img(self, img):
         """
@@ -364,18 +418,8 @@ class MatrixTransform(BaseTransform):
             Output Image
 
         """
-        M = self.state_dict['transform_matrix']
-        M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, img.shape[1], img.shape[0])
 
-        interp = allowed_interpolations[self.__interpolation[0]]
-        if self.__padding[0] == 'z':
-            return cv2.warpPerspective(img, M , (W_new, H_new), interp,
-                                       borderMode=cv2.BORDER_CONSTANT, borderValue=0)
-        elif self.__padding[0] == 'r':
-            return cv2.warpPerspective(img, M, (W_new, H_new), interp,
-                                       borderMode=cv2.BORDER_REFLECT)
-        else:
-            raise NotImplementedError
+        return self._apply_img_or_mask(img)
 
     def _apply_mask(self, mask):
         """
@@ -393,18 +437,7 @@ class MatrixTransform(BaseTransform):
             Result
 
         """
-        # X, Y coordinates
-        M = self.state_dict['transform_matrix']
-        M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, mask.shape[1], mask.shape[0])
-        interp = allowed_interpolations[self.interpolation[0]]
-        if self.padding[0] == 'z' or self.padding is None:
-            return cv2.warpPerspective(mask, M , (W_new, H_new), interp,
-                                       borderMode=cv2.BORDER_CONSTANT, borderValue=0)
-        elif self.padding[0] == 'r':
-            return cv2.warpPerspective(mask, M, (W_new, H_new), interp,
-                                       borderMode=cv2.BORDER_REFLECT)
-        else:
-            raise NotImplementedError
+        return self._apply_img_or_mask(mask)
 
     def _apply_labels(self, labels):
         """
