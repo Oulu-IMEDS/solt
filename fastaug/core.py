@@ -2,7 +2,7 @@ import numpy as np
 
 from collections import OrderedDict
 from .data import DataContainer
-from .base_transforms import BaseTransform, MatrixTransform
+from .base_transforms import BaseTransform, MatrixTransform, DataDependentSamplingTransform
 
 
 class Pipeline(object):
@@ -136,7 +136,7 @@ class Pipeline(object):
         transforms_stack = []
         for trf in transforms:
             assert isinstance(trf, Pipeline) or isinstance(trf, BaseTransform)
-            if isinstance(trf, BaseTransform):
+            if isinstance(trf, BaseTransform) and not isinstance(trf, DataDependentSamplingTransform):
                 if trf.use_transform():
                     trf.sample_transform()
                     if isinstance(trf, MatrixTransform):
@@ -175,9 +175,9 @@ class Pipeline(object):
         # Performing the transforms using the optimized stack
         transforms = Pipeline.optimize_stack(transforms)
         for trf in transforms:
-            if isinstance(trf, BaseTransform):
+            if isinstance(trf, BaseTransform) and not isinstance(trf, DataDependentSamplingTransform):
                 data = trf.apply(data)
-            elif isinstance(trf, Pipeline):
+            elif isinstance(trf, Pipeline) or isinstance(trf, DataDependentSamplingTransform):
                 data = trf(data)
             else:
                 raise NotImplementedError

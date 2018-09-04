@@ -7,7 +7,7 @@ from .data import DataContainer, img_shape_checker, KeyPoints
 from .constants import allowed_interpolations, allowed_paddings
 
 
-def validate_parameter(parameter, allowed_modes, default_value):
+def validate_parameter(parameter, allowed_modes, default_value, basic_type=str):
     """
     Validates the parameter and wraps it into a tuple with the inheritance option (if parameter is not a tuple already).
     In this case the parameter will become a tuple (parameter, 'inherit'),
@@ -23,6 +23,8 @@ def validate_parameter(parameter, allowed_modes, default_value):
         Allowed values for the parameter
     default_value : object
         Default value to substitute if the parameter is None
+    basic_type : type
+        Type of the parameter.
 
     Returns
     -------
@@ -33,16 +35,55 @@ def validate_parameter(parameter, allowed_modes, default_value):
     if parameter is None:
         parameter = default_value
 
-    if isinstance(parameter, str):
+    if isinstance(parameter, basic_type):
         parameter = (parameter, 'inherit')
 
     if isinstance(parameter, tuple):
         assert len(parameter) == 2
+        assert isinstance(parameter[0], basic_type)
         assert parameter[0] in allowed_modes
+
     else:
         raise NotImplementedError
 
     return parameter
+
+
+class DataDependentSamplingTransform(object):
+    def __init__(self):
+        """
+        A class, which indicates that we sample its parameters based on data.
+        Such transforms are Crops, Elastic deformations etc, where the data is needed to make sampling.
+
+        """
+        pass
+
+    def sample_transform_from_data(self, data: DataContainer):
+        prev_h = None
+        prev_w = None
+        # Let's make sure that all the objects have the same coordinate frame
+        for obj, t in data:
+            if t == 'M' or t == 'I':
+                h = obj.shape[0]
+                w = obj.shape[1]
+            elif t == 'P':
+                h = obj.H
+                w = obj.W
+            else:
+                continue
+
+            if prev_h is None:
+                prev_h = h
+            else:
+                assert prev_h == h
+
+            if prev_w is None:
+                prev_w = w
+            else:
+                assert prev_w == w
+
+        assert prev_h is not None
+        assert prev_w is not None
 
 
 class BaseTransform(metaclass=ABCMeta):
@@ -308,7 +349,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         self.state_dict['transform_matrix'] = trf.state_dict['transform_matrix'] @ self.state_dict ['transform_matrix']
 
     @abstractmethod
-    def sample_transform(self):
+    def sample_transform(self, data):
         """
         Abstract method. Must be implemented in the child classes
 

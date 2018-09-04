@@ -259,7 +259,7 @@ def test_padding_img_mask_3x4_5x5(img_mask_3x4):
     assert (res[1][0].shape[0] == 5) and (res[1][0].shape[1] == 5)
 
 
-def test_pad__to_20x20_img_mask_keypoints_3x3(img_mask_3x3):
+def test_pad_to_20x20_img_mask_keypoints_3x3(img_mask_3x3):
     # Setting up the data
     kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
     kpts = augs_data.KeyPoints(kpts_data, 3, 3)
@@ -276,4 +276,64 @@ def test_pad__to_20x20_img_mask_keypoints_3x3(img_mask_3x3):
     assert np.array_equal(res[2][0].data, np.array([[8, 8], [8, 10], [10, 10], [10, 8]]).reshape((4, 2)))
 
 
+def test_3x3_pad_to_20x20_center_crop_3x3_shape_stayes_unchanged(img_mask_3x3):
+    # Setting up the data
+    kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
+    kpts = augs_data.KeyPoints(kpts_data, 3, 3)
+    img, mask = img_mask_3x3
 
+    dc = augs_data.DataContainer((img, mask, kpts,), 'IMP')
+
+    pipeline = augs_core.Pipeline([
+        trf.PadTransform((20, 20)),
+        trf.CropTransform((3, 3))
+    ])
+    res = pipeline(dc)
+
+    assert (res[0][0].shape[0] == 3) and (res[0][0].shape[1] == 3)
+    assert (res[1][0].shape[0] == 3) and (res[1][0].shape[1] == 3)
+    assert (res[2][0].H == 3) and (res[2][0].W == 3)
+
+
+def test_2x2_pad_to_20x20_center_crop_2x2(img_mask_2x2):
+    # Setting up the data
+    kpts_data = np.array([[0, 0], [0, 1], [1, 1], [1, 0]]).reshape((4, 2))
+    kpts = augs_data.KeyPoints(kpts_data, 2, 2)
+    img, mask = img_mask_2x2
+
+    dc = augs_data.DataContainer((img, mask, kpts,), 'IMP')
+
+    pipeline = augs_core.Pipeline([
+        trf.PadTransform((20, 20)),
+        trf.CropTransform((2, 2))
+    ])
+    res = pipeline(dc)
+
+    assert (res[0][0].shape[0] == 2) and (res[0][0].shape[1] == 2)
+    assert (res[1][0].shape[0] == 2) and (res[1][0].shape[1] == 2)
+    assert (res[2][0].H == 2) and (res[2][0].W == 2)
+
+    assert np.array_equal(res[0][0], img)
+    assert np.array_equal(res[1][0], mask)
+    assert np.array_equal(res[2][0].data, kpts_data)
+
+
+def test_6x6_pad_to_20x20_center_crop_6x6(img_6x6):
+    # Setting up the data
+    kpts_data = np.array([[0, 0], [0, 5], [1, 3], [2, 0]]).reshape((4, 2))
+    kpts = augs_data.KeyPoints(kpts_data, 6, 6)
+    img = img_6x6
+
+    dc = augs_data.DataContainer((img,  kpts,), 'IP')
+
+    pipeline = augs_core.Pipeline([
+        trf.PadTransform((20, 20)),
+        trf.CropTransform((6, 6))
+    ])
+    res = pipeline(dc)
+
+    assert (res[0][0].shape[0] == 6) and (res[0][0].shape[1] == 6)
+    assert (res[1][0].H == 6) and (res[1][0].W == 6)
+
+    assert np.array_equal(res[0][0], img)
+    assert np.array_equal(res[1][0].data, kpts_data)

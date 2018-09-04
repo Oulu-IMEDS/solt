@@ -1,10 +1,10 @@
 import numpy as np
 import cv2
 
-from .constants import allowed_paddings
+from .constants import allowed_paddings, allowed_crops
 from .data import img_shape_checker
-from .data import KeyPoints
-from .base_transforms import BaseTransform, MatrixTransform, PaddingPropertyHolder
+from .data import KeyPoints, DataContainer
+from .base_transforms import BaseTransform, MatrixTransform, PaddingPropertyHolder, DataDependentSamplingTransform
 from .core import Pipeline
 
 
@@ -295,33 +295,6 @@ class RandomProjection(MatrixTransform):
         M[-1, 1] = np.random.uniform(self.__vrange[0], self.__vrange[1])
         self.state_dict['transform_matrix'] = M
 
-class RandomCrop(BaseTransform):
-    def __init__(self, crop_size):
-        super(RandomCrop, self).__init__(p=1)
-        self.__crop_size = crop_size
-
-    def sample_transform(self):
-        raise NotImplementedError
-
-    @img_shape_checker
-    def _apply_img(self, img):
-        assert self.__crop_size[0] < img.shape[1]
-        assert self.__crop_size[1] < img.shape[0]
-        raise NotImplementedError
-
-    def _apply_mask(self, mask):
-        assert self.__crop_size[0] < mask.shape[1]
-        assert self.__crop_size[1] < mask.shape[0]
-        raise NotImplementedError
-
-    def _apply_labels(self, labels):
-        return labels
-
-    def _apply_pts(self, pts):
-        assert self.__crop_size[0] < pts.W
-        assert self.__crop_size[1] < pts.H
-        raise NotImplementedError
-
 
 class PadTransform(BaseTransform, PaddingPropertyHolder):
     def __init__(self, pad_to, padding=None):
@@ -342,7 +315,7 @@ class PadTransform(BaseTransform, PaddingPropertyHolder):
         """
         BaseTransform.__init__(self, p=1)
         PaddingPropertyHolder.__init__(self, padding)
-        assert isinstance(pad_to, tuple) or  isinstance(pad_to, int)
+        assert isinstance(pad_to, tuple) or isinstance(pad_to, int)
         if isinstance(pad_to, int):
             pad_to = tuple(pad_to, pad_to)
 
@@ -386,24 +359,129 @@ class PadTransform(BaseTransform, PaddingPropertyHolder):
         return KeyPoints(pts_data, self._pad_to[1], self._pad_to[0])
 
 
-class CenterCrop(BaseTransform):
-    def __init__(self, crop_size):
-        super(CenterCrop, self).__init__(p=1)
-        self.crop_size = crop_size
+class CropTransform(BaseTransform, DataDependentSamplingTransform):
+    def __init__(self, crop_size, crop_mode='c'):
+        """
+        Constructor
+
+        Parameters
+        ----------
+        crop_size : tuple or int
+            Size of the crop (W_new, H_new). If int, then a square crop will be made.
+        crop_mode : str
+            Crop mode. Can be either 'c' - center or 'r' - random.
+
+        """
+        BaseTransform.__init__(self, p=1)
+        DataDependentSamplingTransform.__init__(self)
+
+        assert isinstance(crop_size, int) or isinstance(crop_size, tuple)
+        assert crop_mode in allowed_crops
+
+        if isinstance(crop_size, tuple):
+            assert isinstance(crop_size[0], int)
+
+        if isinstance(crop_size, int):
+            crop_size = (crop_size, crop_size)
+
+        self._crop_size = crop_size
+        self._crop_mode = crop_mode
+
+    @property
+    def crop_mode(self):
+        return self._crop_mode
+
+    @crop_mode.setter
+    def crop_mode(self, value):
+        assert value in allowed_crops
+        self._crop_mode = value
+
+    @property
+    def crop_size(self):
+        return self._crop_size
+
+    @crop_size.setter
+    def crop_size(self, value):
+        assert isinstance(value, int) or isinstance(value, tuple)
+        if isinstance(value, tuple):
+            assert isinstance(value, int)
+        self._crop_size = value
 
     def sample_transform(self):
-        pass
+        raise NotImplementedError
+
+    def sample_transform_from_data(self, data):
+        # calling the superclass method to ensure that everything is right with the coordinates
+        DataDependentSamplingTransform.sample_transform_from_data(self, data)
+
+        for obj, t in data:
+            if t == 'M' or t == 'I':
+                h = obj.shape[0]
+                w = obj.shape[1]
+            elif t == 'P':
+                h = obj.H
+                w = obj.W
+            else:
+                continue
+
+        assert self.crop_size[0] < w
+        assert self.crop_size[1] < h
+
+        if self.crop_mode == 'c':
+            x = w // 2 - self.crop_size[0] // 2
+            y = h // 2 - self.crop_size[1] // 2
+        elif self.crop_mode == 'r':
+            x = np.random.randint(0, w - self.crop_size[0])
+            y = np.random.randint(0, h - self.crop_size[1])
+        else:
+            raise NotImplementedError
+
+        self.state_dict = {'x': x, 'y':y}
+
+    def _crop_img_or_mask(self, img):
+        assert 'x' in self.state_dict
+        assert 'y' in self.state_dict
+        x, y = self.state_dict['x'], self.state_dict['y']
+        return img[y:y+self.crop_size[1], x:x+self.crop_size[0]]
+
+    def __call__(self, data):
+        """
+        Applies the transform to a DataContainer
+
+        Parameters
+        ----------
+        data : DataContainer
+            Data to be augmented
+
+        Returns
+        -------
+        out : DataContainer
+            Result
+
+        """
+        if self.use_transform():
+            self.sample_transform_from_data(data)
+            return self.apply(data)
+        else:
+            return data
 
     @img_shape_checker
     def _apply_img(self, img):
-        raise NotImplementedError
+        return self._crop_img_or_mask(img)
 
     def _apply_mask(self, mask):
-        raise NotImplementedError
+        return self._crop_img_or_mask(mask)
 
     def _apply_labels(self, labels):
-        raise NotImplementedError
+        return labels
 
     def _apply_pts(self, pts):
-        raise NotImplementedError
+        pts_data = pts.data.copy()
+        assert 'x' in self.state_dict
+        assert 'y' in self.state_dict
+        x, y = self.state_dict['x'], self.state_dict['y']
 
+        pts_data[:, 0] -= x
+        pts_data[:, 1] -= y
+
+        return KeyPoints(pts_data, self.crop_size[1], self.crop_size[0])
