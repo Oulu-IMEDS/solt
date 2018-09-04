@@ -119,13 +119,13 @@ class BaseTransform(metaclass=ABCMeta):
         """
         if not include_state:
             d = dict(
-                map(lambda item: (item[0].split('__')[-1], item[1]),
+                map(lambda item: (item[0].split('_')[-1], item[1]),
                     filter(lambda item: item[0] != 'state_dict',
                            self.__dict__.items())
                     )
             )
         else:
-            d = dict(map(lambda item: (item[0].split('__')[-1], item[1]), self.__dict__.items()))
+            d = dict(map(lambda item: (item[0].split('_')[-1], item[1]), self.__dict__.items()))
 
         res = {}
         for item in d.items():
