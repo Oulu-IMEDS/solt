@@ -85,7 +85,7 @@ def test_keypoints_vertical_flip():
 
     dc_res = pipeline(dc)
 
-    assert np.array_equal(dc_res[0][0].data, np.array([[1, 0], [1, 1], [0, 0], [0, 1]]).reshape((4, 2)))
+    assert np.array_equal(dc_res[0][0].data, np.array([[0, 1], [0, 0], [1, 1], [1, 0]]).reshape((4, 2)))
 
 
 def test_keypoints_horizontal_flip_within_pipeline():
@@ -101,7 +101,7 @@ def test_keypoints_horizontal_flip_within_pipeline():
     assert np.array_equal(dc_res[0][0].data, np.array([[1, 0], [1, 1], [0, 0], [0, 1]]).reshape((4, 2)))
 
 
-def test_keypoints_vertical_flip():
+def test_keypoints_vertical_flip_within_pipeline():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
     kpts = augs_data.KeyPoints(kpts_data, 2, 2)
     pipeline = augs_core.Pipeline([
@@ -150,11 +150,12 @@ def test_zoom_x_axis_odd(img_5x5):
 
 
 def test_scale_x_axis_even(img_6x6):
-    pipeline = trf.RandomScale((0.5, 0.5), (1, 1), p=1)
+    pipeline = trf.RandomScale((0.5, 0.5), (1, 1), same=False, p=1)
     dc = augs_data.DataContainer((img_6x6, ), 'I')
     H, W = img_6x6.shape[0], img_6x6.shape[1]
     img_res = pipeline(dc)[0][0]
-    assert img_res.shape[0] == H, img_res.shape[1] == W // 2
+    assert H == img_res.shape[0]
+    assert W // 2 == img_res.shape[1]
 
 
 def test_scale_xy_axis_odd(img_5x5):
@@ -166,7 +167,7 @@ def test_scale_xy_axis_odd(img_5x5):
     assert W // 2 == img_res.shape[1]
 
 
-def test_scale_x_axis_even(img_6x6):
+def test_scale_xy_axis_even(img_6x6):
     pipeline = trf.RandomScale((0.5, 0.5), (2, 2), same=False, p=1)
     dc = augs_data.DataContainer((img_6x6, ), 'I')
     H, W = img_6x6.shape[0], img_6x6.shape[1]
@@ -190,10 +191,89 @@ def test_keypoints_assert_reflective(img_mask_3x3):
     kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
     kpts = augs_data.KeyPoints(kpts_data, 3, 3)
     img, mask = img_mask_3x3
-    H, W = mask.shape
 
     dc = augs_data.DataContainer((img, mask, kpts,), 'IMP')
     # Defining the 90 degrees transform (clockwise)
     pipeline = trf.RandomRotate(rotation_range=(20, 20), p=1, padding='r')
     with pytest.raises(ValueError):
         pipeline(dc)
+
+
+def test_padding_img_2x2_4x4(img_2x2):
+    img = img_2x2
+    dc = augs_data.DataContainer((img, ), 'I')
+    transf = trf.PadTransform((4, 4))
+    res = transf(dc)
+    assert (res[0][0].shape[0] == 4) and (res[0][0].shape[1] == 4)
+
+
+def test_padding_img_2x2_2x2(img_2x2):
+    img = img_2x2
+    dc = augs_data.DataContainer((img, ), 'I')
+    transf = trf.PadTransform((2, 2))
+    res = transf(dc)
+    assert (res[0][0].shape[0] == 2) and (res[0][0].shape[1] == 2)
+
+
+def test_padding_img_mask_2x2_4x4(img_mask_2x2):
+    img, mask = img_mask_2x2
+    dc = augs_data.DataContainer((img, mask), 'IM')
+    transf = trf.PadTransform((4, 4))
+    res = transf(dc)
+    assert (res[0][0].shape[0] == 4) and (res[0][0].shape[1] == 4)
+    assert (res[1][0].shape[0] == 4) and (res[1][0].shape[1] == 4)
+
+
+def test_padding_img_2x2_3x3(img_2x2):
+    img = img_2x2
+    dc = augs_data.DataContainer((img, ), 'I')
+    transf = trf.PadTransform((3, 3))
+    res = transf(dc)
+    assert (res[0][0].shape[0] == 3) and (res[0][0].shape[1] == 3)
+
+
+def test_padding_img_mask_2x2_3x3(img_mask_2x2):
+    img, mask = img_mask_2x2
+    dc = augs_data.DataContainer((img, mask), 'IM')
+    transf = trf.PadTransform((3, 3))
+    res = transf(dc)
+    assert (res[0][0].shape[0] == 3) and (res[0][0].shape[1] == 3)
+    assert (res[1][0].shape[0] == 3) and (res[1][0].shape[1] == 3)
+
+
+def test_padding_img_mask_3x4_3x4(img_mask_3x4):
+    img, mask = img_mask_3x4
+    dc = augs_data.DataContainer((img, mask), 'IM')
+    transf = trf.PadTransform((4, 3))
+    res = transf(dc)
+    assert (res[0][0].shape[0] == 3) and (res[0][0].shape[1] == 4)
+    assert (res[1][0].shape[0] == 3) and (res[1][0].shape[1] == 4)
+
+
+def test_padding_img_mask_3x4_5x5(img_mask_3x4):
+    img, mask = img_mask_3x4
+    dc = augs_data.DataContainer((img, mask), 'IM')
+    transf = trf.PadTransform((5, 5))
+    res = transf(dc)
+    assert (res[0][0].shape[0] == 5) and (res[0][0].shape[1] == 5)
+    assert (res[1][0].shape[0] == 5) and (res[1][0].shape[1] == 5)
+
+
+def test_pad__to_20x20_img_mask_keypoints_3x3(img_mask_3x3):
+    # Setting up the data
+    kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
+    kpts = augs_data.KeyPoints(kpts_data, 3, 3)
+    img, mask = img_mask_3x3
+
+    dc = augs_data.DataContainer((img, mask, kpts,), 'IMP')
+    transf = trf.PadTransform((20, 20))
+    res = transf(dc)
+
+    assert (res[0][0].shape[0] == 20) and (res[0][0].shape[1] == 20)
+    assert (res[1][0].shape[0] == 20) and (res[1][0].shape[1] == 20)
+    assert (res[2][0].H == 20) and (res[2][0].W == 20)
+
+    assert np.array_equal(res[2][0].data, np.array([[8, 8], [8, 10], [10, 10], [10, 8]]).reshape((4, 2)))
+
+
+

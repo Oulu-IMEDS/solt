@@ -251,7 +251,6 @@ class RandomTranslate(MatrixTransform):
         self.state_dict = {'scale_x': tx, 'scale_y': ty, 'transform_matrix': M}
 
 
-
 class RandomProjection(MatrixTransform):
     """
     Generates random Perspective transform. Takes a set of affine transforms and generates a projective
@@ -323,27 +322,68 @@ class RandomCrop(BaseTransform):
         assert self.__crop_size[1] < pts.H
         raise NotImplementedError
 
-class Pad(BaseTransform, PaddingPropertyHolder):
+
+class PadTransform(BaseTransform, PaddingPropertyHolder):
     def __init__(self, pad_to, padding=None):
+        """
+        Transformation, which pads the input to a given size
+
+        Parameters
+        ----------
+        pad_to : tuple or int
+            Target size (W_new, Y_new). The padding is computed using teh following equations:
+
+            left_pad = (pad_to[0] - w) // 2
+            right_pad = (pad_to[0] - w) // 2 + (pad_to[0] - w) % 2
+            top_pad = (pad_to[1] - h) // 2
+            bottom_pad = (pad_to[1] - h) // 2 + (pad_to[1] - h) % 2
+        padding :
+            Padding type.
+        """
         BaseTransform.__init__(self, p=1)
         PaddingPropertyHolder.__init__(self, padding)
+        assert isinstance(pad_to, tuple) or  isinstance(pad_to, int)
+        if isinstance(pad_to, int):
+            pad_to = tuple(pad_to, pad_to)
+
         self._pad_to = pad_to
 
     def sample_transform(self):
         pass
 
+    def _apply_img_or_mask(self, img):
+        h = img.shape[0]
+        w = img.shape[1]
+
+        pad_w = (self._pad_to[0] - w) // 2
+        pad_h = (self._pad_to[1] - h) // 2
+        assert pad_h >= 0
+        assert pad_w >= 0
+
+        padding = allowed_paddings[self.padding[0]]
+        return cv2.copyMakeBorder(img, pad_h, pad_h+(self._pad_to[1] - h) % 2, pad_w, pad_w + (self._pad_to[0] - w) % 2, padding, value=0)
+
     @img_shape_checker
     def _apply_img(self, img):
-        raise NotImplementedError
+        return self._apply_img_or_mask(img)
 
     def _apply_mask(self, mask):
-        raise NotImplementedError
+        return self._apply_img_or_mask(mask)
 
     def _apply_labels(self, labels):
         return labels
 
     def _apply_pts(self, pts):
-        raise NotImplementedError
+        assert self.padding[0] == 'z'
+        pts_data = pts.data.copy()
+
+        pad_w = (self._pad_to[0] - pts.H) // 2
+        pad_h = (self._pad_to[1] - pts.W) // 2
+
+        pts_data[:, 0] += pad_w
+        pts_data[:, 1] += pad_h
+
+        return KeyPoints(pts_data, self._pad_to[1], self._pad_to[0])
 
 
 class CenterCrop(BaseTransform):
