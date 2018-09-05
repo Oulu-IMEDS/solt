@@ -49,49 +49,12 @@ def validate_parameter(parameter, allowed_modes, default_value, basic_type=str):
     return parameter
 
 
-class DataDependentSamplingTransform(object):
-    def __init__(self):
-        """
-        A class, which indicates that we sample its parameters based on data.
-        Such transforms are Crops, Elastic deformations etc, where the data is needed to make sampling.
-
-        """
-        pass
-
-    def sample_transform_from_data(self, data: DataContainer):
-        prev_h = None
-        prev_w = None
-        # Let's make sure that all the objects have the same coordinate frame
-        for obj, t in data:
-            if t == 'M' or t == 'I':
-                h = obj.shape[0]
-                w = obj.shape[1]
-            elif t == 'P':
-                h = obj.H
-                w = obj.W
-            else:
-                continue
-
-            if prev_h is None:
-                prev_h = h
-            else:
-                assert prev_h == h
-
-            if prev_w is None:
-                prev_w = w
-            else:
-                assert prev_w == w
-
-        assert prev_h is not None
-        assert prev_w is not None
-
-
 class BaseTransform(metaclass=ABCMeta):
     """
     Transformation abstract class.
 
     """
-    def __init__(self, p=0.5):
+    def __init__(self, p=0.5, data_indices=None):
         """
         Constructor.
 
@@ -102,6 +65,11 @@ class BaseTransform(metaclass=ABCMeta):
         """
         self.p = p
         self.state_dict = {'use': False}
+        assert data_indices is None or isinstance(data_indices, tuple)
+        if isinstance(data_indices, tuple):
+            for el in data_indices:
+                assert isinstance(el, int)
+        self._data_indices = data_indices
 
     def serialize(self, include_state=False):
         """
@@ -181,15 +149,20 @@ class BaseTransform(metaclass=ABCMeta):
         """
         result = []
         types = []
+        if self._data_indices is None:
+            self._data_indices = np.arange(0, len(data)).astype(int)
         for i, (item, t) in enumerate(data):
-            if t == 'I':  # Image
-                tmp_item = self._apply_img(item)
-            elif t == 'M':  # Mask
-                tmp_item = self._apply_mask(item)
-            elif t == 'P':  # Points
-                tmp_item = self._apply_pts(item)
-            else:  # Labels
-                tmp_item = self._apply_labels(item)
+            if i in self._data_indices:
+                if t == 'I':  # Image
+                    tmp_item = self._apply_img(item)
+                elif t == 'M':  # Mask
+                    tmp_item = self._apply_mask(item)
+                elif t == 'P':  # Points
+                    tmp_item = self._apply_pts(item)
+                else:  # Labels
+                    tmp_item = self._apply_labels(item)
+            else:
+                tmp_item = item
 
             types.append(t)
             result.append(tmp_item)
@@ -213,6 +186,138 @@ class BaseTransform(metaclass=ABCMeta):
         """
         if self.use_transform():
             self.sample_transform()
+            return self.apply(data)
+        else:
+            return data
+
+    @abstractmethod
+    def _apply_img(self, img):
+        """
+        Abstract method, which determines the transform's behaviour when it is applied to images HxWxC.
+
+        Parameters
+        ----------
+        img : ndarray
+            Image to be augmented
+
+        Returns
+        -------
+        out : ndarray
+
+        """
+        pass
+
+    @abstractmethod
+    def _apply_mask(self, mask):
+        """
+        Abstract method, which determines the transform's behaviour when it is applied to masks HxW.
+
+        Parameters
+        ----------
+        mask : ndarray
+            Mask to be augmented
+
+        Returns
+        -------
+        out : ndarray
+            Result
+
+        """
+        pass
+
+    @abstractmethod
+    def _apply_labels(self, labels):
+        """
+        Abstract method, which determines the transform's behaviour when it is applied to labels (e.g. label smoothing)
+
+        Parameters
+        ----------
+        labels : ndarray
+            Array of labels.
+
+        Returns
+        -------
+        out : ndarray
+            Result
+
+        """
+        pass
+
+    @abstractmethod
+    def _apply_pts(self, pts):
+        """
+        Abstract method, which determines the transform's behaviour when it is applied to keypoints.
+
+        Parameters
+        ----------
+        pts : KeyPoints
+            Keypoints object
+
+        Returns
+        -------
+        out : KeyPoints
+            Result
+
+        """
+        pass
+
+
+class DataDependentSamplingTransform(BaseTransform):
+    def __init__(self, p=0.5, data_indices=None):
+        """
+        A class, which indicates that we sample its parameters based on data.
+        Such transforms are Crops, Elastic deformations etc, where the data is needed to make sampling.
+
+        """
+        super(DataDependentSamplingTransform, self).__init__(p=p, data_indices=data_indices)
+
+    def sample_transform(self):
+        raise NotImplementedError
+
+    def sample_transform_from_data(self, data: DataContainer):
+        prev_h = None
+        prev_w = None
+        # Let's make sure that all the objects have the same coordinate frame
+        for obj, t in data:
+            if t == 'M' or t == 'I':
+                h = obj.shape[0]
+                w = obj.shape[1]
+            elif t == 'P':
+                h = obj.H
+                w = obj.W
+            else:
+                continue
+
+            if prev_h is None:
+                prev_h = h
+            else:
+                assert prev_h == h
+
+            if prev_w is None:
+                prev_w = w
+            else:
+                assert prev_w == w
+
+        assert prev_h is not None
+        assert prev_w is not None
+
+    def __call__(self, data):
+        """
+        Applies the transform to a DataContainer
+
+        Parameters
+        ----------
+        data : DataContainer
+            Data to be augmented
+
+        Returns
+        -------
+        out : DataContainer
+            Result
+
+        """
+        if self.use_transform():
+            self.sample_transform_from_data(data)
             return self.apply(data)
         else:
             return data
@@ -324,7 +429,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
 
     """
     def __init__(self, interpolation='bilinear', padding='z', p=0.5):
-        BaseTransform.__init__(self, p=p)
+        BaseTransform.__init__(self, p=p, data_indices=None)
         InterpolationPropertyHolder.__init__(self, interpolation=interpolation)
         PaddingPropertyHolder.__init__(self, padding=padding)
 
@@ -349,7 +454,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         self.state_dict['transform_matrix'] = trf.state_dict['transform_matrix'] @ self.state_dict ['transform_matrix']
 
     @abstractmethod
-    def sample_transform(self, data):
+    def sample_transform(self):
         """
         Abstract method. Must be implemented in the child classes
 

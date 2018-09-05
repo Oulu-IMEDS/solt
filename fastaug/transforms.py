@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-from .constants import allowed_paddings, allowed_crops
+from .constants import allowed_paddings, allowed_crops, allowed_noise_types
 from .data import img_shape_checker
 from .data import KeyPoints, DataContainer
 from .base_transforms import BaseTransform, MatrixTransform, PaddingPropertyHolder, DataDependentSamplingTransform
@@ -359,7 +359,7 @@ class PadTransform(BaseTransform, PaddingPropertyHolder):
         return KeyPoints(pts_data, self._pad_to[1], self._pad_to[0])
 
 
-class CropTransform(BaseTransform, DataDependentSamplingTransform):
+class CropTransform(DataDependentSamplingTransform):
     def __init__(self, crop_size, crop_mode='c'):
         """
         Constructor
@@ -372,8 +372,7 @@ class CropTransform(BaseTransform, DataDependentSamplingTransform):
             Crop mode. Can be either 'c' - center or 'r' - random.
 
         """
-        BaseTransform.__init__(self, p=1)
-        DataDependentSamplingTransform.__init__(self)
+        super(CropTransform, self).__init__(p=1, data_indices=None)
 
         assert isinstance(crop_size, int) or isinstance(crop_size, tuple)
         assert crop_mode in allowed_crops
@@ -444,27 +443,6 @@ class CropTransform(BaseTransform, DataDependentSamplingTransform):
         x, y = self.state_dict['x'], self.state_dict['y']
         return img[y:y+self.crop_size[1], x:x+self.crop_size[0]]
 
-    def __call__(self, data):
-        """
-        Applies the transform to a DataContainer
-
-        Parameters
-        ----------
-        data : DataContainer
-            Data to be augmented
-
-        Returns
-        -------
-        out : DataContainer
-            Result
-
-        """
-        if self.use_transform():
-            self.sample_transform_from_data(data)
-            return self.apply(data)
-        else:
-            return data
-
     @img_shape_checker
     def _apply_img(self, img):
         return self._crop_img_or_mask(img)
@@ -485,3 +463,81 @@ class CropTransform(BaseTransform, DataDependentSamplingTransform):
         pts_data[:, 1] -= y
 
         return KeyPoints(pts_data, self.crop_size[1], self.crop_size[0])
+
+
+class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
+    """
+    Adds noise to an image. Other types of data than the image are ignored.
+
+    """
+    def __init__(self, p=0.5, gain_range=0.1, data_indices=None):
+        """
+        Constructor.
+
+        Parameters
+        ----------
+        p : float
+            Probability of applying this transfor,
+        gain_range : tuple or float
+            Gain of the noise. Final image is created as (1-gain)*img + gain*noise.
+            If float, then gain_range = (0, gain_range).
+        data_indices : tuple or None
+            Indices of the images within the data container to which this transform needs to be applied.
+            Every element within the tuple must be integer numebers.
+            If None, then the transform will be applied to all the images withing the DataContainer.
+        """
+        super(ImageAdditiveGaussianNoise, self).__init__(p=p, data_indices=data_indices)
+        if isinstance(gain_range, float):
+            gain_range = (0, gain_range)
+
+        assert gain_range[0] >= 0
+        assert gain_range[1] <= 1
+
+        self._gain_range = gain_range
+
+    def sample_transform(self):
+        raise NotImplementedError
+
+    def sample_transform_from_data(self, data: DataContainer):
+        DataDependentSamplingTransform.sample_transform_from_data(self, data)
+        gain = np.random.uniform(self._gain_range[0], self._gain_range[1])
+        h = None
+        w = None
+        c = None
+        for obj, t in data:
+            if t == 'I':
+                h = obj.shape[0]
+                w = obj.shape[1]
+                c = obj.shape[2]
+                break
+
+        assert w is not None
+        assert h is not None
+        assert c is not None
+
+        noise_img = np.random.randn(h, w, c)
+
+        noise_img -= noise_img.min()
+        noise_img /= noise_img.max()
+        noise_img *= 255
+        noise_img = noise_img.astype(obj.dtype)
+
+        self.state_dict = {'noise': noise_img, 'gain': gain}
+
+    @img_shape_checker
+    def _apply_img(self, img):
+        return cv2.addWeighted(img, (1-self.state_dict['gain']), self.state_dict['noise'], self.state_dict['gain'], 0)
+
+    def _apply_mask(self, mask):
+        return mask
+
+    def _apply_labels(self, labels):
+        return labels
+
+    def _apply_pts(self, pts):
+        return pts
+
+
+
+
+
