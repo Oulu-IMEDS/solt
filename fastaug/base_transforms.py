@@ -2,6 +2,7 @@ from collections import OrderedDict
 from abc import ABCMeta, abstractmethod
 import cv2
 import numpy as np
+import copy
 
 from .data import DataContainer, img_shape_checker, KeyPoints
 from .constants import allowed_interpolations, allowed_paddings
@@ -162,7 +163,12 @@ class BaseTransform(metaclass=ABCMeta):
                 else:  # Labels
                     tmp_item = self._apply_labels(item)
             else:
-                tmp_item = item
+                if t == 'I' or t == 'M':
+                    tmp_item = item.copy()
+                elif t == 'L':
+                    tmp_item = copy.copy(item)
+                elif t == 'P':
+                    tmp_item = copy.copy(item)
 
             types.append(t)
             result.append(tmp_item)
