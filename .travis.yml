@@ -4,5 +4,10 @@ os:
 python:
   - "3.6"
 install:
+  - pip install coveralls
+  - pip install pytest-pep8 coverage pytest-cov -U 
   - pip install -e .
-script: py.test -v
+script:
+  - py.test . --cov --cov-report term-missing -v
+after-success:
+  - coveralls
