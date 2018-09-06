@@ -1,4 +1,8 @@
-# FastAug
+# SOLT
+Streaming over lightweight data trasnformations
 
-JIT-optimized image data augmentations library. Currently under development.
+## About
+Data augmentation libarary for Deep Learning, which supports images, segmentation masks, labels and keypoints. Furthermore, SOLT is fast and has OpenCV in its backend.
+
+
 
