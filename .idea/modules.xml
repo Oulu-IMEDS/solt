@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/fastaug.iml" filepath="$PROJECT_DIR$/.idea/fastaug.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../solt/.idea/solt.iml" filepath="$PROJECT_DIR$/../solt/.idea/solt.iml" />
     </modules>
   </component>
 </project>

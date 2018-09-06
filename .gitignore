@@ -1,0 +1,8 @@
+solt/__pycache__/
+.DS_Strore
+notebooks/Affine_testing.ipynb
+notebooks/annotation/
+notebooks/test/
+solt.egg-info/
+tests/.pytest_cache/
+.eggs/

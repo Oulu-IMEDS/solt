@@ -1,6 +1,6 @@
-import fastaug.core as augs_core
-import fastaug.data as augs_data
-import fastaug.transforms as imtrf
+import solt.core as augs_core
+import solt.data as augs_data
+import solt.transforms as imtrf
 import numpy as np
 import pytest
 import cv2
