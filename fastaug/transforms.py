@@ -538,6 +538,102 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
         return pts
 
 
+class ImageSaltAndPepper(DataDependentSamplingTransform):
+    """
+    Adds salt and pepper noise to an image. Other types of data than the image are ignored.
+
+    """
+    def __init__(self, p=0.5, gain_range=0.1, salt_p=0.5, data_indices=None):
+        """
+        Constructor.
+
+        Parameters
+        ----------
+        p : float
+            Probability of applying this transfor,
+        gain_range : tuple or float
+            Gain of the noise. Indicates percentage of indices, which will be changed.
+            If float, then gain_range = (0, gain_range).
+        salt_p : float or tuple
+            Percentage of salt. Percentage of pepper is 1-salt_p. If tuple, then salt_p is chosen uniformly from the
+            given range.
+        data_indices : tuple or None
+            Indices of the images within the data container to which this transform needs to be applied.
+            Every element within the tuple must be integer numebers.
+            If None, then the transform will be applied to all the images withing the DataContainer.
+        """
+        super(ImageSaltAndPepper, self).__init__(p=p, data_indices=data_indices)
+
+        assert isinstance(gain_range, float) or isinstance(gain_range, tuple)
+        assert isinstance(salt_p, float) or isinstance(salt_p, tuple)
+
+        if isinstance(gain_range, float):
+            gain_range = (0, gain_range)
+
+        if isinstance(salt_p, float):
+            assert 0 <= salt_p <= 1
+            salt_p = (salt_p, salt_p)
+
+        assert len(salt_p) == 2
+        assert salt_p[0] <= salt_p[1]
+        assert 0 <= salt_p[0] <= 1
+        assert 0 <= salt_p[1] <= 1
+
+        assert gain_range[0] >= 0
+        assert gain_range[1] <= 1
+
+        self._gain_range = gain_range
+        self._salt_p = salt_p
+
+    def sample_transform(self):
+        raise NotImplementedError
+
+    def sample_transform_from_data(self, data: DataContainer):
+        DataDependentSamplingTransform.sample_transform_from_data(self, data)
+        gain = np.random.uniform(self._gain_range[0], self._gain_range[1])
+        salt_p = np.random.uniform(self._salt_p[0], self._salt_p[1])
+        h = None
+        w = None
+        c = None
+        for obj, t in data:
+            if t == 'I':
+                h = obj.shape[0]
+                w = obj.shape[1]
+                c = obj.shape[2]
+                break
+
+        assert w is not None
+        assert h is not None
+        assert c is not None
+
+        sp = np.random.rand(h, w) <= gain
+        salt = sp.copy() * 1.
+        pepper = sp.copy() * 1.
+        salt_mask = (np.random.rand(sp.sum()) <= salt_p)
+        pepper_mask = 1 - salt_mask
+        salt[np.where(salt)] *= salt_mask
+        pepper[np.where(pepper)] *= pepper_mask
+
+        self.state_dict = {'salt': salt, 'pepper': pepper}
+
+    @img_shape_checker
+    def _apply_img(self, img):
+        img = img.copy()
+        img[np.where(self.state_dict['salt'])] = 255
+        img[np.where(self.state_dict['pepper'])] = 0
+        return img
+
+    def _apply_mask(self, mask):
+        return mask
+
+    def _apply_labels(self, labels):
+        return labels
+
+    def _apply_pts(self, pts):
+        return pts
+
+
+
 
 
 
