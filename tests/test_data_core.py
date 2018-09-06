@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 import cv2
 
-from .fixtures import img_2x2, img_3x4, img_mask_2x2, img_mask_3x4, img_5x5
+from .fixtures import img_2x2, img_3x4, mask_2x2, mask_3x4, img_5x5
 
 
 def test_data_item_create_img(img_2x2):
@@ -29,8 +29,8 @@ def test_empty_stream_selective():
         augs_core.SelectiveStream()
 
 
-def test_nested_stream(img_mask_3x4):
-    img, mask = img_mask_3x4
+def test_nested_stream(img_3x4, mask_3x4):
+    img, mask = img_3x4, mask_3x4
     dc = augs_data.DataContainer((img, mask), 'IM')
 
     stream = augs_core.Stream([

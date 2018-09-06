@@ -16,7 +16,7 @@ def img_2x2():
 
 
 @pytest.fixture
-def img_mask_2x2():
+def mask_2x2():
     """
     Generates 2x2 mask (doesn't have the 3rd dimension compare to an image).
 
@@ -25,7 +25,7 @@ def img_mask_2x2():
     out : ndarray
         2x2 mask, uint8
     """
-    return img_2x2(), np.array([[1, 0], [0, 1]]).reshape((2, 2)).astype(np.uint8)  # Generating the mask as well
+    return np.array([[1, 0], [0, 1]]).reshape((2, 2)).astype(np.uint8)  # Generating the mask as well
 
 
 @pytest.fixture
@@ -45,7 +45,7 @@ def img_3x4():
 
 
 @pytest.fixture
-def img_mask_3x4():
+def mask_3x4():
     """
     Generates a mask  3x4
 
@@ -54,11 +54,11 @@ def img_mask_3x4():
     out : ndarray
         3x4 uint8 image
     """
-    img = img_3x4()
+
     mask = np.array([[0, 1, 1, 1],
                     [0, 1, 1, 0],
                     [0, 1, 1, 0]]).reshape((3, 4)).astype(np.uint8)
-    return img, mask
+    return mask
 
 
 @pytest.fixture
@@ -78,7 +78,7 @@ def img_3x3():
 
 
 @pytest.fixture
-def img_mask_3x3():
+def mask_3x3():
     """
     Generates a image+mask  3x4
 
@@ -87,11 +87,11 @@ def img_mask_3x3():
     out : ndarray
         3x4 uint8 image
     """
-    img = img_3x3()
+
     mask = np.array([[1, 1, 1],
                     [1, 1, 1],
                     [0, 1, 1]]).reshape((3, 3)).astype(np.uint8)
-    return img, mask
+    return mask
 
 
 @pytest.fixture
