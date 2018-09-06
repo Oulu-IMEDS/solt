@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-from .constants import allowed_paddings, allowed_crops, allowed_noise_types
+from .constants import allowed_paddings, allowed_crops
 from .data import img_shape_checker
 from .data import KeyPoints, DataContainer
 from .base_transforms import BaseTransform, MatrixTransform, PaddingPropertyHolder, DataDependentSamplingTransform
@@ -619,8 +619,16 @@ class ImageSaltAndPepper(DataDependentSamplingTransform):
     @img_shape_checker
     def _apply_img(self, img):
         img = img.copy()
-        # TODO: uint16 support
-        img[np.where(self.state_dict['salt'])] = 255
+
+        img_max = None
+        if img.dtype == 'uint8':
+            img_max = 255
+        elif img.dtype == 'uint16':
+            img_max = 65535
+        else:
+            raise NotImplementedError
+
+        img[np.where(self.state_dict['salt'])] = img_max
         img[np.where(self.state_dict['pepper'])] = 0
         return img
 
