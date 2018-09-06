@@ -6,3 +6,8 @@ notebooks/test/
 solt.egg-info/
 tests/.pytest_cache/
 .eggs/
+.gitignore~
+.idea/.name
+.idea/dictionaries/
+.idea/workspace.xml
+notebooks/.ipynb_checkpoints/
