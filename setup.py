@@ -16,11 +16,11 @@ setup(
     author="Aleksei Tiulpin",
     author_email='aleksei.tiulpin@oulu.fi',
     classifiers=[
-        'Development Status :: 2 - Alpha',
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Science/Research',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
-        'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
     ],
     description="Optimized data augmentation library for Deep Learning",
