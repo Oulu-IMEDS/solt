@@ -296,7 +296,7 @@ class RandomProjection(MatrixTransform):
         self.state_dict['transform_matrix'] = M
 
 
-class PadTransform(BaseTransform, PaddingPropertyHolder):
+class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
     def __init__(self, pad_to, padding=None):
         """
         Transformation, which pads the input to a given size
@@ -317,24 +317,50 @@ class PadTransform(BaseTransform, PaddingPropertyHolder):
         PaddingPropertyHolder.__init__(self, padding)
         assert isinstance(pad_to, tuple) or isinstance(pad_to, int)
         if isinstance(pad_to, int):
-            pad_to = tuple(pad_to, pad_to)
+            pad_to = (pad_to, pad_to)
 
         self._pad_to = pad_to
 
-    def sample_transform(self):
-        pass
+    def sample_transform_from_data(self, data: DataContainer):
+        DataDependentSamplingTransform.sample_transform_from_data(self, data)
 
-    def _apply_img_or_mask(self, img):
-        h = img.shape[0]
-        w = img.shape[1]
+        for obj, t in data:
+            if t == 'M' or t == 'I':
+                h = obj.shape[0]
+                w = obj.shape[1]
+                break
+            elif t == 'P':
+                h = obj.H
+                w = obj.W
+                break
+            else:
+                continue
 
         pad_w = (self._pad_to[0] - w) // 2
         pad_h = (self._pad_to[1] - h) // 2
-        assert pad_h >= 0
-        assert pad_w >= 0
+
+        pad_h_top = pad_h
+        pad_h_bottom = pad_h + (self._pad_to[1] - h) % 2
+
+        pad_w_left = pad_w
+        pad_w_right = pad_w + (self._pad_to[0] - w) % 2
+
+        if pad_h <= 0:
+            pad_h_top = 0
+            pad_h_bottom = 0
+
+        if pad_w <= 0:
+            pad_w_left = 0
+            pad_w_right = 0
+
+        self.state_dict = {'pad_h': (pad_h_top, pad_h_bottom), 'pad_w': (pad_w_left, pad_w_right)}
+
+    def _apply_img_or_mask(self, img):
+        pad_h_top, pad_h_bottom = self.state_dict['pad_h']
+        pad_w_left, pad_w_right = self.state_dict['pad_w']
 
         padding = allowed_paddings[self.padding[0]]
-        return cv2.copyMakeBorder(img, pad_h, pad_h+(self._pad_to[1] - h) % 2, pad_w, pad_w + (self._pad_to[0] - w) % 2, padding, value=0)
+        return cv2.copyMakeBorder(img, pad_h_top, pad_h_bottom, pad_w_left, pad_w_right, padding, value=0)
 
     @img_shape_checker
     def _apply_img(self, img):
@@ -350,13 +376,13 @@ class PadTransform(BaseTransform, PaddingPropertyHolder):
         assert self.padding[0] == 'z'
         pts_data = pts.data.copy()
 
-        pad_w = (self._pad_to[0] - pts.H) // 2
-        pad_h = (self._pad_to[1] - pts.W) // 2
+        pad_h_top, pad_h_bottom = self.state_dict['pad_h']
+        pad_w_left, pad_w_right = self.state_dict['pad_w']
 
-        pts_data[:, 0] += pad_w
-        pts_data[:, 1] += pad_h
+        pts_data[:, 0] += pad_w_left
+        pts_data[:, 1] += pad_h_top
 
-        return KeyPoints(pts_data, self._pad_to[1], self._pad_to[0])
+        return KeyPoints(pts_data, pad_h_top + pts.H + pad_h_bottom, pad_w_left + pts.W + pad_w_right)
 
 
 class CropTransform(DataDependentSamplingTransform):
@@ -417,14 +443,16 @@ class CropTransform(DataDependentSamplingTransform):
             if t == 'M' or t == 'I':
                 h = obj.shape[0]
                 w = obj.shape[1]
+                break
             elif t == 'P':
                 h = obj.H
                 w = obj.W
+                break
             else:
                 continue
 
-        assert self.crop_size[0] < w
-        assert self.crop_size[1] < h
+        assert self.crop_size[0] <= w
+        assert self.crop_size[1] <= h
 
         if self.crop_mode == 'c':
             x = w // 2 - self.crop_size[0] // 2
