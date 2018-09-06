@@ -11,3 +11,5 @@ tests/.pytest_cache/
 .idea/dictionaries/
 .idea/workspace.xml
 notebooks/.ipynb_checkpoints/
+.pytest_cache/
+tests/__pycache__/
