@@ -16,33 +16,33 @@ def test_data_item_create_img(img_2x2):
     assert dc[0][1] == 'I'
 
 
-def test_pipeline_empty(img_2x2):
+def test_stream_empty(img_2x2):
     img = img_2x2
     dc = augs_data.DataContainer((img,), 'I')
-    pipeline = augs_core.Pipeline()
-    res, _ = pipeline(dc)[0]
+    stream = augs_core.Stream()
+    res, _ = stream(dc)[0]
     assert np.all(res == img)
 
 
-def test_empty_pipeline_selective():
+def test_empty_stream_selective():
     with pytest.raises(AssertionError):
-        augs_core.SelectivePipeline()
+        augs_core.SelectiveStream()
 
 
-def test_nested_pipeline(img_mask_3x4):
+def test_nested_stream(img_mask_3x4):
     img, mask = img_mask_3x4
     dc = augs_data.DataContainer((img, mask), 'IM')
 
-    pipeline = augs_core.Pipeline([
+    stream = augs_core.Stream([
         imtrf.RandomFlip(p=1, axis=0),
         imtrf.RandomFlip(p=1, axis=1),
-        augs_core.Pipeline([
+        augs_core.Stream([
             imtrf.RandomFlip(p=1, axis=1),
             imtrf.RandomFlip(p=1, axis=0),
         ])
     ])
 
-    dc = pipeline(dc)
+    dc = stream(dc)
     img_res, t0 = dc[0]
     mask_res, t1 = dc[1]
 
@@ -54,16 +54,16 @@ def test_image_shape_equal_3_after_nested_flip(img_3x4):
     img = img_3x4
     dc = augs_data.DataContainer((img, ), 'I')
 
-    pipeline = augs_core.Pipeline([
+    stream = augs_core.Stream([
         imtrf.RandomFlip(p=1, axis=0),
         imtrf.RandomFlip(p=1, axis=1),
-        augs_core.Pipeline([
+        augs_core.Stream([
             imtrf.RandomFlip(p=1, axis=1),
             imtrf.RandomFlip(p=1, axis=0),
         ])
     ])
 
-    dc = pipeline(dc)
+    dc = stream(dc)
     img_res, _ = dc[0]
 
     assert np.array_equal(len(img.shape), 3)
@@ -113,7 +113,7 @@ def test_fusion_happens(img_5x5):
     img = img_5x5
     dc = augs_data.DataContainer((img,), 'I')
 
-    ppl = augs_core.Pipeline([
+    ppl = augs_core.Stream([
         imtrf.RandomScale((0.5, 1.5), (0.5, 1.5), p=1),
         imtrf.RandomRotate((-50, 50), padding='z', p=1),
         imtrf.RandomShear((-0.5, 0.5), (-0.5, 0.5),padding='z', p=1),
@@ -128,7 +128,7 @@ def test_fusion_rotate_360(img_5x5):
     img = img_5x5
     dc = augs_data.DataContainer((img,), 'I')
 
-    ppl = augs_core.Pipeline([
+    ppl = augs_core.Stream([
         imtrf.RandomRotate((45, 45), padding='z', p=1),
         imtrf.RandomRotate((45, 45), padding='z', p=1),
         imtrf.RandomRotate((45, 45), padding='z', p=1),
@@ -148,7 +148,7 @@ def test_fusion_rotate_360_flip_rotate_360(img_5x5):
     img = img_5x5
     dc = augs_data.DataContainer((img,), 'I')
 
-    ppl = augs_core.Pipeline([
+    ppl = augs_core.Stream([
         imtrf.RandomRotate((45, 45), padding='z', p=1),
         imtrf.RandomRotate((45, 45), padding='z', p=1),
         imtrf.RandomRotate((45, 45), padding='z', p=1),
@@ -158,7 +158,7 @@ def test_fusion_rotate_360_flip_rotate_360(img_5x5):
         imtrf.RandomRotate((45, 45), padding='z', p=1),
         imtrf.RandomRotate((45, 45), padding='z', p=1),
         imtrf.RandomFlip(p=1, axis=1),
-        augs_core.Pipeline([
+        augs_core.Stream([
             imtrf.RandomRotate((45, 45), padding='z', p=1),
             imtrf.RandomRotate((45, 45), padding='z', p=1),
             imtrf.RandomRotate((45, 45), padding='z', p=1),
@@ -175,8 +175,8 @@ def test_fusion_rotate_360_flip_rotate_360(img_5x5):
     np.testing.assert_array_almost_equal(cv2.flip(img, 1).reshape(5, 5, 1), img_res)
 
 
-def test_pipeline_settings():
-    ppl = augs_core.Pipeline([
+def test_stream_settings():
+    ppl = augs_core.Stream([
         imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
         imtrf.RandomRotate((45, 45), padding='r', p=1),
         imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
@@ -191,8 +191,8 @@ def test_pipeline_settings():
         assert trf.padding[0] == 'z'
 
 
-def test_pipeline_settings_replacement():
-    ppl = augs_core.Pipeline([
+def test_stream_settings_replacement():
+    ppl = augs_core.Stream([
         imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
         imtrf.RandomRotate((45, 45), padding='r', p=1),
         imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
@@ -210,8 +210,8 @@ def test_pipeline_settings_replacement():
         assert trf.padding[0] == 'r'
 
 
-def test_pipeline_settings_strict():
-    ppl = augs_core.Pipeline([
+def test_stream_settings_strict():
+    ppl = augs_core.Stream([
         imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
         imtrf.RandomRotate((45, 45), padding='r', p=1),
         imtrf.RandomRotate((45, 45), interpolation=('bicubic', 'strict'), padding=('r', 'strict'), p=1),
@@ -230,11 +230,11 @@ def test_pipeline_settings_strict():
             assert trf.padding[0] == 'z'
 
 
-def test_pipeline_nested_settings():
-    ppl = augs_core.Pipeline([
+def test_stream_nested_settings():
+    ppl = augs_core.Stream([
         imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
         imtrf.RandomRotate((45, 45), padding='r', p=1),
-        augs_core.Pipeline([
+        augs_core.Stream([
             imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
             imtrf.RandomRotate((45, 45), padding='r', p=1),
         ], interpolation='bicubic', padding='r'

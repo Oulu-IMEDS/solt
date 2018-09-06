@@ -5,9 +5,9 @@ from .data import DataContainer
 from .base_transforms import BaseTransform, MatrixTransform, DataDependentSamplingTransform
 
 
-class Pipeline(object):
+class Stream(object):
     """
-    Pipeline class. Executes the list of transformations
+    Stream class. Executes the list of transformations
 
     """
     def __init__(self, transforms=None, interpolation=None, padding=None):
@@ -19,11 +19,11 @@ class Pipeline(object):
         transforms : list or None
             List of transforms to execute
         interpolation : str or None
-            Pipeline-wide settings for interpolation. If for some particular transform your would like
+            Stream-wide settings for interpolation. If for some particular transform your would like
             to still use its own mode, simply pass (<interpolation_value>, 'strict')
             in the constructor of that transform.
         padding : str or None
-            Pipeline-wide settings for padding. If for some particular transform your would like
+            Stream-wide settings for padding. If for some particular transform your would like
             to still use its own mode, simply pass (<padding_value>, 'strict')
             in the constructor of that transform.
 
@@ -34,7 +34,7 @@ class Pipeline(object):
         self.__interpolation = interpolation
         self.__padding = padding
         self.__transforms = transforms
-        self._reset_pipeline_settings()
+        self._reset_stream_settings()
 
     @property
     def interpolation(self):
@@ -43,7 +43,7 @@ class Pipeline(object):
     @interpolation.setter
     def interpolation(self, value):
         self.__interpolation = value
-        self._reset_pipeline_settings()
+        self._reset_stream_settings()
 
     @property
     def padding(self):
@@ -52,11 +52,11 @@ class Pipeline(object):
     @padding.setter
     def padding(self, value):
         self.__padding = value
-        self._reset_pipeline_settings()
+        self._reset_stream_settings()
 
-    def _reset_pipeline_settings(self):
+    def _reset_stream_settings(self):
         """
-        Protected method, resets pipeline's settings
+        Protected method, resets stream's settings
 
         """
         for trf in self.__transforms:
@@ -64,21 +64,21 @@ class Pipeline(object):
                 if isinstance(trf, BaseTransform):
                     if trf.interpolation[1] != 'strict':
                         trf.interpolation = (self.__interpolation, trf.interpolation[1])
-                elif isinstance(trf, Pipeline):
+                elif isinstance(trf, Stream):
                     trf.interpolation = self.interpolation
 
             if self.__padding is not None and hasattr(trf, 'padding'):
                 if isinstance(trf, BaseTransform):
                     if trf.padding[1] != 'strict':
                         trf.padding = (self.__padding, trf.padding[1])
-                elif isinstance(trf, Pipeline):
+                elif isinstance(trf, Stream):
                     trf.padding = self.__padding
                 else:
                     raise NotImplementedError
 
     def serialize(self):
         """
-        Serializes a pipeline into an OrderedDict
+        Serializes a Stream into an OrderedDict
 
         Returns
         -------
@@ -114,7 +114,7 @@ class Pipeline(object):
             Result
 
         """
-        return Pipeline.exec_pipeline(self.__transforms, data)
+        return Stream.exec_stream(self.__transforms, data)
 
     @staticmethod
     def optimize_stack(transforms):
@@ -135,7 +135,7 @@ class Pipeline(object):
         # First we should create a stack
         transforms_stack = []
         for trf in transforms:
-            assert isinstance(trf, Pipeline) or isinstance(trf, BaseTransform)
+            assert isinstance(trf, Stream) or isinstance(trf, BaseTransform)
             if isinstance(trf, BaseTransform) and not isinstance(trf, DataDependentSamplingTransform):
                 if trf.use_transform():
                     trf.sample_transform()
@@ -150,12 +150,12 @@ class Pipeline(object):
                     else:
                         transforms_stack.append(trf)
             else:
-                transforms_stack.append(trf)  # It means that the transform is actually a nested pipeline
+                transforms_stack.append(trf)  # It means that the transform is actually a nested Stream
 
         return transforms_stack
 
     @staticmethod
-    def exec_pipeline(transforms, data):
+    def exec_stream(transforms, data):
         """
         Static method, executes the list of transformations for a given data point.
 
@@ -173,20 +173,20 @@ class Pipeline(object):
         """
 
         # Performing the transforms using the optimized stack
-        transforms = Pipeline.optimize_stack(transforms)
+        transforms = Stream.optimize_stack(transforms)
         for trf in transforms:
             if isinstance(trf, BaseTransform) and not isinstance(trf, DataDependentSamplingTransform):
                 data = trf.apply(data)
-            elif isinstance(trf, Pipeline) or isinstance(trf, DataDependentSamplingTransform):
+            elif isinstance(trf, Stream) or isinstance(trf, DataDependentSamplingTransform):
                 data = trf(data)
             else:
                 raise NotImplementedError
         return data
 
 
-class SelectivePipeline(Pipeline):
+class SelectiveStream(Stream):
     """
-    Pipeline, which uniformly selects n out of k given transforms.
+    Stream, which uniformly selects n out of k given transforms.
 
     """
     def __init__(self, transforms=None, n=1, probs=None):
@@ -200,7 +200,7 @@ class SelectivePipeline(Pipeline):
         n : int
             How many transform to sample
         """
-        super(SelectivePipeline, self).__init__(transforms)
+        super(SelectiveStream, self).__init__(transforms)
         assert 0 < n <= len(self.transforms)
         if probs is not None:
             assert len(probs) == n
@@ -223,7 +223,7 @@ class SelectivePipeline(Pipeline):
         """
         if len(self.transforms) > 0:
             trfs = np.random.choice(self.transforms, self.n, replace=False, p=self.probs)
-            trfs = Pipeline.optimize_stack(trfs)
-            data = Pipeline.exec_pipeline(trfs, data)
+            trfs = Stream.optimize_stack(trfs)
+            data = Stream.exec_stream(trfs, data)
         return data
 

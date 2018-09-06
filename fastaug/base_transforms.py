@@ -12,7 +12,7 @@ def validate_parameter(parameter, allowed_modes, default_value, basic_type=str):
     """
     Validates the parameter and wraps it into a tuple with the inheritance option (if parameter is not a tuple already).
     In this case the parameter will become a tuple (parameter, 'inherit'),
-    which will indicate that the pipeline settings will override this parameter.
+    which will indicate that the stream settings will override this parameter.
     In case if the parameter is already a tuple specified as parameter=(value, 'strict'), then the parameter
     will not be overrided.
 

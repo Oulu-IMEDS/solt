@@ -5,7 +5,7 @@ from .constants import allowed_paddings, allowed_crops
 from .data import img_shape_checker
 from .data import KeyPoints, DataContainer
 from .base_transforms import BaseTransform, MatrixTransform, PaddingPropertyHolder, DataDependentSamplingTransform
-from .core import Pipeline
+from .core import Stream
 
 
 class RandomFlip(BaseTransform):
@@ -263,8 +263,8 @@ class RandomProjection(MatrixTransform):
 
         Parameters
         ----------
-        affine_transforms : Pipeline or None
-            Pipeline object, which has a parameterized Affine Transform. If it is None, then empty pipeline is created.
+        affine_transforms : Stream or None
+            Stream object, which has a parameterized Affine Transform. If it is None, then empty stream is created.
         v_range : tuple or None.
             Projective parameters range. If None, then v_range = (0, 0)
         p : float
@@ -273,11 +273,11 @@ class RandomProjection(MatrixTransform):
         super(RandomProjection, self).__init__(p=p)
 
         if affine_transforms is None:
-            affine_transforms = Pipeline()
+            affine_transforms = Stream()
 
         if v_range is None:
             v_range = (0, 0)
-        assert isinstance(affine_transforms, Pipeline)
+        assert isinstance(affine_transforms, Stream)
         for trf in affine_transforms.transforms:
             assert isinstance(trf, MatrixTransform)
 
@@ -289,7 +289,7 @@ class RandomProjection(MatrixTransform):
         self.__vrange = v_range  # projection components.
 
     def sample_transform(self):
-        trf = Pipeline.optimize_stack(self.__affine_transforms.transforms)[0]
+        trf = Stream.optimize_stack(self.__affine_transforms.transforms)[0]
         M = trf.state_dict['transform_matrix'].copy()
         M[-1, 0] = np.random.uniform(self.__vrange[0], self.__vrange[1])
         M[-1, 1] = np.random.uniform(self.__vrange[0], self.__vrange[1])
@@ -313,13 +313,16 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
         padding :
             Padding type.
         """
-        BaseTransform.__init__(self, p=1)
+        DataDependentSamplingTransform.__init__(self, p=1)
         PaddingPropertyHolder.__init__(self, padding)
         assert isinstance(pad_to, tuple) or isinstance(pad_to, int)
         if isinstance(pad_to, int):
             pad_to = (pad_to, pad_to)
 
         self._pad_to = pad_to
+
+    def sample_transform(self):
+        raise NotImplementedError
 
     def sample_transform_from_data(self, data: DataContainer):
         DataDependentSamplingTransform.sample_transform_from_data(self, data)
@@ -345,11 +348,11 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
         pad_w_left = pad_w
         pad_w_right = pad_w + (self._pad_to[0] - w) % 2
 
-        if pad_h <= 0:
+        if pad_h < 0:
             pad_h_top = 0
             pad_h_bottom = 0
 
-        if pad_w <= 0:
+        if pad_w < 0:
             pad_w_left = 0
             pad_w_right = 0
 
@@ -647,7 +650,6 @@ class ImageSaltAndPepper(DataDependentSamplingTransform):
     @img_shape_checker
     def _apply_img(self, img):
         img = img.copy()
-
         img_max = None
         if img.dtype == 'uint8':
             img_max = 255

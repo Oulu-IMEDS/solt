@@ -12,11 +12,11 @@ def test_img_mask_vertical_flip(img_mask_3x4):
     img, mask = img_mask_3x4
     dc = augs_data.DataContainer((img, mask), 'IM')
 
-    pipeline = augs_core.Pipeline([
+    stream = augs_core.Stream([
         trf.RandomFlip(p=1, axis=0)
     ])
 
-    dc = pipeline(dc)
+    dc = stream(dc)
     img_res, _ = dc[0]
     mask_res, _ = dc[1]
 
@@ -29,11 +29,11 @@ def test_img_mask_mask_vertical_flip(img_mask_3x4):
     img, mask = img_mask_3x4
     dc = augs_data.DataContainer((img, mask, mask), 'IMM')
 
-    pipeline = augs_core.Pipeline([
+    stream = augs_core.Stream([
         trf.RandomFlip(p=1, axis=0)
     ])
 
-    dc = pipeline(dc)
+    dc = stream(dc)
     img_res, _ = dc[0]
     mask_res, _ = dc[1]
 
@@ -46,11 +46,11 @@ def test_img_mask_horizontal_flip(img_mask_3x4):
     img, mask = img_mask_3x4
     dc = augs_data.DataContainer((img, mask), 'IM')
 
-    pipeline = augs_core.Pipeline([
+    stream = augs_core.Stream([
         trf.RandomFlip(p=1, axis=1)
     ])
 
-    dc = pipeline(dc)
+    dc = stream(dc)
     img_res, _ = dc[0]
     mask_res, _ = dc[1]
 
@@ -63,12 +63,12 @@ def test_img_mask_vertical_horizontal_flip(img_mask_3x4):
     img, mask = img_mask_3x4
     dc = augs_data.DataContainer((img, mask), 'IM')
 
-    pipeline = augs_core.Pipeline([
+    stream = augs_core.Stream([
         trf.RandomFlip(p=1, axis=0),
         trf.RandomFlip(p=1, axis=1)
     ])
 
-    dc = pipeline(dc)
+    dc = stream(dc)
     img_res, _ = dc[0]
     mask_res, _ = dc[1]
 
@@ -80,36 +80,36 @@ def test_img_mask_vertical_horizontal_flip(img_mask_3x4):
 def test_keypoints_vertical_flip():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
     kpts = augs_data.KeyPoints(kpts_data, 2, 2)
-    pipeline = trf.RandomFlip(p=1, axis=0)
+    stream = trf.RandomFlip(p=1, axis=0)
     dc = augs_data.DataContainer((kpts, ), 'P')
 
-    dc_res = pipeline(dc)
+    dc_res = stream(dc)
 
     assert np.array_equal(dc_res[0][0].data, np.array([[0, 1], [0, 0], [1, 1], [1, 0]]).reshape((4, 2)))
 
 
-def test_keypoints_horizontal_flip_within_pipeline():
+def test_keypoints_horizontal_flip_within_stream():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
     kpts = augs_data.KeyPoints(kpts_data, 2, 2)
-    pipeline = augs_core.Pipeline([
+    stream = augs_core.Stream([
         trf.RandomFlip(p=1, axis=1)
         ])
     dc = augs_data.DataContainer((kpts, ), 'P')
 
-    dc_res = pipeline(dc)
+    dc_res = stream(dc)
 
     assert np.array_equal(dc_res[0][0].data, np.array([[1, 0], [1, 1], [0, 0], [0, 1]]).reshape((4, 2)))
 
 
-def test_keypoints_vertical_flip_within_pipeline():
+def test_keypoints_vertical_flip_within_stream():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
     kpts = augs_data.KeyPoints(kpts_data, 2, 2)
-    pipeline = augs_core.Pipeline([
+    stream = augs_core.Stream([
         trf.RandomFlip(p=1, axis=0)
         ])
     dc = augs_data.DataContainer((kpts, ), 'P')
 
-    dc_res = pipeline(dc)
+    dc_res = stream(dc)
 
     assert np.array_equal(dc_res[0][0].data, np.array([[0, 1], [0, 0], [1, 1], [1, 0]]).reshape((4, 2)))
 
@@ -123,8 +123,8 @@ def test_rotate_90_img_mask_keypoints(img_mask_3x3):
 
     dc = augs_data.DataContainer((img, mask, kpts,), 'IMP')
     # Defining the 90 degrees transform (clockwise)
-    pipeline = trf.RandomRotate(rotation_range=(90, 90), p=1)
-    dc_res = pipeline(dc)
+    stream = trf.RandomRotate(rotation_range=(90, 90), p=1)
+    dc_res = stream(dc)
 
     img_res, _ = dc_res[0]
     mask_res, _ = dc_res[1]
@@ -141,47 +141,47 @@ def test_rotate_90_img_mask_keypoints(img_mask_3x3):
 
 
 def test_zoom_x_axis_odd(img_5x5):
-    pipeline = trf.RandomScale(range_x=(0.5, 0.5), range_y=(1, 1), same=False, p=1)
+    stream = trf.RandomScale(range_x=(0.5, 0.5), range_y=(1, 1), same=False, p=1)
     dc = augs_data.DataContainer((img_5x5, ), 'I')
     H, W = img_5x5.shape[0], img_5x5.shape[1]
-    img_res = pipeline(dc)[0][0]
+    img_res = stream(dc)[0][0]
     assert H == img_res.shape[0]
     assert W // 2 == img_res.shape[1]
 
 
 def test_scale_x_axis_even(img_6x6):
-    pipeline = trf.RandomScale((0.5, 0.5), (1, 1), same=False, p=1)
+    stream = trf.RandomScale((0.5, 0.5), (1, 1), same=False, p=1)
     dc = augs_data.DataContainer((img_6x6, ), 'I')
     H, W = img_6x6.shape[0], img_6x6.shape[1]
-    img_res = pipeline(dc)[0][0]
+    img_res = stream(dc)[0][0]
     assert H == img_res.shape[0]
     assert W // 2 == img_res.shape[1]
 
 
 def test_scale_xy_axis_odd(img_5x5):
-    pipeline = trf.RandomScale((0.5, 0.5), (3, 3), same=False, p=1)
+    stream = trf.RandomScale((0.5, 0.5), (3, 3), same=False, p=1)
     dc = augs_data.DataContainer((img_5x5, ), 'I')
     H, W = img_5x5.shape[0], img_5x5.shape[1]
-    img_res = pipeline(dc)[0][0]
+    img_res = stream(dc)[0][0]
     assert H * 3 == img_res.shape[0]
     assert W // 2 == img_res.shape[1]
 
 
 def test_scale_xy_axis_even(img_6x6):
-    pipeline = trf.RandomScale((0.5, 0.5), (2, 2), same=False, p=1)
+    stream = trf.RandomScale((0.5, 0.5), (2, 2), same=False, p=1)
     dc = augs_data.DataContainer((img_6x6, ), 'I')
     H, W = img_6x6.shape[0], img_6x6.shape[1]
-    img_res = pipeline(dc)[0][0]
+    img_res = stream(dc)[0][0]
     assert H * 2 == img_res.shape[0]
     assert W // 2 == img_res.shape[1]
 
 
 def test_scale_img_mask(img_mask_3x4):
-    pipeline = trf.RandomScale((0.5, 0.5), (2, 2), same=False, p=1)
+    stream = trf.RandomScale((0.5, 0.5), (2, 2), same=False, p=1)
     dc = augs_data.DataContainer(img_mask_3x4, 'IM')
     H, W = img_mask_3x4[0].shape[0], img_mask_3x4[0].shape[1]
-    img_res = pipeline(dc)[0][0]
-    mask_res = pipeline(dc)[1][0]
+    img_res = stream(dc)[0][0]
+    mask_res = stream(dc)[1][0]
     assert H * 2 == img_res.shape[0],  W // 2 == img_res.shape[1]
     assert H * 2 == mask_res.shape[0],  W // 2 == mask_res.shape[1]
 
@@ -194,9 +194,9 @@ def test_keypoints_assert_reflective(img_mask_3x3):
 
     dc = augs_data.DataContainer((img, mask, kpts,), 'IMP')
     # Defining the 90 degrees transform (clockwise)
-    pipeline = trf.RandomRotate(rotation_range=(20, 20), p=1, padding='r')
+    stream = trf.RandomRotate(rotation_range=(20, 20), p=1, padding='r')
     with pytest.raises(ValueError):
-        pipeline(dc)
+        stream(dc)
 
 
 def test_padding_img_2x2_4x4(img_2x2):
@@ -284,11 +284,11 @@ def test_3x3_pad_to_20x20_center_crop_3x3_shape_stayes_unchanged(img_mask_3x3):
 
     dc = augs_data.DataContainer((img, mask, kpts,), 'IMP')
 
-    pipeline = augs_core.Pipeline([
+    stream = augs_core.Stream([
         trf.PadTransform((20, 20)),
         trf.CropTransform((3, 3))
     ])
-    res = pipeline(dc)
+    res = stream(dc)
 
     assert (res[0][0].shape[0] == 3) and (res[0][0].shape[1] == 3)
     assert (res[1][0].shape[0] == 3) and (res[1][0].shape[1] == 3)
@@ -303,11 +303,11 @@ def test_2x2_pad_to_20x20_center_crop_2x2(img_mask_2x2):
 
     dc = augs_data.DataContainer((img, mask, kpts,), 'IMP')
 
-    pipeline = augs_core.Pipeline([
+    stream = augs_core.Stream([
         trf.PadTransform((20, 20)),
         trf.CropTransform((2, 2))
     ])
-    res = pipeline(dc)
+    res = stream(dc)
 
     assert (res[0][0].shape[0] == 2) and (res[0][0].shape[1] == 2)
     assert (res[1][0].shape[0] == 2) and (res[1][0].shape[1] == 2)
@@ -326,11 +326,11 @@ def test_6x6_pad_to_20x20_center_crop_6x6(img_6x6):
 
     dc = augs_data.DataContainer((img,  kpts,), 'IP')
 
-    pipeline = augs_core.Pipeline([
+    stream = augs_core.Stream([
         trf.PadTransform((20, 20)),
         trf.CropTransform((6, 6))
     ])
-    res = pipeline(dc)
+    res = stream(dc)
 
     assert (res[0][0].shape[0] == 6) and (res[0][0].shape[1] == 6)
     assert (res[1][0].H == 6) and (res[1][0].W == 6)
