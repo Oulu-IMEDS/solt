@@ -619,9 +619,63 @@ class ImageSaltAndPepper(DataDependentSamplingTransform):
     @img_shape_checker
     def _apply_img(self, img):
         img = img.copy()
+        # TODO: uint16 support
         img[np.where(self.state_dict['salt'])] = 255
         img[np.where(self.state_dict['pepper'])] = 0
         return img
+
+    def _apply_mask(self, mask):
+        return mask
+
+    def _apply_labels(self, labels):
+        return labels
+
+    def _apply_pts(self, pts):
+        return pts
+
+
+class ImageGammaCorrection(BaseTransform):
+    """
+    Transform applies random gamma correction
+
+    """
+    def __init__(self, p=0.5, gamma_range=0.1, data_indices=None):
+        """
+        Constructor.
+
+        Parameters
+        ----------
+        p : float
+            Probability of applying this transfor,
+        gamma_range : tuple or float
+            Gain of the noise. Indicates percentage of indices, which will be changed.
+            If float, then gain_range = (1-gamma_range, 1+gamma_range).
+        data_indices : tuple or None
+            Indices of the images within the data container to which this transform needs to be applied.
+            Every element within the tuple must be integer numebers.
+            If None, then the transform will be applied to all the images withing the DataContainer.
+        """
+        super(ImageGammaCorrection, self).__init__(p=p, data_indices=data_indices)
+
+        assert isinstance(gamma_range, float) or isinstance(gamma_range, tuple)
+
+        if isinstance(gamma_range, float):
+            gamma_range = (1-gamma_range, 1+gamma_range)
+
+        assert gamma_range[0] >= 0
+
+        self._gamma_range = gamma_range
+
+    def sample_transform(self):
+        gamma = np.random.uniform(self._gamma_range[0], self._gamma_range[1])
+        inv_gamma = 1.0 / gamma
+        lut = np.array([((i / 255.0) ** inv_gamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
+
+        self.state_dict = {'gamma': gamma, 'LUT':lut}
+
+    @img_shape_checker
+    def _apply_img(self, img):
+        return cv2.LUT(img, self.state_dict['LUT'])
 
     def _apply_mask(self, mask):
         return mask
