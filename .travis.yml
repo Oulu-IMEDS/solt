@@ -13,6 +13,8 @@ script:
 after_success:
 - coveralls
 deploy:
+  on:
+    branch: master
   provider: pypi
   user: lext
   password:
