@@ -8,6 +8,6 @@ install:
   - pip install pytest-pep8 coverage pytest-cov -U 
   - pip install -e .
 script:
-  - py.test tests/ --cov --cov-report term-missing -v
+  - py.test tests --cov solt --cov-report term-missing -v
 after_success:
   - coveralls
