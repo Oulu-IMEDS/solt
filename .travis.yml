@@ -8,10 +8,13 @@ install:
 - pip install codecov
 - pip install pytest-pep8 coverage pytest-cov -U
 - pip install -e .
+- pip install travis-sphinx
 script:
 - py.test tests --cov solt --cov-report term-missing -v
+- travis-sphinx build --source=./doc/source/
 after_success:
 - codecov
+- travis-sphinx deploy
 deploy:
   on:
     tags: true

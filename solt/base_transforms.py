@@ -192,12 +192,12 @@ class BaseTransform(metaclass=ABCMeta):
 
         Parameters
         ----------
-        img : ndarray
+        img : numpy.ndarray
             Image to be augmented
 
         Returns
         -------
-        out : ndarray
+        out : numpy.ndarray
 
         """
         pass
@@ -208,12 +208,12 @@ class BaseTransform(metaclass=ABCMeta):
 
         Parameters
         ----------
-        mask : ndarray
+        mask : numpy.ndarray
             Mask to be augmented
 
         Returns
         -------
-        out : ndarray
+        out : numpy.ndarray
             Result
 
         """
@@ -225,12 +225,12 @@ class BaseTransform(metaclass=ABCMeta):
 
         Parameters
         ----------
-        labels : ndarray
+        labels : numpy.ndarray
             Array of labels.
 
         Returns
         -------
-        out : ndarray
+        out : numpy.ndarray
             Result
 
         """
@@ -326,12 +326,12 @@ class DataDependentSamplingTransform(BaseTransform):
 
         Parameters
         ----------
-        img : ndarray
+        img : numpy.ndarray
             Image to be augmented
 
         Returns
         -------
-        out : ndarray
+        out : numpy.ndarray
 
         """
         pass
@@ -342,7 +342,7 @@ class DataDependentSamplingTransform(BaseTransform):
 
         Parameters
         ----------
-        mask : ndarray
+        mask : numpy.ndarray
             Mask to be augmented
 
         Returns
@@ -359,12 +359,12 @@ class DataDependentSamplingTransform(BaseTransform):
 
         Parameters
         ----------
-        labels : ndarray
+        labels : numpy.ndarray
             Array of labels.
 
         Returns
         -------
-        out : ndarray
+        out : numpy.ndarray
             Result
 
         """
@@ -391,10 +391,13 @@ class DataDependentSamplingTransform(BaseTransform):
 class PaddingPropertyHolder(object):
     """PaddingPropertyHolder
 
+    Adds padding property to a class and validates it using the allowed paddings from constants.
+
     Parameters
     ----------
     padding : None or str
-        Pading mode.
+        Padding mode.
+
     """
     def __init__(self, padding=None):
         super(PaddingPropertyHolder, self).__init__()
@@ -410,6 +413,16 @@ class PaddingPropertyHolder(object):
 
 
 class InterpolationPropertyHolder(object):
+    """InterpolationPropertyHolder
+
+    Adds interpolation property to a class and validates it using the allowed interpolations from constants.
+
+    Parameters
+    ----------
+    interpolation : None or str
+        Padding mode.
+
+    """
     def __init__(self, interpolation=None):
         super(InterpolationPropertyHolder, self).__init__()
         self._interpolation = validate_parameter(interpolation, allowed_interpolations, 'bilinear')
@@ -427,6 +440,15 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
     """Matrix Transform abstract class. (Affine and Homography).
     Does all the transforms around the image /  center.
 
+    Parameters
+    ----------
+    interpolation : str
+        Interpolation mode.
+    padding : str
+        Padding Mode.
+    p : float
+        Probability of transform's execution.
+
     """
     def __init__(self, interpolation='bilinear', padding='z', p=0.5):
         BaseTransform.__init__(self, p=p, data_indices=None)
@@ -442,6 +464,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         Parameters
         ----------
         trf : MatrixTransform
+
         """
         assert self.state_dict is not None
         assert trf.state_dict is not None
@@ -459,6 +482,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         Returns
         -------
         None
+
         """
         pass
 
@@ -468,7 +492,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
 
         Parameters
         ----------
-        M : ndarray
+        M : numpy.ndarray
             Transform (3x3) matrix
         W : int
             Width of the coordinate frame
@@ -476,7 +500,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
             Height of the coordinate frame
         Returns
         -------
-        out : ndarray
+        out : numpy.ndarray
             Modified Transform matrix
 
         """
@@ -526,12 +550,12 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
 
         Parameters
         ----------
-        img : ndarray
+        img : numpy.ndarray
             Image or mask
 
         Returns
         -------
-        out : ndarray
+        out : numpy.ndarray
             Warped image
 
         """
@@ -549,12 +573,12 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
 
         Parameters
         ----------
-        img : ndarray
+        img : numpy.ndarray
             Input Image
 
         Returns
         -------
-        out : ndarray
+        out : numpy.ndarray
             Output Image
 
         """
@@ -562,41 +586,41 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         return self._apply_img_or_mask(img)
 
     def _apply_mask(self, mask):
-        """Abstract method, which determines the transform's behaviour when it is applied to masks HxW.
+        """Abstract method, which defines the transform's behaviour when it is applied to masks HxW.
 
         If padding is None, the default behavior (zero padding) is expected.
 
         Parameters
         ----------
-        mask : ndarray
+        mask : numpy.ndarray
             Mask to be augmented
 
         Returns
         -------
-        out : ndarray
+        out : numpy.ndarray
             Result
 
         """
         return self._apply_img_or_mask(mask)
 
     def _apply_labels(self, labels):
-        """Transform application to labels. Simply returns them.
+        """Transform's application to labels. Simply returns them.
 
         Parameters
         ----------
-        labels : ndarray
+        labels : numpy.ndarray
             Array of labels.
 
         Returns
         -------
-        out : ndarray
+        out : numpy.ndarray
             Result
 
         """
         return labels
 
     def _apply_pts(self, pts):
-        """Abstract method, which determines the transform's behaviour when it is applied to keypoints.
+        """Abstract method, which defines the transform's behaviour when it is applied to keypoints.
 
         Parameters
         ----------

@@ -4,8 +4,7 @@ allowed_types = {'I', 'M', 'P', 'L'}
 
 
 def img_shape_checker(method):
-    """
-    Decorator to ensure that the image has always 3 dimensions: WxHC
+    """Decorator to ensure that the image has always 3 dimensions: WxHC
 
     Parameters
     ----------
@@ -14,6 +13,7 @@ def img_shape_checker(method):
     Returns
     -------
     out : method of a class
+        Result
 
     """
     @wraps(method)
@@ -31,23 +31,19 @@ def img_shape_checker(method):
 
 
 class DataContainer(object):
-    """
-    Data container to encapsulate different types of data, such as images, bounding boxes, etc.
+    """Data container to encapsulate different types of data, such as images, bounding boxes, etc.
+
     The container itself is iterable according to the format.
+
+    Parameters
+    ----------
+    data : tuple
+        Data items stored in a tuple
+    fmt : str
+        Data format. Example: 'IMMM' - image and three masks.
 
     """
     def __init__(self, data, fmt):
-        """
-        Constructor
-
-        Parameters
-        ----------
-        data : tuple
-            Data items stored in a tuple
-        fmt : str
-            Data format. Example: 'IMMM' - image and three masks.
-
-        """
         if len(fmt) == 1 and not isinstance(data, tuple):
             data = (data,)
         if isinstance(data, list):
@@ -86,7 +82,7 @@ class DataContainer(object):
         Returns
         -------
         out : tuple
-            Data item (e.g. ndarray) and its type, e.g. 'I' - image.
+            Data item (e.g. numpy.ndarray) and its type, e.g. 'I' - image.
 
         """
         assert isinstance(idx, int)
@@ -97,23 +93,18 @@ class DataContainer(object):
 
 
 class KeyPoints(object):
-    """
-    Keypoints class
+    """Keypoints class
 
+    Parameters
+    ----------
+    pts : numpy.ndarray
+        Key points as an numpy.ndarray, (x, y) format.
+    H : int
+        Height of the coordinate frame.
+    W : int
+        Width of the coordinate frame.
     """
     def __init__(self, pts=None, H=None, W=None):
-        """
-        Constructor
-
-        Parameters
-        ----------
-        pts : ndarray
-            Key points as an ndarray, (x, y) format.
-        H : int
-            Height of the coordinate frame.
-        W : int
-            Width of the coordinate frame.
-        """
         self.__data = pts
         self.__H = H
         self.__W = W

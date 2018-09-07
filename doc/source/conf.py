@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('../../solt/'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'SOLT'
+project = 'solt'
 copyright = '2018, Aleksei Tiulpin, University of Oulu'
 author = 'Aleksei Tiulpin'
 
@@ -93,7 +93,7 @@ html_theme = "sphinx_rtd_theme"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+#html_static_path = [os.path.abspath('_static')]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -168,4 +168,5 @@ texinfo_documents = [
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {'https://docs.python.org/': None,
+                       'http://docs.scipy.org/doc/numpy': None}

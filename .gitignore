@@ -1,3 +1,4 @@
+doc/build/
 docs/build/
 solt/__pycache__/
 .idea/*
