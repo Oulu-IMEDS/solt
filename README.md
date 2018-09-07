@@ -1,4 +1,4 @@
-![slide](logo.png)
+![slide](doc/source/_static/logo.png)
 --------------------------------------------------------------------------------
 [![PyPI version](https://badge.fury.io/py/solt.svg)](https://badge.fury.io/py/solt)
 [![Build Status](https://travis-ci.org/MIPT-Oulu/solt.svg?branch=master)](https://travis-ci.org/MIPT-Oulu/solt)
