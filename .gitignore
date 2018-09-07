@@ -1,4 +1,5 @@
 solt/__pycache__/
+.idea/*
 .DS_Strore
 notebooks/Affine_testing.ipynb
 notebooks/annotation/
