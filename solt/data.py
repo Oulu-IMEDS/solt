@@ -1,6 +1,9 @@
 from functools import wraps
 from copy import deepcopy
-allowed_types = {'I', 'M', 'P', 'L'}
+from .constants import allowed_types
+
+
+__all__ = ['img_shape_checker', 'DataContainer', 'KeyPoints']
 
 
 def img_shape_checker(method):
