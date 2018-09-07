@@ -1,3 +1,4 @@
+docs/build/
 solt/__pycache__/
 .idea/*
 .DS_Strore
@@ -16,3 +17,5 @@ notebooks/.ipynb_checkpoints/
 tests/__pycache__/
 build/*
 dist/*
+.DS_Store
+docs/.DS_Store

@@ -9,21 +9,18 @@ from .core import Stream
 
 
 class RandomFlip(BaseTransform):
-    """
-    Performs a random flip of an image.
+    """Random Flipping transform.
+
+    Parameters
+    ----------
+    p : float
+        Probability of flip
+    axis : int
+        Axis of flip. Here, 0 stands for horizontal flipping, 1 stands for the vertical one.
 
     """
     def __init__(self, p=0.5, axis=1):
-        """
-        Constructor.
 
-        Parameters
-        ----------
-        p : float
-            Probability of flip
-        axis : int
-            Axis of flip. Here, 0 stands for horizontal flipping, 1 stands for the vertical one.
-        """
         super(RandomFlip, self).__init__(p=p)
         self.__axis = axis
 
@@ -53,27 +50,23 @@ class RandomFlip(BaseTransform):
 
 
 class RandomRotate(MatrixTransform):
-    """
-    Random rotation around the center.
+    """Random rotation around the center.
+
+    Parameters
+    ----------
+    rotation_range : tuple or float or None
+        Range of rotation.
+        If float, then (-rotation_range, rotation_range) will be used for transformation sampling.
+        if None, then rotation_range=(0,0).
+    interpolation : str or tuple or None
+        Interpolation type. Check the allowed interpolation types.
+    padding : str or tuple or None
+        Padding mode. Check the allowed padding modes.
+    p : float
+        Probability of using this transform
 
     """
     def __init__(self, rotation_range=None, interpolation='bilinear', padding='z', p=0.5):
-        """
-        Constructor.
-
-        Parameters
-        ----------
-        rotation_range : tuple or float or None
-            Range of rotation.
-            If float, then (-rotation_range, rotation_range) will be used for transformation sampling.
-            if None, then rotation_range=(0,0).
-        interpolation : str or tuple or None.
-            Interpolation type. Check the allowed interpolation types.
-        padding : str or tuple or None.
-            Padding mode. Check the allowed padding modes.
-        p : float
-            Probability of using this transform
-        """
         super(RandomRotate, self).__init__(interpolation=interpolation, padding=padding, p=p)
         if rotation_range is None:
             rotation_range = (0, 0)
@@ -98,30 +91,26 @@ class RandomRotate(MatrixTransform):
 
 
 class RandomShear(MatrixTransform):
-    """
-    Random shear around the center.
+    """Random shear around the center.
+
+    Parameters
+    ----------
+    range_x : tuple or float
+        Shearing range along X-axis.
+        If float, then (-range_x, range_x) will be used.
+        If None, then range_x=(0, 0)
+    range_y : tuple or float or None
+        Shearing range along Y-axis. If float, then (-range_y, range_y) will be used.
+        If None, then range_y=(0, 0)
+    interpolation : str or tuple or None or tuple or None
+        Interpolation type. Check the allowed interpolation types.
+    padding : str
+        Padding mode. Check the allowed padding modes.
+    p : float
+        Probability of using this transform
 
     """
     def __init__(self, range_x=None, range_y=None, interpolation='bilinear', padding='z', p=0.5):
-        """
-        Constructor.
-
-        Parameters
-        ----------
-        range_x : tuple or float
-            Shearing range along X-axis.
-            If float, then (-range_x, range_x) will be used.
-            If None, then range_x=(0, 0)
-        range_y : tuple or float or None
-            Shearing range along Y-axis. If float, then (-range_y, range_y) will be used.
-            If None, then range_y=(0, 0)
-        interpolation : str or tuple or None. or tuple or None.
-            Interpolation type. Check the allowed interpolation types.
-        padding : str
-            Padding mode. Check the allowed padding modes.
-        p : float
-            Probability of using this transform
-        """
         super(RandomShear, self).__init__(p=p, padding=padding, interpolation=interpolation)
         if range_x is None:
             range_x = (0, 0)
@@ -149,32 +138,29 @@ class RandomShear(MatrixTransform):
 
 
 class RandomScale(MatrixTransform):
-    """
-    Random scale transform.
+    """Random scale transform.
+
+    Parameters
+    ----------
+    range_x : tuple or float or None
+        Scaling range along X-axis.
+        If float, then (-range_x, range_x) will be used.
+        If None, then range_x =(1,1) by default.
+    range_y : tuple or float
+        Scaling range along Y-axis.
+        If float, then (-range_y, range_y) will be used.
+        If None, then range_y=(1,1) by default.
+    same: bool
+        Indicates whether to use the same scaling factor for width and height.
+    interpolation : str or tuple or None
+        Interpolation type. Check the allowed interpolation types.
+        one indicates default behavior - bilinear mode.
+    p : float
+        Probability of using this transform
 
     """
     def __init__(self, range_x=None, range_y=None, same=True, interpolation='bilinear', p=0.5):
-        """
-        Constructor.
 
-        Parameters
-        ----------
-        range_x : tuple or float or None
-            Scaling range along X-axis.
-            If float, then (-range_x, range_x) will be used.
-            If None, then range_x =(1,1) by default.
-        range_y : tuple or float
-            Scaling range along Y-axis.
-            If float, then (-range_y, range_y) will be used.
-            If None, then range_y=(1,1) by default.
-        same: bool
-            Indicates whether to use the same scaling factor for width and height.
-        interpolation : str or tuple or None.
-            Interpolation type. Check the allowed interpolation types. 
-            one indicates default behavior - bilinear mode.
-        p : float
-            Probability of using this transform
-        """
         super(RandomScale, self).__init__(interpolation=interpolation, padding=None, p=p)
 
         if isinstance(range_x, (int, float)):
@@ -217,30 +203,23 @@ class RandomScale(MatrixTransform):
 
 
 class RandomTranslate(MatrixTransform):
-    """
-    Random Translate transform.
-    This transform does not change the original frame where the transform is applied.
+    """Random Translate transform..
 
+    Parameters
+    ----------
+    range_x: tuple or int or None
+        Translation range along the horizontal axis. If int, then range_x=(-range_x, range_x).
+        If None, then range_x=(0,0).
+    range_y: tuple or int or None
+        Translation range along the vertical axis. If int, then range_y=(-range_y, range_y).
+        If None, then range_y=(0,0).
+    interpolation: str
+        Interpolation type. See allowed_interpolations in constants.
+    padding: str
+        Padding mode. See allowed_paddings  in constants
+    p: probability of applying this transform.
     """
     def __init__(self, range_x=None, range_y=None,  interpolation='bilinear', padding='z', p=0.5):
-        """
-        Constructor.
-
-        Parameters
-        ----------
-        range_x: tuple or int or None
-            Translation range along the horizontal axis. If int, then range_x=(-range_x, range_x).
-            If None, then range_x=(0,0).
-        range_y: tuple or int or None
-            Translation range along the vertical axis. If int, then range_y=(-range_y, range_y).
-            If None, then range_y=(0,0).
-        interpolation: str
-            Interpolation type. See allowed_interpolations in constants.
-        padding: str
-            Padding mode. See allowed_paddings  in constants
-        p: probability of applying this transform.
-
-        """
         super(RandomTranslate, self).__init__(interpolation=interpolation, padding=padding, p=p)
         if isinstance(range_x, (int, float)):
             range_x = (-range_x, range_x)
@@ -270,25 +249,22 @@ class RandomTranslate(MatrixTransform):
 
 
 class RandomProjection(MatrixTransform):
-    """
-    Generates random perspective transform. Takes a set of affine transforms and generates a projective
-    transform.
+    """Random Projective transform.
 
+    Takes a set of affine transforms.
+
+    Parameters
+    ----------
+    affine_transforms : Stream or None
+        Stream object, which has a parameterized Affine Transform.
+        If None, then a zero degrees rotation matrix is instantiated.
+    v_range : tuple or None
+        Projective parameters range. If None, then v_range = (0, 0)
+    p : float
+        Probability of using this transform.
     """
     def __init__(self, affine_transforms=None, v_range=None, interpolation='bilinear', padding='z', p=0.5):
-        """
-        Constructor.
 
-        Parameters
-        ----------
-        affine_transforms : Stream or None
-            Stream object, which has a parameterized Affine Transform.
-            If None, then a zero degrees rotation matrix is instantiated.
-        v_range : tuple or None.
-            Projective parameters range. If None, then v_range = (0, 0)
-        p : float
-            Probability of using this transform
-        """
         super(RandomProjection, self).__init__(interpolation=interpolation, padding=padding, p=p)
 
         if affine_transforms is None:
@@ -323,22 +299,22 @@ class RandomProjection(MatrixTransform):
 
 
 class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
+    """Transformation, which pads the input to a given size
+
+    Parameters
+    ----------
+    pad_to : tuple or int
+        Target size (W_new, Y_new). The padding is computed using teh following equations:
+
+        left_pad = (pad_to[0] - w) // 2
+        right_pad = (pad_to[0] - w) // 2 + (pad_to[0] - w) % 2
+        top_pad = (pad_to[1] - h) // 2
+        bottom_pad = (pad_to[1] - h) // 2 + (pad_to[1] - h) % 2
+    padding :
+        Padding type.
+
+    """
     def __init__(self, pad_to, padding=None):
-        """
-        Transformation, which pads the input to a given size
-
-        Parameters
-        ----------
-        pad_to : tuple or int
-            Target size (W_new, Y_new). The padding is computed using teh following equations:
-
-            left_pad = (pad_to[0] - w) // 2
-            right_pad = (pad_to[0] - w) // 2 + (pad_to[0] - w) % 2
-            top_pad = (pad_to[1] - h) // 2
-            bottom_pad = (pad_to[1] - h) // 2 + (pad_to[1] - h) % 2
-        padding :
-            Padding type.
-        """
         DataDependentSamplingTransform.__init__(self, p=1)
         PaddingPropertyHolder.__init__(self, padding)
         assert isinstance(pad_to, tuple) or isinstance(pad_to, int)
@@ -348,9 +324,13 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
         self._pad_to = pad_to
 
     def sample_transform(self):
+        """
+        """
         raise NotImplementedError
 
     def sample_transform_from_data(self, data: DataContainer):
+        """
+        """
         DataDependentSamplingTransform.sample_transform_from_data(self, data)
 
         for obj, t in data:
@@ -415,18 +395,19 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
 
 
 class CropTransform(DataDependentSamplingTransform):
+    """Center / Random crop transform.
+
+    Object performs center or random cropping depending on the parameters.
+
+    Parameters
+    ----------
+    crop_size : tuple or int
+        Size of the crop (W_new, H_new). If int, then a square crop will be made.
+    crop_mode : str
+        Crop mode. Can be either 'c' - center or 'r' - random.
+
+    """
     def __init__(self, crop_size, crop_mode='c'):
-        """
-        Constructor
-
-        Parameters
-        ----------
-        crop_size : tuple or int
-            Size of the crop (W_new, H_new). If int, then a square crop will be made.
-        crop_mode : str
-            Crop mode. Can be either 'c' - center or 'r' - random.
-
-        """
         super(CropTransform, self).__init__(p=1, data_indices=None)
 
         assert isinstance(crop_size, int) or isinstance(crop_size, tuple)
@@ -462,10 +443,13 @@ class CropTransform(DataDependentSamplingTransform):
         self._crop_size = value
 
     def sample_transform(self):
+        """
+        """
         raise NotImplementedError
 
     def sample_transform_from_data(self, data):
-        # calling the superclass method to ensure that everything is right with the coordinates
+        """
+        """
         DataDependentSamplingTransform.sample_transform_from_data(self, data)
         for obj, t in data:
             if t == 'M' or t == 'I':
@@ -522,26 +506,22 @@ class CropTransform(DataDependentSamplingTransform):
 
 
 class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
-    """
-    Adds noise to an image. Other types of data than the image are ignored.
+    """Adds noise to an image. Other types of data than the image are ignored.
+
+    Parameters
+    ----------
+    p : float
+        Probability of applying this transfor,
+    gain_range : tuple or float
+        Gain of the noise. Final image is created as (1-gain)*img + gain*noise.
+        If float, then gain_range = (0, gain_range).
+    data_indices : tuple or None
+        Indices of the images within the data container to which this transform needs to be applied.
+        Every element within the tuple must be integer numbers.
+        If None, then the transform will be applied to all the images withing the DataContainer.
 
     """
     def __init__(self, p=0.5, gain_range=0.1, data_indices=None):
-        """
-        Constructor.
-
-        Parameters
-        ----------
-        p : float
-            Probability of applying this transfor,
-        gain_range : tuple or float
-            Gain of the noise. Final image is created as (1-gain)*img + gain*noise.
-            If float, then gain_range = (0, gain_range).
-        data_indices : tuple or None
-            Indices of the images within the data container to which this transform needs to be applied.
-            Every element within the tuple must be integer numebers.
-            If None, then the transform will be applied to all the images withing the DataContainer.
-        """
         super(ImageAdditiveGaussianNoise, self).__init__(p=p, data_indices=data_indices)
         if isinstance(gain_range, float):
             gain_range = (0, gain_range)
@@ -594,29 +574,25 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
 
 
 class ImageSaltAndPepper(DataDependentSamplingTransform):
-    """
-    Adds salt and pepper noise to an image. Other types of data than the image are ignored.
+    """Adds salt and pepper noise to an image. Other types of data than the image are ignored.
+
+    Parameters
+    ----------
+    p : float
+        Probability of applying this transfor,
+    gain_range : tuple or float
+        Gain of the noise. Indicates percentage of indices, which will be changed.
+        If float, then gain_range = (0, gain_range).
+    salt_p : float or tuple
+        Percentage of salt. Percentage of pepper is 1-salt_p. If tuple, then salt_p is chosen uniformly from the
+        given range.
+    data_indices : tuple or None
+        Indices of the images within the data container to which this transform needs to be applied.
+        Every element within the tuple must be integer numebers.
+        If None, then the transform will be applied to all the images withing the DataContainer.
 
     """
     def __init__(self, p=0.5, gain_range=0.1, salt_p=0.5, data_indices=None):
-        """
-        Constructor.
-
-        Parameters
-        ----------
-        p : float
-            Probability of applying this transfor,
-        gain_range : tuple or float
-            Gain of the noise. Indicates percentage of indices, which will be changed.
-            If float, then gain_range = (0, gain_range).
-        salt_p : float or tuple
-            Percentage of salt. Percentage of pepper is 1-salt_p. If tuple, then salt_p is chosen uniformly from the
-            given range.
-        data_indices : tuple or None
-            Indices of the images within the data container to which this transform needs to be applied.
-            Every element within the tuple must be integer numebers.
-            If None, then the transform will be applied to all the images withing the DataContainer.
-        """
         super(ImageSaltAndPepper, self).__init__(p=p, data_indices=data_indices)
 
         assert isinstance(gain_range, float) or isinstance(gain_range, tuple)
@@ -697,26 +673,22 @@ class ImageSaltAndPepper(DataDependentSamplingTransform):
 
 
 class ImageGammaCorrection(BaseTransform):
-    """
-    Transform applies random gamma correction
+    """Transform applies random gamma correction
+
+    Parameters
+    ----------
+    p : float
+        Probability of applying this transfor,
+    gamma_range : tuple or float
+        Gain of the noise. Indicates percentage of indices, which will be changed.
+        If float, then gain_range = (1-gamma_range, 1+gamma_range).
+    data_indices : tuple or None
+        Indices of the images within the data container to which this transform needs to be applied.
+        Every element within the tuple must be integer numebers.
+        If None, then the transform will be applied to all the images withing the DataContainer.
 
     """
     def __init__(self, p=0.5, gamma_range=0.1, data_indices=None):
-        """
-        Constructor.
-
-        Parameters
-        ----------
-        p : float
-            Probability of applying this transfor,
-        gamma_range : tuple or float
-            Gain of the noise. Indicates percentage of indices, which will be changed.
-            If float, then gain_range = (1-gamma_range, 1+gamma_range).
-        data_indices : tuple or None
-            Indices of the images within the data container to which this transform needs to be applied.
-            Every element within the tuple must be integer numebers.
-            If None, then the transform will be applied to all the images withing the DataContainer.
-        """
         super(ImageGammaCorrection, self).__init__(p=p, data_indices=data_indices)
 
         assert isinstance(gamma_range, float) or isinstance(gamma_range, tuple)

@@ -51,19 +51,13 @@ def validate_parameter(parameter, allowed_modes, default_value, basic_type=str):
 
 
 class BaseTransform(metaclass=ABCMeta):
-    """
-    Transformation abstract class.
+    """Transformation abstract class.
 
+    Parameters
+    ----------
+    p : probability of executing this transform
     """
     def __init__(self, p=0.5, data_indices=None):
-        """
-        Constructor.
-
-        Parameters
-        ----------
-        p : probability of executing this transform
-
-        """
         self.p = p
         self.state_dict = {'use': False}
         assert data_indices is None or isinstance(data_indices, tuple)
@@ -106,8 +100,7 @@ class BaseTransform(metaclass=ABCMeta):
         return OrderedDict(sorted(res.items()))
 
     def use_transform(self):
-        """
-        Method to randomly determine whether to use this transform.
+        """Method to randomly determine whether to use this transform.
 
         Returns
         -------
@@ -123,8 +116,7 @@ class BaseTransform(metaclass=ABCMeta):
 
     @abstractmethod
     def sample_transform(self):
-        """
-        Abstract method. Must be implemented in the child classes
+        """Abstract method. Must be implemented in the child classes
 
         Returns
         -------
@@ -134,8 +126,7 @@ class BaseTransform(metaclass=ABCMeta):
         pass
 
     def apply(self, data):
-        """
-        Applies transformation to a DataContainer items depending on the type.
+        """Applies transformation to a DataContainer items depending on the type.
 
         Parameters
         ----------
@@ -176,8 +167,7 @@ class BaseTransform(metaclass=ABCMeta):
         return DataContainer(data=tuple(result), fmt=''.join(types))
 
     def __call__(self, data):
-        """
-        Applies the transform to a DataContainer
+        """Applies the transform to a DataContainer
 
         Parameters
         ----------
@@ -198,8 +188,7 @@ class BaseTransform(metaclass=ABCMeta):
 
     @abstractmethod
     def _apply_img(self, img):
-        """
-        Abstract method, which determines the transform's behaviour when it is applied to images HxWxC.
+        """Abstract method, which determines the transform's behaviour when it is applied to images HxWxC.
 
         Parameters
         ----------
@@ -215,8 +204,7 @@ class BaseTransform(metaclass=ABCMeta):
 
     @abstractmethod
     def _apply_mask(self, mask):
-        """
-        Abstract method, which determines the transform's behaviour when it is applied to masks HxW.
+        """Abstract method, which determines the transform's behaviour when it is applied to masks HxW.
 
         Parameters
         ----------
@@ -233,8 +221,7 @@ class BaseTransform(metaclass=ABCMeta):
 
     @abstractmethod
     def _apply_labels(self, labels):
-        """
-        Abstract method, which determines the transform's behaviour when it is applied to labels (e.g. label smoothing)
+        """Abstract method, which determines the transform's behaviour when it is applied to labels (e.g. label smoothing)
 
         Parameters
         ----------
@@ -251,8 +238,7 @@ class BaseTransform(metaclass=ABCMeta):
 
     @abstractmethod
     def _apply_pts(self, pts):
-        """
-        Abstract method, which determines the transform's behaviour when it is applied to keypoints.
+        """Abstract method, which determines the transform's behaviour when it is applied to keypoints.
 
         Parameters
         ----------
@@ -270,8 +256,8 @@ class BaseTransform(metaclass=ABCMeta):
 
 class DataDependentSamplingTransform(BaseTransform):
     def __init__(self, p=0.5, data_indices=None):
-        """
-        A class, which indicates that we sample its parameters based on data.
+        """A class, which indicates that we sample its parameters based on data.
+
         Such transforms are Crops, Elastic deformations etc, where the data is needed to make sampling.
 
         """
@@ -281,6 +267,13 @@ class DataDependentSamplingTransform(BaseTransform):
         raise NotImplementedError
 
     def sample_transform_from_data(self, data: DataContainer):
+        """Samples transform parameters based on data.
+
+        Parameters
+        ----------
+        data : DataContainer
+            Data container to be used for sampling.
+        """
         prev_h = None
         prev_w = None
         # Let's make sure that all the objects have the same coordinate frame
@@ -308,8 +301,7 @@ class DataDependentSamplingTransform(BaseTransform):
         assert prev_w is not None
 
     def __call__(self, data):
-        """
-        Applies the transform to a DataContainer
+        """Applies the transform to a DataContainer
 
         Parameters
         ----------
@@ -330,8 +322,7 @@ class DataDependentSamplingTransform(BaseTransform):
 
     @abstractmethod
     def _apply_img(self, img):
-        """
-        Abstract method, which determines the transform's behaviour when it is applied to images HxWxC.
+        """Abstract method, which determines the transform's behaviour when it is applied to images HxWxC.
 
         Parameters
         ----------
@@ -347,8 +338,7 @@ class DataDependentSamplingTransform(BaseTransform):
 
     @abstractmethod
     def _apply_mask(self, mask):
-        """
-        Abstract method, which determines the transform's behaviour when it is applied to masks HxW.
+        """Abstract method, which determines the transform's behaviour when it is applied to masks HxW.
 
         Parameters
         ----------
@@ -365,8 +355,7 @@ class DataDependentSamplingTransform(BaseTransform):
 
     @abstractmethod
     def _apply_labels(self, labels):
-        """
-        Abstract method, which determines the transform's behaviour when it is applied to labels (e.g. label smoothing)
+        """Abstract method, which determines the transform's behaviour when it is applied to labels (e.g. label smoothing)
 
         Parameters
         ----------
@@ -383,8 +372,7 @@ class DataDependentSamplingTransform(BaseTransform):
 
     @abstractmethod
     def _apply_pts(self, pts):
-        """
-        Abstract method, which determines the transform's behaviour when it is applied to keypoints.
+        """Abstract method, which determines the transform's behaviour when it is applied to keypoints.
 
         Parameters
         ----------
@@ -401,6 +389,13 @@ class DataDependentSamplingTransform(BaseTransform):
 
 
 class PaddingPropertyHolder(object):
+    """PaddingPropertyHolder
+
+    Parameters
+    ----------
+    padding : None or str
+        Pading mode.
+    """
     def __init__(self, padding=None):
         super(PaddingPropertyHolder, self).__init__()
         self._padding = validate_parameter(padding, allowed_paddings, 'z')
@@ -429,8 +424,7 @@ class InterpolationPropertyHolder(object):
 
 
 class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropertyHolder):
-    """
-    Matrix Transform abstract class. (Affine and Homography).
+    """Matrix Transform abstract class. (Affine and Homography).
     Does all the transforms around the image /  center.
 
     """
@@ -448,7 +442,6 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         Parameters
         ----------
         trf : MatrixTransform
-
         """
         assert self.state_dict is not None
         assert trf.state_dict is not None
@@ -461,20 +454,17 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
 
     @abstractmethod
     def sample_transform(self):
-        """
-        Abstract method. Must be implemented in the child classes
+        """Abstract method. Must be implemented in the child classes
 
         Returns
         -------
         None
-
         """
         pass
 
     @staticmethod
     def correct_for_frame_change(M, W, H):
-        """
-        Method takes a matrix transform, and modifies its origin.
+        """Method takes a matrix transform, and modifies its origin.
 
         Parameters
         ----------
@@ -532,8 +522,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         return M, W_new, H_new
 
     def _apply_img_or_mask(self, img):
-        """
-        Applies a transform to an image or mask without controlling the shapes.
+        """Applies a transform to an image or mask without controlling the shapes.
 
         Parameters
         ----------
@@ -555,8 +544,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
 
     @img_shape_checker
     def _apply_img(self, img):
-        """
-        Applies a matrix transform to an image.
+        """Applies a matrix transform to an image.
         If padding is None, the default behavior (zero padding) is expected.
 
         Parameters
@@ -574,8 +562,8 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         return self._apply_img_or_mask(img)
 
     def _apply_mask(self, mask):
-        """
-        Abstract method, which determines the transform's behaviour when it is applied to masks HxW.
+        """Abstract method, which determines the transform's behaviour when it is applied to masks HxW.
+
         If padding is None, the default behavior (zero padding) is expected.
 
         Parameters
@@ -592,8 +580,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         return self._apply_img_or_mask(mask)
 
     def _apply_labels(self, labels):
-        """
-        Transform application to labels. Simply returns them.
+        """Transform application to labels. Simply returns them.
 
         Parameters
         ----------
@@ -609,8 +596,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         return labels
 
     def _apply_pts(self, pts):
-        """
-        Abstract method, which determines the transform's behaviour when it is applied to keypoints.
+        """Abstract method, which determines the transform's behaviour when it is applied to keypoints.
 
         Parameters
         ----------
