@@ -223,6 +223,24 @@ class RandomTranslate(MatrixTransform):
 
     """
     def __init__(self, range_x=None, range_y=None,  interpolation='bilinear', padding='z', p=0.5):
+        """
+        Constructor.
+
+        Parameters
+        ----------
+        range_x: tuple or int or None
+            Translation range along the horizontal axis. If int, then range_x=(-range_x, range_x).
+            If None, then range_x=(0,0).
+        range_y: tuple or int or None
+            Translation range along the vertical axis. If int, then range_y=(-range_y, range_y).
+            If None, then range_y=(0,0).
+        interpolation: str
+            Interpolation type. See allowed_interpolations in constants.
+        padding: str
+            Padding mode. See allowed_paddings  in constants
+        p: probability of applying this transform.
+
+        """
         super(RandomTranslate, self).__init__(interpolation=interpolation, padding=padding, p=p)
         if isinstance(range_x, (int, float)):
             range_x = (-range_x, range_x)
@@ -248,32 +266,35 @@ class RandomTranslate(MatrixTransform):
                       0, 1, ty,
                       0, 0, 1]).reshape((3, 3)).astype(np.float32)
 
-        self.state_dict = {'scale_x': tx, 'scale_y': ty, 'transform_matrix': M}
+        self.state_dict = {'translate_x': tx, 'translate_y': ty, 'transform_matrix': M}
 
 
 class RandomProjection(MatrixTransform):
     """
-    Generates random Perspective transform. Takes a set of affine transforms and generates a projective
-    transform according to the eq. 2.13 from A. Zisserman's book: Multiple View Geometry in Computer Vision.
+    Generates random perspective transform. Takes a set of affine transforms and generates a projective
+    transform.
 
     """
-    def __init__(self, affine_transforms=None, v_range=None, p=0.5):
+    def __init__(self, affine_transforms=None, v_range=None, interpolation='bilinear', padding='z', p=0.5):
         """
         Constructor.
 
         Parameters
         ----------
         affine_transforms : Stream or None
-            Stream object, which has a parameterized Affine Transform. If it is None, then empty stream is created.
+            Stream object, which has a parameterized Affine Transform.
+            If None, then a zero degrees rotation matrix is instantiated.
         v_range : tuple or None.
             Projective parameters range. If None, then v_range = (0, 0)
         p : float
             Probability of using this transform
         """
-        super(RandomProjection, self).__init__(p=p)
+        super(RandomProjection, self).__init__(interpolation=interpolation, padding=padding, p=p)
 
         if affine_transforms is None:
-            affine_transforms = Stream()
+            affine_transforms = Stream([
+                RandomRotate(rotation_range=0, interpolation=interpolation)
+            ])
 
         if v_range is None:
             v_range = (0, 0)
@@ -289,7 +310,12 @@ class RandomProjection(MatrixTransform):
         self.__vrange = v_range  # projection components.
 
     def sample_transform(self):
-        trf = Stream.optimize_stack(self.__affine_transforms.transforms)[0]
+        if len(self.__affine_transforms.transforms) > 1:
+            trf = Stream.optimize_stack(self.__affine_transforms.transforms)[0]
+        else:
+            trf = self.__affine_transforms.transforms[0]
+            trf.sample_transform()
+
         M = trf.state_dict['transform_matrix'].copy()
         M[-1, 0] = np.random.uniform(self.__vrange[0], self.__vrange[1])
         M[-1, 1] = np.random.uniform(self.__vrange[0], self.__vrange[1])
@@ -441,7 +467,6 @@ class CropTransform(DataDependentSamplingTransform):
     def sample_transform_from_data(self, data):
         # calling the superclass method to ensure that everything is right with the coordinates
         DataDependentSamplingTransform.sample_transform_from_data(self, data)
-
         for obj, t in data:
             if t == 'M' or t == 'I':
                 h = obj.shape[0]
@@ -542,9 +567,8 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
                 c = obj.shape[2]
                 break
 
-        assert w is not None
-        assert h is not None
-        assert c is not None
+        if w is None or h is None or c is None:
+            raise ValueError
 
         noise_img = np.random.randn(h, w, c)
 
@@ -709,7 +733,7 @@ class ImageGammaCorrection(BaseTransform):
         inv_gamma = 1.0 / gamma
         lut = np.array([((i / 255.0) ** inv_gamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
 
-        self.state_dict = {'gamma': gamma, 'LUT':lut}
+        self.state_dict = {'gamma': gamma, 'LUT': lut}
 
     @img_shape_checker
     def _apply_img(self, img):

@@ -1,6 +1,6 @@
-import solt.core as augs_core
-import solt.data as augs_data
-import solt.transforms as imtrf
+import solt.core as slc
+import solt.data as sld
+import solt.transforms as slt
 import numpy as np
 import pytest
 import cv2
@@ -10,7 +10,7 @@ from .fixtures import img_2x2, img_3x4, mask_2x2, mask_3x4, img_5x5
 
 def test_data_item_create_img(img_2x2):
     img = img_2x2
-    dc = augs_data.DataContainer((img,), 'I')
+    dc = sld.DataContainer((img,), 'I')
     assert len(dc) == 1
     assert np.array_equal(img, dc[0][0])
     assert dc[0][1] == 'I'
@@ -18,27 +18,27 @@ def test_data_item_create_img(img_2x2):
 
 def test_stream_empty(img_2x2):
     img = img_2x2
-    dc = augs_data.DataContainer((img,), 'I')
-    stream = augs_core.Stream()
+    dc = sld.DataContainer((img,), 'I')
+    stream = slc.Stream()
     res, _ = stream(dc)[0]
     assert np.all(res == img)
 
 
 def test_empty_stream_selective():
     with pytest.raises(AssertionError):
-        augs_core.SelectiveStream()
+        slc.SelectiveStream()
 
 
 def test_nested_stream(img_3x4, mask_3x4):
     img, mask = img_3x4, mask_3x4
-    dc = augs_data.DataContainer((img, mask), 'IM')
+    dc = sld.DataContainer((img, mask), 'IM')
 
-    stream = augs_core.Stream([
-        imtrf.RandomFlip(p=1, axis=0),
-        imtrf.RandomFlip(p=1, axis=1),
-        augs_core.Stream([
-            imtrf.RandomFlip(p=1, axis=1),
-            imtrf.RandomFlip(p=1, axis=0),
+    stream = slc.Stream([
+        slt.RandomFlip(p=1, axis=0),
+        slt.RandomFlip(p=1, axis=1),
+        slc.Stream([
+            slt.RandomFlip(p=1, axis=1),
+            slt.RandomFlip(p=1, axis=0),
         ])
     ])
 
@@ -52,14 +52,14 @@ def test_nested_stream(img_3x4, mask_3x4):
 
 def test_image_shape_equal_3_after_nested_flip(img_3x4):
     img = img_3x4
-    dc = augs_data.DataContainer((img, ), 'I')
+    dc = sld.DataContainer((img,), 'I')
 
-    stream = augs_core.Stream([
-        imtrf.RandomFlip(p=1, axis=0),
-        imtrf.RandomFlip(p=1, axis=1),
-        augs_core.Stream([
-            imtrf.RandomFlip(p=1, axis=1),
-            imtrf.RandomFlip(p=1, axis=0),
+    stream = slc.Stream([
+        slt.RandomFlip(p=1, axis=0),
+        slt.RandomFlip(p=1, axis=1),
+        slc.Stream([
+            slt.RandomFlip(p=1, axis=1),
+            slt.RandomFlip(p=1, axis=0),
         ])
     ])
 
@@ -70,7 +70,7 @@ def test_image_shape_equal_3_after_nested_flip(img_3x4):
 
 
 def test_create_empty_keypoints():
-    kpts = augs_data.KeyPoints()
+    kpts = sld.KeyPoints()
     assert kpts.H is None
     assert kpts.W is None
     assert kpts.data is None
@@ -78,7 +78,7 @@ def test_create_empty_keypoints():
 
 def test_create_4_keypoints():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
-    kpts = augs_data.KeyPoints(kpts_data, 3, 4)
+    kpts = sld.KeyPoints(kpts_data, 3, 4)
     assert kpts.H == 3
     assert kpts.W == 4
     assert np.array_equal(kpts_data, kpts.data)
@@ -86,7 +86,7 @@ def test_create_4_keypoints():
 
 def test_create_4_keypoints_change_frame():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
-    kpts = augs_data.KeyPoints(kpts_data, 3, 4)
+    kpts = sld.KeyPoints(kpts_data, 3, 4)
     kpts.H = 2
     kpts.W = 2
 
@@ -97,7 +97,7 @@ def test_create_4_keypoints_change_frame():
 
 def test_create_4_keypoints_change_grid_and_frame():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
-    kpts = augs_data.KeyPoints(kpts_data, 3, 4)
+    kpts = sld.KeyPoints(kpts_data, 3, 4)
 
     kpts_data_new = np.array([[0, 0], [0, 1], [1, 0], [1, 1], [0.5, 0.5]]).reshape((5, 2))
     kpts.H = 2
@@ -109,15 +109,12 @@ def test_create_4_keypoints_change_grid_and_frame():
     assert np.array_equal(kpts_data_new, kpts.pts)
 
 
-def test_fusion_happens(img_5x5):
-    img = img_5x5
-    dc = augs_data.DataContainer((img,), 'I')
-
-    ppl = augs_core.Stream([
-        imtrf.RandomScale((0.5, 1.5), (0.5, 1.5), p=1),
-        imtrf.RandomRotate((-50, 50), padding='z', p=1),
-        imtrf.RandomShear((-0.5, 0.5), (-0.5, 0.5),padding='z', p=1),
-        imtrf.RandomFlip(p=1, axis=1),
+def test_fusion_happens():
+    ppl = slc.Stream([
+        slt.RandomScale((0.5, 1.5), (0.5, 1.5), p=1),
+        slt.RandomRotate((-50, 50), padding='z', p=1),
+        slt.RandomShear((-0.5, 0.5), (-0.5, 0.5), padding='z', p=1),
+        slt.RandomFlip(p=1, axis=1),
     ])
 
     st = ppl.optimize_stack(ppl.transforms)
@@ -126,17 +123,17 @@ def test_fusion_happens(img_5x5):
 
 def test_fusion_rotate_360(img_5x5):
     img = img_5x5
-    dc = augs_data.DataContainer((img,), 'I')
+    dc = sld.DataContainer((img,), 'I')
 
-    ppl = augs_core.Stream([
-        imtrf.RandomRotate((45, 45), padding='z', p=1),
-        imtrf.RandomRotate((45, 45), padding='z', p=1),
-        imtrf.RandomRotate((45, 45), padding='z', p=1),
-        imtrf.RandomRotate((45, 45), padding='z', p=1),
-        imtrf.RandomRotate((45, 45), padding='z', p=1),
-        imtrf.RandomRotate((45, 45), padding='z', p=1),
-        imtrf.RandomRotate((45, 45), padding='z', p=1),
-        imtrf.RandomRotate((45, 45), padding='z', p=1),
+    ppl = slc.Stream([
+        slt.RandomRotate((45, 45), padding='z', p=1),
+        slt.RandomRotate((45, 45), padding='z', p=1),
+        slt.RandomRotate((45, 45), padding='z', p=1),
+        slt.RandomRotate((45, 45), padding='z', p=1),
+        slt.RandomRotate((45, 45), padding='z', p=1),
+        slt.RandomRotate((45, 45), padding='z', p=1),
+        slt.RandomRotate((45, 45), padding='z', p=1),
+        slt.RandomRotate((45, 45), padding='z', p=1),
     ])
 
     img_res = ppl(dc)[0][0]
@@ -146,27 +143,27 @@ def test_fusion_rotate_360(img_5x5):
 
 def test_fusion_rotate_360_flip_rotate_360(img_5x5):
     img = img_5x5
-    dc = augs_data.DataContainer((img,), 'I')
+    dc = sld.DataContainer((img,), 'I')
 
-    ppl = augs_core.Stream([
-        imtrf.RandomRotate((45, 45), padding='z', p=1),
-        imtrf.RandomRotate((45, 45), padding='z', p=1),
-        imtrf.RandomRotate((45, 45), padding='z', p=1),
-        imtrf.RandomRotate((45, 45), padding='z', p=1),
-        imtrf.RandomRotate((45, 45), padding='z', p=1),
-        imtrf.RandomRotate((45, 45), padding='z', p=1),
-        imtrf.RandomRotate((45, 45), padding='z', p=1),
-        imtrf.RandomRotate((45, 45), padding='z', p=1),
-        imtrf.RandomFlip(p=1, axis=1),
-        augs_core.Stream([
-            imtrf.RandomRotate((45, 45), padding='z', p=1),
-            imtrf.RandomRotate((45, 45), padding='z', p=1),
-            imtrf.RandomRotate((45, 45), padding='z', p=1),
-            imtrf.RandomRotate((45, 45), padding='z', p=1),
-            imtrf.RandomRotate((45, 45), padding='z', p=1),
-            imtrf.RandomRotate((45, 45), padding='z', p=1),
-            imtrf.RandomRotate((45, 45), padding='z', p=1),
-            imtrf.RandomRotate((45, 45), padding='z', p=1),
+    ppl = slc.Stream([
+        slt.RandomRotate((45, 45), padding='z', p=1),
+        slt.RandomRotate((45, 45), padding='z', p=1),
+        slt.RandomRotate((45, 45), padding='z', p=1),
+        slt.RandomRotate((45, 45), padding='z', p=1),
+        slt.RandomRotate((45, 45), padding='z', p=1),
+        slt.RandomRotate((45, 45), padding='z', p=1),
+        slt.RandomRotate((45, 45), padding='z', p=1),
+        slt.RandomRotate((45, 45), padding='z', p=1),
+        slt.RandomFlip(p=1, axis=1),
+        slc.Stream([
+            slt.RandomRotate((45, 45), padding='z', p=1),
+            slt.RandomRotate((45, 45), padding='z', p=1),
+            slt.RandomRotate((45, 45), padding='z', p=1),
+            slt.RandomRotate((45, 45), padding='z', p=1),
+            slt.RandomRotate((45, 45), padding='z', p=1),
+            slt.RandomRotate((45, 45), padding='z', p=1),
+            slt.RandomRotate((45, 45), padding='z', p=1),
+            slt.RandomRotate((45, 45), padding='z', p=1),
         ])
     ])
 
@@ -176,11 +173,11 @@ def test_fusion_rotate_360_flip_rotate_360(img_5x5):
 
 
 def test_stream_settings():
-    ppl = augs_core.Stream([
-        imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
-        imtrf.RandomRotate((45, 45), padding='r', p=1),
-        imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
-        imtrf.RandomShear(0.1, 0.1, interpolation='bilinear', padding='z'),
+    ppl = slc.Stream([
+        slt.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
+        slt.RandomRotate((45, 45), padding='r', p=1),
+        slt.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
+        slt.RandomShear(0.1, 0.1, interpolation='bilinear', padding='z'),
         ],
         interpolation='nearest',
         padding='z'
@@ -192,11 +189,11 @@ def test_stream_settings():
 
 
 def test_stream_settings_replacement():
-    ppl = augs_core.Stream([
-        imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
-        imtrf.RandomRotate((45, 45), padding='r', p=1),
-        imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
-        imtrf.RandomShear(0.1, 0.1, interpolation='bilinear', padding='z'),
+    ppl = slc.Stream([
+        slt.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
+        slt.RandomRotate((45, 45), padding='r', p=1),
+        slt.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
+        slt.RandomShear(0.1, 0.1, interpolation='bilinear', padding='z'),
     ],
         interpolation='nearest',
         padding='z'
@@ -211,11 +208,11 @@ def test_stream_settings_replacement():
 
 
 def test_stream_settings_strict():
-    ppl = augs_core.Stream([
-        imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
-        imtrf.RandomRotate((45, 45), padding='r', p=1),
-        imtrf.RandomRotate((45, 45), interpolation=('bicubic', 'strict'), padding=('r', 'strict'), p=1),
-        imtrf.RandomShear(0.1, 0.1, interpolation='bilinear', padding='z'),
+    ppl = slc.Stream([
+        slt.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
+        slt.RandomRotate((45, 45), padding='r', p=1),
+        slt.RandomRotate((45, 45), interpolation=('bicubic', 'strict'), padding=('r', 'strict'), p=1),
+        slt.RandomShear(0.1, 0.1, interpolation='bilinear', padding='z'),
         ],
         interpolation='nearest',
         padding='z'
@@ -231,12 +228,12 @@ def test_stream_settings_strict():
 
 
 def test_stream_nested_settings():
-    ppl = augs_core.Stream([
-        imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
-        imtrf.RandomRotate((45, 45), padding='r', p=1),
-        augs_core.Stream([
-            imtrf.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
-            imtrf.RandomRotate((45, 45), padding='r', p=1),
+    ppl = slc.Stream([
+        slt.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
+        slt.RandomRotate((45, 45), padding='r', p=1),
+        slc.Stream([
+            slt.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
+            slt.RandomRotate((45, 45), padding='r', p=1),
         ], interpolation='bicubic', padding='r'
         )
         ],
