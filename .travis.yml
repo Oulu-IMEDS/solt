@@ -9,6 +9,7 @@ install:
 - pip install pytest-pep8 coverage pytest-cov -U
 - pip install -e .
 - pip install travis-sphinx
+- pip install sphinx_rtd_theme
 - pip install msmb_theme
 script:
 - py.test tests --cov solt --cov-report term-missing -v
