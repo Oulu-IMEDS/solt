@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-from .constants import allowed_paddings, allowed_crops
+from .constants import allowed_paddings, allowed_crops, dtypes_max
 from .data import img_shape_checker
 from .data import KeyPoints, DataContainer
 from .base_transforms import BaseTransform, MatrixTransform, PaddingPropertyHolder, DataDependentSamplingTransform
@@ -25,9 +25,9 @@ class RandomFlip(BaseTransform):
         Axis of flip. Here, 0 stands for horizontal flipping, 1 stands for the vertical one.
 
     """
-    def __init__(self, p=0.5, axis=1):
+    def __init__(self, p=0.5, axis=1, data_indices=None):
 
-        super(RandomFlip, self).__init__(p=p)
+        super(RandomFlip, self).__init__(p=p, data_indices=data_indices)
         self.__axis = axis
 
     def sample_transform(self):
@@ -72,7 +72,7 @@ class RandomRotate(MatrixTransform):
         Probability of using this transform
 
     """
-    def __init__(self, rotation_range=None, interpolation='bilinear', padding='z', p=0.5):
+    def __init__(self, rotation_range=None, interpolation='bilinear', padding='z', p=0.5, data_indices=None):
         super(RandomRotate, self).__init__(interpolation=interpolation, padding=padding, p=p)
         if rotation_range is None:
             rotation_range = (0, 0)
@@ -656,15 +656,7 @@ class ImageSaltAndPepper(DataDependentSamplingTransform):
     @img_shape_checker
     def _apply_img(self, img):
         img = img.copy()
-        img_max = None
-        if img.dtype == 'uint8':
-            img_max = 255
-        elif img.dtype == 'uint16':
-            img_max = 65535
-        else:
-            raise NotImplementedError
-
-        img[np.where(self.state_dict['salt'])] = img_max
+        img[np.where(self.state_dict['salt'])] = dtypes_max[img.dtype]
         img[np.where(self.state_dict['pepper'])] = 0
         return img
 

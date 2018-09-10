@@ -1,6 +1,7 @@
 import solt.core as slc
 import solt.data as sld
 import solt.transforms as slt
+import solt.base_transforms as slb
 import numpy as np
 import cv2
 import pytest
@@ -424,6 +425,12 @@ def test_gaussian_noise_float_gain():
 
 
 def test_salt_and_pepper_no_gain(img_6x6):
+    trf = slt.ImageSaltAndPepper(gain_range=0., p=1)
+    dc_res = trf(sld.DataContainer((img_6x6.astype(np.uint8),), 'I'))
+    assert np.array_equal(img_6x6, dc_res[0][0])
+
+
+def test_gamma_correction_works(img_6x6):
     trf = slt.ImageSaltAndPepper(gain_range=0., p=1)
     dc_res = trf(sld.DataContainer((img_6x6.astype(np.uint8),), 'I'))
     assert np.array_equal(img_6x6, dc_res[0][0])

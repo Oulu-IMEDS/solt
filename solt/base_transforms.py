@@ -34,11 +34,17 @@ def validate_parameter(parameter, allowed_modes, default_value, basic_type=str):
 
     Returns
     -------
-    out : object
+    out : tuple
         New parameter value wrapped into a tuple.
 
     """
+
     if parameter is None:
+        if isinstance(default_value, tuple):
+            assert isinstance(default_value[0], basic_type)
+            assert default_value[1] in {'inherit', 'strict'}
+        else:
+            assert isinstance(default_value, basic_type)
         parameter = default_value
 
     if isinstance(parameter, basic_type):
@@ -48,7 +54,6 @@ def validate_parameter(parameter, allowed_modes, default_value, basic_type=str):
         assert len(parameter) == 2
         assert isinstance(parameter[0], basic_type)
         assert parameter[0] in allowed_modes
-
     else:
         raise NotImplementedError
 
@@ -69,6 +74,7 @@ class BaseTransform(metaclass=ABCMeta):
         if isinstance(data_indices, tuple):
             for el in data_indices:
                 assert isinstance(el, int)
+                assert el>=0
         self._data_indices = data_indices
 
     def serialize(self, include_state=False):
@@ -156,7 +162,7 @@ class BaseTransform(metaclass=ABCMeta):
                     tmp_item = self._apply_mask(item)
                 elif t == 'P':  # Points
                     tmp_item = self._apply_pts(item)
-                else:  # Labels
+                elif t == 'L':  # Labels
                     tmp_item = self._apply_labels(item)
             else:
                 if t == 'I' or t == 'M':
