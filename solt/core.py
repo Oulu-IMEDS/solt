@@ -3,7 +3,7 @@ import numpy as np
 from collections import OrderedDict
 from .data import DataContainer
 from .base_transforms import BaseTransform, MatrixTransform, DataDependentSamplingTransform
-
+import copy
 
 __all__ = ['Stream', 'SelectiveStream',]
 
@@ -33,6 +33,9 @@ class Stream(object):
         """
         if transforms is None:
             transforms = []
+
+        for trf in transforms:
+            assert isinstance(trf, BaseTransform) or isinstance(trf, Stream)
 
         self.__interpolation = interpolation
         self.__padding = padding
@@ -76,8 +79,6 @@ class Stream(object):
                         trf.padding = (self.__padding, trf.padding[1])
                 elif isinstance(trf, Stream):
                     trf.padding = self.__padding
-                else:
-                    raise NotImplementedError
 
     def serialize(self):
         """
@@ -207,8 +208,8 @@ class SelectiveStream(Stream):
         assert 0 < n <= len(self.transforms)
         if probs is not None:
             assert len(probs) == n
-        self.n = n
-        self.probs = probs
+        self._n = n
+        self._probs = probs
 
     def __call__(self, data):
         """
@@ -225,7 +226,8 @@ class SelectiveStream(Stream):
             Result
         """
         if len(self.transforms) > 0:
-            trfs = np.random.choice(self.transforms, self.n, replace=False, p=self.probs)
+            trfs = np.random.choice(self.transforms, self._n, replace=False, p=self._probs)
+            trfs = [copy.deepcopy(x) for x in trfs]
             trfs = Stream.optimize_stack(trfs)
             data = Stream.exec_stream(trfs, data)
         return data

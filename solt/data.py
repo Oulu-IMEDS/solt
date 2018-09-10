@@ -49,8 +49,10 @@ class DataContainer(object):
     def __init__(self, data, fmt):
         if len(fmt) == 1 and not isinstance(data, tuple):
             data = (data,)
-        if isinstance(data, list):
-            data = tuple(data)
+
+        assert isinstance(data, tuple)
+        assert len(data) == len(fmt)
+
         for t in fmt:
             assert t in allowed_types
 

@@ -8,6 +8,16 @@ import cv2
 from .fixtures import img_2x2, img_3x4, mask_2x2, mask_3x4, img_5x5
 
 
+def test_data_container_different_length_of_data_and_format(img_2x2):
+    with pytest.raises(AssertionError):
+        sld.DataContainer((img_2x2,), 'II')
+
+
+def test_data_container_create_from_any_data(img_2x2):
+    d = sld.DataContainer(img_2x2, 'I')
+    assert np.array_equal(img_2x2, d.data[0])
+
+
 def test_data_item_create_img(img_2x2):
     img = img_2x2
     dc = sld.DataContainer((img,), 'I')
@@ -247,3 +257,38 @@ def test_stream_nested_settings():
         assert trf.interpolation[0] == 'nearest'
         assert trf.padding[0] == 'z'
 
+
+def test_stream_raises_assertion_error_when_not_basetransform_or_stream_in_the_transforms():
+    with pytest.raises(AssertionError):
+        ppl = slc.Stream([1,2,3])
+
+
+def test_stream_serializes_correctly():
+    ppl = slc.Stream([
+        slt.RandomRotate(rotation_range=(-90,90)),
+        slt.RandomRotate(rotation_range=(-90, 90)),
+        slt.RandomRotate(rotation_range=(-90, 90))
+    ])
+
+    serialized = ppl.serialize()
+
+    for el in serialized:
+        assert el == 'RandomRotate'
+        assert serialized['RandomRotate']['p'] == 0.5
+        assert serialized['RandomRotate']['interpolation'] == ('bilinear', 'inherit')
+        assert serialized['RandomRotate']['padding'] == ('z', 'inherit')
+        assert serialized['RandomRotate']['range'] == (-90, 90)
+
+
+def test_selective_pipeline_selects_transforms_and_does_the_fusion():
+    ppl = slc.SelectiveStream([
+        slt.RandomRotate(rotation_range=(90, 90), p=1),
+        slt.RandomRotate(rotation_range=(-90, -90), p=1),
+    ], n=2, probs=[0.5, 0.5])
+
+    kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
+    kpts = sld.KeyPoints(kpts_data, 3, 4)
+    dc = sld.DataContainer(kpts, 'P')
+    dc_res = ppl(dc)
+
+    assert np.array_equal(np.eye(3), ppl.transforms[0].state_dict['transform_matrix'])

@@ -330,13 +330,9 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
         self._pad_to = pad_to
 
     def sample_transform(self):
-        """
-        """
-        raise NotImplementedError
+        DataDependentSamplingTransform.sample_transform(self)
 
     def sample_transform_from_data(self, data: DataContainer):
-        """
-        """
         DataDependentSamplingTransform.sample_transform_from_data(self, data)
 
         for obj, t in data:
@@ -432,30 +428,14 @@ class CropTransform(DataDependentSamplingTransform):
     def crop_mode(self):
         return self._crop_mode
 
-    @crop_mode.setter
-    def crop_mode(self, value):
-        assert value in allowed_crops
-        self._crop_mode = value
-
     @property
     def crop_size(self):
         return self._crop_size
 
-    @crop_size.setter
-    def crop_size(self, value):
-        assert isinstance(value, int) or isinstance(value, tuple)
-        if isinstance(value, tuple):
-            assert isinstance(value, int)
-        self._crop_size = value
-
     def sample_transform(self):
-        """
-        """
         raise NotImplementedError
 
     def sample_transform_from_data(self, data):
-        """
-        """
         DataDependentSamplingTransform.sample_transform_from_data(self, data)
         for obj, t in data:
             if t == 'M' or t == 'I':
@@ -478,10 +458,8 @@ class CropTransform(DataDependentSamplingTransform):
         elif self.crop_mode == 'r':
             x = np.random.randint(0, w - self.crop_size[0])
             y = np.random.randint(0, h - self.crop_size[1])
-        else:
-            raise NotImplementedError
 
-        self.state_dict = {'x': x, 'y':y}
+        self.state_dict = {'x': x, 'y': y}
 
     def _crop_img_or_mask(self, img):
         assert 'x' in self.state_dict

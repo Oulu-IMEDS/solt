@@ -314,7 +314,14 @@ def test_3x3_pad_to_20x20_center_crop_3x3_shape_stayes_unchanged(img_3x3, mask_3
     assert (res[2][0].H == 3) and (res[2][0].W == 3)
 
 
-def test_2x2_pad_to_20x20_center_crop_2x2(img_2x2, mask_2x2):
+@pytest.mark.parametrize('pad_size,crop_size', [
+    (20, 2),
+    (20, (2, 2)),
+    ((20,20), (2, 2)),
+    ((20, 20), 2),
+    ]
+)
+def test_2x2_pad_to_20x20_center_crop_2x2(pad_size, crop_size, img_2x2, mask_2x2):
     # Setting up the data
     kpts_data = np.array([[0, 0], [0, 1], [1, 1], [1, 0]]).reshape((4, 2))
     kpts = sld.KeyPoints(kpts_data, 2, 2)
@@ -323,8 +330,8 @@ def test_2x2_pad_to_20x20_center_crop_2x2(img_2x2, mask_2x2):
     dc = sld.DataContainer((img, mask, kpts,), 'IMP')
 
     stream = slc.Stream([
-        slt.PadTransform((20, 20)),
-        slt.CropTransform((2, 2))
+        slt.PadTransform(pad_to=pad_size),
+        slt.CropTransform(crop_size=crop_size)
     ])
     res = stream(dc)
 
@@ -337,13 +344,37 @@ def test_2x2_pad_to_20x20_center_crop_2x2(img_2x2, mask_2x2):
     assert np.array_equal(res[2][0].data, kpts_data)
 
 
+@pytest.mark.parametrize('crop_mode', [
+    'c',
+    'r',
+    'd'
+    ]
+)
+def test_different_crop_modes(crop_mode, img_2x2, mask_2x2):
+    if crop_mode == 'd':
+        with pytest.raises(AssertionError):
+            slt.CropTransform(crop_size=2, crop_mode=crop_mode)
+    else:
+        stream = slc.Stream([
+            slt.PadTransform(pad_to=20),
+            slt.CropTransform(crop_size=2, crop_mode=crop_mode)
+        ])
+        img, mask = img_2x2, mask_2x2
+        dc = sld.DataContainer((img, mask,), 'IM')
+        dc_res = stream(dc)
+
+        for el in dc_res.data:
+            assert el.shape[0] == 2
+            assert el.shape[1] == 2
+
+
 def test_6x6_pad_to_20x20_center_crop_6x6_img_kpts(img_6x6):
     # Setting up the data
     kpts_data = np.array([[0, 0], [0, 5], [1, 3], [2, 0]]).reshape((4, 2))
     kpts = sld.KeyPoints(kpts_data, 6, 6)
     img = img_6x6
 
-    dc = sld.DataContainer((img, kpts,), 'IP')
+    dc = sld.DataContainer((img, kpts,1), 'IPL')
 
     stream = slc.Stream([
         slt.PadTransform((20, 20)),
@@ -430,7 +461,37 @@ def test_salt_and_pepper_no_gain(img_6x6):
     assert np.array_equal(img_6x6, dc_res[0][0])
 
 
-def test_gamma_correction_works(img_6x6):
-    trf = slt.ImageSaltAndPepper(gain_range=0., p=1)
-    dc_res = trf(sld.DataContainer((img_6x6.astype(np.uint8),), 'I'))
-    assert np.array_equal(img_6x6, dc_res[0][0])
+@pytest.mark.parametrize('pad_size,pad_type', [
+    (2, 'z'),
+    ((2, 2), 'z'),
+    (2, 'r'),
+    ((2, 2), 'r'),
+    ]
+)
+def test_pad_does_not_change_the_data_when_the_image_and_the_mask_are_big(pad_size, pad_type, img_3x3, mask_3x3):
+    dc = sld.DataContainer((img_3x3, mask_3x3), 'IM')
+    trf = slt.PadTransform(pad_to=pad_size, padding=pad_type)
+    dc_res = trf(dc)
+
+    np.testing.assert_array_equal(dc_res.data[0], img_3x3)
+    np.testing.assert_array_equal(dc_res.data[1], mask_3x3)
+
+
+def test_image_doesnt_change_when_gain_0_in_gaussian_noise_addition(img_3x3):
+    dc = sld.DataContainer((img_3x3, ), 'I')
+    trf = slt.ImageAdditiveGaussianNoise(gain_range=(0, 0), p=1)
+    dc_res = trf(dc)
+    np.testing.assert_array_equal(img_3x3, dc_res.data[0])
+
+
+@pytest.mark.parametrize('trf_cls,trf_params', [
+    (slt.ImageAdditiveGaussianNoise, {'gain_range': 0.5, }),
+    (slt.ImageSaltAndPepper, {'p': 1}),
+    (slt.CropTransform, {'crop_size': 1}),
+    (slt.PadTransform, {'pad_to': 1}),
+    ]
+)
+def test_data_dependent_samplers_raise_nie_when_sample_transform_is_called(trf_cls, trf_params):
+    with pytest.raises(NotImplementedError):
+        trf = trf_cls(**trf_params)
+        trf.sample_transform()
