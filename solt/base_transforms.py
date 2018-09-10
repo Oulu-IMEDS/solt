@@ -8,6 +8,11 @@ from .data import DataContainer, img_shape_checker, KeyPoints
 from .constants import allowed_interpolations, allowed_paddings
 
 
+__all__ = ['BaseTransform', 'MatrixTransform',
+           'DataDependentSamplingTransform', 'PaddingPropertyHolder',
+           'InterpolationPropertyHolder']
+
+
 def validate_parameter(parameter, allowed_modes, default_value, basic_type=str):
     """
     Validates the parameter and wraps it into a tuple with the inheritance option (if parameter is not a tuple already).

@@ -8,6 +8,12 @@ from .base_transforms import BaseTransform, MatrixTransform, PaddingPropertyHold
 from .core import Stream
 
 
+__all__ = ['RandomFlip', 'RandomRotate', 'RandomShear',
+           'RandomScale', 'RandomTranslate', 'RandomProjection',
+           'PadTransform', 'CropTransform', 'ImageAdditiveGaussianNoise',
+           'ImageGammaCorrection', 'ImageSaltAndPepper']
+
+
 class RandomFlip(BaseTransform):
     """Random Flipping transform.
 

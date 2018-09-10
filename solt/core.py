@@ -5,6 +5,9 @@ from .data import DataContainer
 from .base_transforms import BaseTransform, MatrixTransform, DataDependentSamplingTransform
 
 
+__all__ = ['Stream', 'SelectiveStream',]
+
+
 class Stream(object):
     """
     Stream class. Executes the list of transformations

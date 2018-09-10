@@ -1,3 +1,4 @@
+notebooks/Data/*
 doc/build/
 docs/build/
 solt/__pycache__/
