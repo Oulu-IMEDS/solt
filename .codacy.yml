@@ -1,0 +1,5 @@
+exclude_paths:
+  - 'tests/**'
+  - 'notebooks/**'
+  - 'doc/**'
+  - 'solt/__init__.py'
