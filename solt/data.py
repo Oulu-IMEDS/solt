@@ -63,17 +63,9 @@ class DataContainer(object):
     def data_format(self):
         return self.__fmt
 
-    @data_format.setter
-    def data_format(self, value):
-        self.__fmt = value
-
     @property
     def data(self):
         return self.__data
-
-    @data.setter
-    def data(self, value):
-        self.__fmt = value
 
     def __getitem__(self, idx):
         """
@@ -117,10 +109,6 @@ class KeyPoints(object):
     @property
     def data(self):
         return self.__data
-
-    @data.setter
-    def data(self, value):
-        self.__data = value
 
     @property
     def H(self):

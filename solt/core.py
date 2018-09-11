@@ -35,7 +35,8 @@ class Stream(object):
             transforms = []
 
         for trf in transforms:
-            assert isinstance(trf, BaseTransform) or isinstance(trf, Stream)
+            if not isinstance(trf, BaseTransform) and not isinstance(trf, Stream):
+                raise TypeError
 
         self.__interpolation = interpolation
         self.__padding = padding
@@ -99,10 +100,6 @@ class Stream(object):
     def transforms(self):
         return self.__transforms
 
-    @transforms.setter
-    def transforms(self, value):
-        self.__transforms = value
-
     def __call__(self, data):
         """
         Executes the list of the pre-defined transformations for a given data container.
@@ -139,7 +136,8 @@ class Stream(object):
         # First we should create a stack
         transforms_stack = []
         for trf in transforms:
-            assert isinstance(trf, Stream) or isinstance(trf, BaseTransform)
+            if not isinstance(trf, Stream) and not isinstance(trf, BaseTransform):
+                raise TypeError
             if isinstance(trf, BaseTransform) and not isinstance(trf, DataDependentSamplingTransform):
                 if trf.use_transform():
                     trf.sample_transform()
@@ -183,8 +181,6 @@ class Stream(object):
                 data = trf.apply(data)
             elif isinstance(trf, Stream) or isinstance(trf, DataDependentSamplingTransform):
                 data = trf(data)
-            else:
-                raise NotImplementedError
         return data
 
 

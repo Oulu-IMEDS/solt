@@ -115,6 +115,17 @@ def test_keypoints_vertical_flip_within_stream():
     assert np.array_equal(dc_res[0][0].data, np.array([[0, 1], [0, 0], [1, 1], [1, 0]]).reshape((4, 2)))
 
 
+def test_rotate_range_none():
+    trf = slt.RandomRotate(None)
+    assert trf.rotation_range == (0, 0)
+
+
+def test_shear_range_none():
+    trf = slt.RandomShear(None, None)
+    assert trf.shear_range_x == (0, 0)
+    assert trf.shear_range_y == (0, 0)
+
+
 def test_rotate_90_img_mask_keypoints(img_3x3, mask_3x3):
     # Setting up the data
     kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
@@ -122,7 +133,7 @@ def test_rotate_90_img_mask_keypoints(img_3x3, mask_3x3):
     img, mask = img_3x3, mask_3x3
     H, W = mask.shape
 
-    dc = sld.DataContainer((img, mask, kpts,), 'IMP')
+    dc = sld.DataContainer((img, mask, kpts, 1), 'IMPL')
     # Defining the 90 degrees transform (clockwise)
     stream = slt.RandomRotate(rotation_range=(90, 90), p=1)
     dc_res = stream(dc)
@@ -130,7 +141,7 @@ def test_rotate_90_img_mask_keypoints(img_3x3, mask_3x3):
     img_res, _ = dc_res[0]
     mask_res, _ = dc_res[1]
     kpts_res, _ = dc_res[2]
-
+    label_res, _ = dc_res[3]
     M = cv2.getRotationMatrix2D((W // 2, H // 2), -90, 1)
     expected_img_res = cv2.warpAffine(img, M, (W, H)).reshape((H, W, 1))
     expected_mask_res = cv2.warpAffine(mask, M, (W, H))
@@ -139,7 +150,7 @@ def test_rotate_90_img_mask_keypoints(img_3x3, mask_3x3):
     assert np.array_equal(expected_img_res, img_res)
     assert np.array_equal(expected_mask_res, mask_res)
     np.testing.assert_array_almost_equal(expected_kpts_res, kpts_res.data)
-
+    assert label_res == 1
 
 def test_zoom_x_axis_odd(img_5x5):
     stream = slt.RandomScale(range_x=(0.5, 0.5), range_y=(1, 1), same=False, p=1)
@@ -352,7 +363,7 @@ def test_2x2_pad_to_20x20_center_crop_2x2(pad_size, crop_size, img_2x2, mask_2x2
 )
 def test_different_crop_modes(crop_mode, img_2x2, mask_2x2):
     if crop_mode == 'd':
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError):
             slt.CropTransform(crop_size=2, crop_mode=crop_mode)
     else:
         stream = slc.Stream([
@@ -484,14 +495,53 @@ def test_image_doesnt_change_when_gain_0_in_gaussian_noise_addition(img_3x3):
     np.testing.assert_array_equal(img_3x3, dc_res.data[0])
 
 
+@pytest.mark.parametrize('scale,expected', [
+    (2, (1, 2)),
+    (2.5, (1, 2.5)),
+    (0.5, (0.5, 1)),
+    (-1, None)
+    ]
+)
+def test_scale_range_from_number(scale, expected):
+    if expected is not None:
+        trf = slt.RandomScale(range_x=scale, range_y=scale)
+        assert trf.scale_range_x == expected
+        assert trf.scale_range_x == expected
+    else:
+        with pytest.raises(ValueError):
+            slt.RandomScale(range_x=scale)
+        with pytest.raises(ValueError):
+            slt.RandomScale(range_x=None, range_y=scale)
+
+
+@pytest.mark.parametrize('translate,expected', [
+    (2, (-2, 2)),
+    (2.5, (-2.5, 2.5)),
+    (0.5, (-0.5, 0.5)),
+    (-0.5, (-0.5, 0.5)),
+    ]
+)
+def test_translate_range_from_number(translate, expected):
+    trf = slt.RandomTranslate(range_x=translate, range_y=translate)
+    assert trf.translate_range_x == expected
+    assert trf.translate_range_y == expected
+
+
 @pytest.mark.parametrize('trf_cls,trf_params', [
     (slt.ImageAdditiveGaussianNoise, {'gain_range': 0.5, }),
     (slt.ImageSaltAndPepper, {'p': 1}),
-    (slt.CropTransform, {'crop_size': 1}),
-    (slt.PadTransform, {'pad_to': 1}),
+    (slt.ImageGammaCorrection, {'p':1})
     ]
 )
-def test_data_dependent_samplers_raise_nie_when_sample_transform_is_called(trf_cls, trf_params):
-    with pytest.raises(NotImplementedError):
-        trf = trf_cls(**trf_params)
-        trf.sample_transform()
+def test_image_trfs_dont_change_mask_labels_kpts(trf_cls, trf_params, img_3x4, mask_3x4):
+    trf = trf_cls(**trf_params)
+    kpts_data = np.array([[0, 0], [0, 1], [1, 0], [2, 0]]).reshape((4, 2))
+    kpts = sld.KeyPoints(kpts_data, 3, 4)
+    dc = sld.DataContainer((img_3x4, mask_3x4, kpts, 1), 'IMPL')
+    dc_res = trf(dc)
+
+    assert np.all(dc.data[1] == dc_res.data[1])
+    assert np.all(dc.data[2].data == dc_res.data[2].data)
+    assert dc.data[3] == dc_res.data[3]
+
+

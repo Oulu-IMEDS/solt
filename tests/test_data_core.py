@@ -259,8 +259,8 @@ def test_stream_nested_settings():
 
 
 def test_stream_raises_assertion_error_when_not_basetransform_or_stream_in_the_transforms():
-    with pytest.raises(AssertionError):
-        ppl = slc.Stream([1,2,3])
+    with pytest.raises(TypeError):
+        slc.Stream([1,2,3])
 
 
 def test_stream_serializes_correctly():
@@ -292,3 +292,29 @@ def test_selective_pipeline_selects_transforms_and_does_the_fusion():
     dc_res = ppl(dc)
 
     assert np.array_equal(np.eye(3), ppl.transforms[0].state_dict['transform_matrix'])
+
+
+def test_value_error_when_optimizeing_wrong_elements_transforms_list():
+    trfs = [
+        slt.RandomRotate(rotation_range=(90, 90), p=1),
+        slt.RandomRotate(rotation_range=(-90, -90), p=1),
+        lambda x: x**2
+    ]
+
+    with pytest.raises(TypeError):
+        slc.Stream.optimize_stack(trfs)
+
+
+def test_nested_streams_are_not_fused_with_matrix_trf():
+    trfs = [
+        slt.RandomRotate(rotation_range=(90, 90), p=1),
+        slt.RandomRotate(rotation_range=(-90, -90), p=1),
+        slc.Stream([
+            slt.RandomRotate(rotation_range=(90, 90), p=1),
+        ]),
+        slt.RandomRotate(rotation_range=(-90, -90), p=1),
+    ]
+
+    trfs_optimized = slc.Stream.optimize_stack(trfs)
+    assert trfs_optimized[-2] == trfs[-2]
+

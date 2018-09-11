@@ -40,20 +40,20 @@ def validate_parameter(parameter, allowed_modes, default_value, basic_type=str):
     """
 
     if parameter is None:
-        if isinstance(default_value, tuple):
-            assert isinstance(default_value[0], basic_type)
-            assert default_value[1] in {'inherit', 'strict'}
-        else:
-            assert isinstance(default_value, basic_type)
         parameter = default_value
 
     if isinstance(parameter, basic_type):
         parameter = (parameter, 'inherit')
 
     if isinstance(parameter, tuple):
-        assert len(parameter) == 2
-        assert isinstance(parameter[0], basic_type)
-        assert parameter[0] in allowed_modes
+        if len(parameter) != 2:
+            raise ValueError
+        if not isinstance(parameter[0], basic_type):
+            raise TypeError
+        if parameter[0] not in allowed_modes:
+            raise ValueError
+        if parameter[1] not in {'inherit', 'strict'}:
+            raise ValueError
     else:
         raise NotImplementedError
 
@@ -70,11 +70,15 @@ class BaseTransform(metaclass=ABCMeta):
     def __init__(self, p=0.5, data_indices=None):
         self.p = p
         self.state_dict = {'use': False}
-        assert data_indices is None or isinstance(data_indices, tuple)
+        if data_indices is not None and not isinstance(data_indices, tuple):
+            raise TypeError
         if isinstance(data_indices, tuple):
             for el in data_indices:
-                assert isinstance(el, int)
-                assert el>=0
+                if not isinstance(el, int):
+                    raise TypeError
+                if el < 0:
+                    raise ValueError
+
         self._data_indices = data_indices
 
     def serialize(self, include_state=False):
@@ -154,6 +158,7 @@ class BaseTransform(metaclass=ABCMeta):
         types = []
         if self._data_indices is None:
             self._data_indices = np.arange(0, len(data)).astype(int)
+        tmp_item = None
         for i, (item, t) in enumerate(data):
             if i in self._data_indices:
                 if t == 'I':  # Image
@@ -295,21 +300,20 @@ class DataDependentSamplingTransform(BaseTransform):
             elif t == 'P':
                 h = obj.H
                 w = obj.W
-            else:
+            elif t == 'L':
                 continue
 
             if prev_h is None:
                 prev_h = h
             else:
-                assert prev_h == h
+                if prev_h != h:
+                    raise ValueError
 
             if prev_w is None:
                 prev_w = w
             else:
-                assert prev_w == w
-
-        assert prev_h is not None
-        assert prev_w is not None
+                if prev_w != w:
+                    raise ValueError
 
     def __call__(self, data):
         """Applies the transform to a DataContainer
@@ -477,8 +481,10 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         trf : MatrixTransform
 
         """
-        assert self.state_dict is not None
-        assert trf.state_dict is not None
+        if self.state_dict is None:
+            raise ValueError
+        if trf.state_dict is None:
+            raise ValueError
 
         if trf.padding is not None:
             self.padding = trf.padding

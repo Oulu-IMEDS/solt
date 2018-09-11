@@ -82,6 +82,10 @@ class RandomRotate(MatrixTransform):
 
         self.__range = rotation_range
 
+    @property
+    def rotation_range(self):
+        return self.__range
+
     def sample_transform(self):
         """
         Samples random rotation within specified range and saves it as an object state.
@@ -132,9 +136,17 @@ class RandomShear(MatrixTransform):
         self.__range_x = range_x
         self.__range_y = range_y
 
+    @property
+    def shear_range_x(self):
+        return self.__range_x
+
+    @property
+    def shear_range_y(self):
+        return self.__range_y
+
     def sample_transform(self):
-        shear_x = np.random.uniform(self.__range_x[0], self.__range_x[1])
-        shear_y = np.random.uniform(self.__range_y[0], self.__range_y[1])
+        shear_x = np.random.uniform(self.shear_range_x[0], self.shear_range_x[1])
+        shear_y = np.random.uniform(self.shear_range_y[0], self.shear_range_y[1])
 
         M = np.array([1, shear_x, 0,
                      shear_y, 1, 0,
@@ -150,11 +162,11 @@ class RandomScale(MatrixTransform):
     ----------
     range_x : tuple or float or None
         Scaling range along X-axis.
-        If float, then (-range_x, range_x) will be used.
+        If float, then (min(1, range_x), max(1, range_x)) will be used.
         If None, then range_x =(1,1) by default.
     range_y : tuple or float
         Scaling range along Y-axis.
-        If float, then (-range_y, range_y) will be used.
+        If float, then (min(1, range_y), max(1, range_y)) will be used.
         If None, then range_y=(1,1) by default.
     same: bool
         Indicates whether to use the same scaling factor for width and height.
@@ -170,30 +182,40 @@ class RandomScale(MatrixTransform):
         super(RandomScale, self).__init__(interpolation=interpolation, padding=None, p=p)
 
         if isinstance(range_x, (int, float)):
-            range_x = (-range_x, range_x)
+            range_x = (min(1, range_x), max(1, range_x))
 
         if isinstance(range_y, (int, float)):
-            range_y = (-range_y, range_y)
+            range_y = (min(1, range_y), max(1, range_y))
 
         if range_x is not None:
-            assert (range_x[0] > 0 and range_x[0] > 0)
+            if not (range_x[0] > 0 and range_x[1] > 0):
+                raise ValueError
         if range_y is not None:
-            assert (range_y[0] > 0 and range_y[0] > 0)
+            if not (range_y[0] > 0 and range_y[1] > 0):
+                raise ValueError
 
         self.__same = same
         self.__range_x = range_x
         self.__range_y = range_y
 
+    @property
+    def scale_range_x(self):
+        return self.__range_x
+
+    @property
+    def scale_range_y(self):
+        return self.__range_y
+
     def sample_transform(self):
-        if self.__range_x is None:
+        if self.scale_range_x is None:
             scale_x = 1
         else:
-            scale_x = np.random.uniform(self.__range_x[0], self.__range_x[1])
+            scale_x = np.random.uniform(self.scale_range_x[0], self.scale_range_x[1])
 
-        if self.__range_y is None:
+        if self.scale_range_y is None:
             scale_y = 1
         else:
-            scale_y = np.random.uniform(self.__range_y[0], self.__range_y[1])
+            scale_y = np.random.uniform(self.scale_range_y[0], self.scale_range_y[1])
 
         if self.__same:
             if self.__range_x is None:
@@ -228,24 +250,32 @@ class RandomTranslate(MatrixTransform):
     def __init__(self, range_x=None, range_y=None,  interpolation='bilinear', padding='z', p=0.5):
         super(RandomTranslate, self).__init__(interpolation=interpolation, padding=padding, p=p)
         if isinstance(range_x, (int, float)):
-            range_x = (-range_x, range_x)
+            range_x = (min(range_x, -range_x), max(range_x, -range_x))
 
         if isinstance(range_y, (int, float)):
-            range_y = (-range_y, range_y)
+            range_y = (min(range_y, -range_y), max(range_y, -range_y))
 
         self.__range_x = range_x
         self.__range_y = range_y
 
+    @property
+    def translate_range_x(self):
+        return self.__range_x
+
+    @property
+    def translate_range_y(self):
+        return self.__range_y
+
     def sample_transform(self):
-        if self.__range_x is None:
+        if self.translate_range_x is None:
             tx = 0
         else:
-            tx = np.random.uniform(self.__range_x[0], self.__range_x[1])
+            tx = np.random.uniform(self.translate_range_x[0], self.translate_range_x[1])
 
-        if self.__range_y is None:
+        if self.translate_range_y is None:
             ty = 0
         else:
-            ty = np.random.uniform(self.__range_y[0], self.__range_y[1])
+            ty = np.random.uniform(self.translate_range_y[0], self.translate_range_y[1])
 
         M = np.array([1, 0, tx,
                       0, 1, ty,
@@ -280,13 +310,17 @@ class RandomProjection(MatrixTransform):
 
         if v_range is None:
             v_range = (0, 0)
-        assert isinstance(affine_transforms, Stream)
+        if not isinstance(affine_transforms, Stream):
+            raise TypeError
         for trf in affine_transforms.transforms:
-            assert isinstance(trf, MatrixTransform)
+            if not isinstance(trf, MatrixTransform):
+                raise TypeError
 
-        assert isinstance(v_range, tuple)
+        if not isinstance(v_range, tuple):
+            raise TypeError
         for limit in v_range:
-            assert isinstance(limit, (int, float))
+            if not isinstance(limit, (int, float)):
+                raise TypeError
 
         self.__affine_transforms = affine_transforms
         self.__vrange = v_range  # projection components.
@@ -323,7 +357,8 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
     def __init__(self, pad_to, padding=None):
         DataDependentSamplingTransform.__init__(self, p=1)
         PaddingPropertyHolder.__init__(self, padding)
-        assert isinstance(pad_to, tuple) or isinstance(pad_to, int)
+        if not isinstance(pad_to, tuple) and not isinstance(pad_to, int):
+            raise TypeError
         if isinstance(pad_to, int):
             pad_to = (pad_to, pad_to)
 
@@ -384,7 +419,8 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
         return labels
 
     def _apply_pts(self, pts):
-        assert self.padding[0] == 'z'
+        if self.padding[0] != 'z':
+            raise ValueError
         pts_data = pts.data.copy()
 
         pad_h_top, pad_h_bottom = self.state_dict['pad_h']
@@ -412,11 +448,14 @@ class CropTransform(DataDependentSamplingTransform):
     def __init__(self, crop_size, crop_mode='c'):
         super(CropTransform, self).__init__(p=1, data_indices=None)
 
-        assert isinstance(crop_size, int) or isinstance(crop_size, tuple)
-        assert crop_mode in allowed_crops
+        if not isinstance(crop_size, int) and not isinstance(crop_size, tuple):
+            raise TypeError
+        if crop_mode not in allowed_crops:
+            raise ValueError
 
         if isinstance(crop_size, tuple):
-            assert isinstance(crop_size[0], int)
+            if not isinstance(crop_size[0], int):
+                raise TypeError
 
         if isinstance(crop_size, int):
             crop_size = (crop_size, crop_size)
@@ -446,11 +485,11 @@ class CropTransform(DataDependentSamplingTransform):
                 h = obj.H
                 w = obj.W
                 break
-            else:
-                continue
 
-        assert self.crop_size[0] <= w
-        assert self.crop_size[1] <= h
+        if self.crop_size[0] > w:
+            raise ValueError
+        if self.crop_size[1] > h:
+            raise ValueError
 
         if self.crop_mode == 'c':
             x = w // 2 - self.crop_size[0] // 2
@@ -462,8 +501,6 @@ class CropTransform(DataDependentSamplingTransform):
         self.state_dict = {'x': x, 'y': y}
 
     def _crop_img_or_mask(self, img):
-        assert 'x' in self.state_dict
-        assert 'y' in self.state_dict
         x, y = self.state_dict['x'], self.state_dict['y']
         return img[y:y+self.crop_size[1], x:x+self.crop_size[0]]
 
@@ -479,8 +516,6 @@ class CropTransform(DataDependentSamplingTransform):
 
     def _apply_pts(self, pts):
         pts_data = pts.data.copy()
-        assert 'x' in self.state_dict
-        assert 'y' in self.state_dict
         x, y = self.state_dict['x'], self.state_dict['y']
 
         pts_data[:, 0] -= x
@@ -667,12 +702,14 @@ class ImageGammaCorrection(BaseTransform):
     def __init__(self, p=0.5, gamma_range=0.1, data_indices=None):
         super(ImageGammaCorrection, self).__init__(p=p, data_indices=data_indices)
 
-        assert isinstance(gamma_range, float) or isinstance(gamma_range, tuple)
+        if not isinstance(gamma_range, float) and not isinstance(gamma_range, tuple):
+            raise TypeError
 
         if isinstance(gamma_range, float):
             gamma_range = (1-gamma_range, 1+gamma_range)
 
-        assert gamma_range[0] >= 0
+        if gamma_range[0] < 0:
+            raise ValueError
 
         self._gamma_range = gamma_range
 
