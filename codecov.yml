@@ -1,2 +1,2 @@
 ignore:
-  - "solt/__init__py"
+  - "solt/__init__.py"
