@@ -8,7 +8,7 @@ install:
 - bash miniconda.sh -b -p $HOME/miniconda
 - export OPATH="$PATH" && export PATH="$HOME/miniconda/bin:$PATH"
 - conda create -q -y -n solt_test_env python=$TRAVIS_PYTHON_VERSION
-- conda install -n -y solt_test_env pandoc
+- conda install -y -n solt_test_env pandoc
 - source activate solt_test_env
 - pip install ipykernel
 - pip install codecov
