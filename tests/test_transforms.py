@@ -545,3 +545,102 @@ def test_image_trfs_dont_change_mask_labels_kpts(trf_cls, trf_params, img_3x4, m
     assert dc.data[3] == dc_res.data[3]
 
 
+def test_padding_cant_be_float():
+    with pytest.raises(TypeError):
+        slt.PadTransform(pad_to=2.5)
+
+
+def test_reflective_padding_cant_be_applied_to_kpts():
+    kpts_data = np.array([[0, 0], [0, 1], [1, 0], [2, 0]]).reshape((4, 2))
+    kpts = sld.KeyPoints(kpts_data, 3, 4)
+    dc = sld.DataContainer((1, kpts), 'LP')
+    trf = slt.PadTransform(pad_to=(10, 10), padding='r')
+    with pytest.raises(ValueError):
+        trf(dc)
+
+
+@pytest.mark.parametrize('crop_size', [
+    (2, 3),
+    (3, 2),
+    ]
+)
+def test_crop_size_is_too_big(img_2x2, crop_size):
+    dc = sld.DataContainer((img_2x2,), 'I')
+    trf = slt.CropTransform(crop_size=crop_size)
+    with pytest.raises(ValueError):
+        trf(dc)
+
+
+@pytest.mark.parametrize('crop_size', [
+    '123',
+    2.5,
+    (2.5, 2),
+    (2, 2.2)
+]
+)
+def test_wrong_crop_size_types(crop_size):
+    with pytest.raises(TypeError):
+        slt.CropTransform(crop_size=crop_size)
+
+
+@pytest.mark.parametrize('salt_p', [
+    (1, 2),
+    (2, 2),
+    (0.7, 0.3),
+    (-0.1),
+    (-0.8, 0.1),
+    (0.3, 0.7, 0.8),
+]
+)
+def test_wrong_salt_p_salt_and_pepper(salt_p):
+    with pytest.raises(ValueError):
+        slt.ImageSaltAndPepper(salt_p=salt_p)
+
+
+@pytest.mark.parametrize('gain_range', [
+    (1, 2),
+    (2, 2),
+    (0.7, 0.3),
+    (-0.1),
+    (-0.8, 0.1),
+    (0.3, 0.7, 0.8),
+]
+)
+def test_wrong_gain_range_vals_salt_and_pepper(gain_range):
+    with pytest.raises(ValueError):
+        slt.ImageSaltAndPepper(gain_range=gain_range)
+
+
+def test_wrong_types_in_gain_and_salt_p_salt_and_peper():
+    with pytest.raises(TypeError):
+        slt.ImageSaltAndPepper(salt_p='2')
+
+    with pytest.raises(TypeError):
+        slt.ImageSaltAndPepper(gain_range='2')
+
+
+@pytest.mark.parametrize('scale_x, scale_y, same, expected', [
+    (None, (2,2), True, (2, 2)),
+    ((2,2), None, True, (2, 2)),
+    (None, None, True, (1, 1)),
+    (None, (2,2), False, (1, 2)),
+    ((2,2), None, False, (2, 1)),
+    (None, None, False, (1, 1)),
+]
+)
+def test_scale_when_range_x_is_none(scale_x, scale_y, same, expected):
+    trf = slt.RandomScale(range_x=scale_x, range_y=scale_y, same=same, p=1)
+    trf.sample_transform()
+    assert (trf.state_dict['scale_x'], trf.state_dict['scale_y']) == expected
+
+
+@pytest.mark.parametrize('translate_x, translate_y, expected', [
+    (None, (2, 2), (0, 2)),
+    ((2, 2), None, (2, 0)),
+    (None, None, (0, 0)),
+]
+)
+def test_scale_when_range_x_is_none(translate_x, translate_y, expected):
+    trf = slt.RandomTranslate(range_x=translate_x, range_y=translate_y, p=1)
+    trf.sample_transform()
+    assert (trf.state_dict['translate_x'], trf.state_dict['translate_y']) == expected

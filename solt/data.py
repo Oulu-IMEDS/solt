@@ -2,7 +2,6 @@ from functools import wraps
 from copy import deepcopy
 from .constants import allowed_types
 
-
 __all__ = ['img_shape_checker', 'DataContainer', 'KeyPoints']
 
 
@@ -22,12 +21,13 @@ def img_shape_checker(method):
     @wraps(method)
     def wrapper(self, *args, **kwargs):
         res = method(self, *args, **kwargs)
-        assert 1 < len(res.shape) <= 3
         if len(res.shape) == 2:
             h, w = res.shape
             c = 1
-        else:
+        elif len(res.shape) == 3:
             h, w, c = res.shape
+        else:
+            raise ValueError
 
         return res.reshape((h, w, c))
     return wrapper
@@ -48,7 +48,8 @@ class DataContainer(object):
     """
     def __init__(self, data, fmt):
         if len(fmt) == 1 and not isinstance(data, tuple):
-            data = (data,)
+            if not isinstance(data, list):
+                data = (data,)
 
         if not isinstance(data, tuple):
             raise TypeError
@@ -56,7 +57,8 @@ class DataContainer(object):
             raise ValueError
 
         for t in fmt:
-            assert t in allowed_types
+            if t not in allowed_types:
+                raise TypeError
 
         self.__data = deepcopy(data)
         self.__fmt = fmt
@@ -84,8 +86,6 @@ class DataContainer(object):
             Data item (e.g. numpy.ndarray) and its type, e.g. 'I' - image.
 
         """
-        if not isinstance(idx, int):
-            raise TypeError
         return self.__data[idx], self.__fmt[idx]
 
     def __len__(self):

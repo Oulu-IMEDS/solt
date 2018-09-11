@@ -47,7 +47,7 @@ def test_transform_returns_original_data_if_use_transform_is_false(img_2x2):
 def test_transform_returns_original_data_if_not_in_specified_indices(img_2x2, img_3x3, img_3x4, img_5x5):
     kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
     kpts = sld.KeyPoints(kpts_data, 3, 3)
-    dc = sld.DataContainer((img_2x2, img_3x3, img_3x4, img_5x5, 1, kpts), 'IIIILP')
+    dc = sld.DataContainer((img_2x2, img_3x3, img_3x4, img_5x5, 1, kpts, 2), 'IIIILPL')
     trf = slt.RandomFlip(p=1, data_indices=(0, 1, 4))
     res = trf(dc)
 
@@ -55,7 +55,7 @@ def test_transform_returns_original_data_if_not_in_specified_indices(img_2x2, im
     assert np.linalg.norm(res.data[1]-img_3x3) > 0
     np.testing.assert_array_equal(res.data[2], img_3x4)
     np.testing.assert_array_equal(res.data[3], img_5x5)
-    assert res.data[4] == 1
+    assert res.data[-1] == 2
     np.testing.assert_array_equal(res.data[5].data, kpts_data)
 
 
@@ -93,3 +93,18 @@ def test_validate_parameter_raises_value_errors(parameter):
     with pytest.raises(ValueError):
         slb.validate_parameter(parameter, {1, 2}, 1, basic_type=int)
 
+
+def test_transform_returns_original_data_when_not_used_and_applied(img_2x2):
+    trf = slt.RandomFlip(p=0)
+    dc = sld.DataContainer(img_2x2, 'I')
+    dc_res = trf(dc)
+    assert dc_res == dc
+
+
+def test_transforms_are_serialized_with_state_when_needed():
+    trf = slt.RandomRotate(rotation_range=(-90, 90))
+
+    serialized = trf.serialize(include_state=True)
+
+    assert 'dict' in serialized
+    np.testing.assert_array_equal(serialized['dict']['transform_matrix'], np.eye(3))

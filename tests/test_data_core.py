@@ -8,6 +8,13 @@ import cv2
 from .fixtures import img_2x2, img_3x4, mask_2x2, mask_3x4, img_5x5
 
 
+def test_img_shape_checker_decorator_shape_check():
+    img = np.random.rand(3, 4, 5, 6)
+    func = sld.img_shape_checker(lambda x: x)
+    with pytest.raises(ValueError):
+        func(img)
+
+
 def test_data_container_different_length_of_data_and_format(img_2x2):
     with pytest.raises(ValueError):
         sld.DataContainer((img_2x2,), 'II')
@@ -16,6 +23,12 @@ def test_data_container_different_length_of_data_and_format(img_2x2):
 def test_data_container_create_from_any_data(img_2x2):
     d = sld.DataContainer(img_2x2, 'I')
     assert np.array_equal(img_2x2, d.data[0])
+    assert d.data_format == 'I'
+
+
+def test_data_container_can_be_only_tuple_if_iterable(img_2x2):
+    with pytest.raises(TypeError):
+        sld.DataContainer([img_2x2, ], 'I')
 
 
 def test_data_item_create_img(img_2x2):
@@ -267,17 +280,29 @@ def test_stream_serializes_correctly():
     ppl = slc.Stream([
         slt.RandomRotate(rotation_range=(-90,90)),
         slt.RandomRotate(rotation_range=(-90, 90)),
-        slt.RandomRotate(rotation_range=(-90, 90))
+        slt.RandomRotate(rotation_range=(-90, 90)),
+        slt.RandomProjection(
+            slc.Stream([
+                slt.RandomRotate(rotation_range=(-90, 90)),
+            ])
+        )
     ])
 
     serialized = ppl.serialize()
 
-    for el in serialized:
-        assert el == 'RandomRotate'
-        assert serialized['RandomRotate']['p'] == 0.5
-        assert serialized['RandomRotate']['interpolation'] == ('bilinear', 'inherit')
-        assert serialized['RandomRotate']['padding'] == ('z', 'inherit')
-        assert serialized['RandomRotate']['range'] == (-90, 90)
+    for i, el in enumerate(serialized):
+        if i < len(serialized) - 1:
+            assert el == 'RandomRotate'
+            assert serialized[el]['p'] == 0.5
+            assert serialized[el]['interpolation'] == ('bilinear', 'inherit')
+            assert serialized[el]['padding'] == ('z', 'inherit')
+            assert serialized[el]['range'] == (-90, 90)
+        else:
+            assert el == 'RandomProjection'
+            assert serialized[el]['transforms']['RandomRotate']['p'] == 0.5
+            assert serialized[el]['transforms']['RandomRotate']['interpolation'] == ('bilinear', 'inherit')
+            assert serialized[el]['transforms']['RandomRotate']['padding'] == ('z', 'inherit')
+            assert serialized[el]['transforms']['RandomRotate']['range'] == (-90, 90)
 
 
 def test_selective_pipeline_selects_transforms_and_does_the_fusion():
@@ -318,3 +343,15 @@ def test_nested_streams_are_not_fused_with_matrix_trf():
     trfs_optimized = slc.Stream.optimize_stack(trfs)
     assert trfs_optimized[-2] == trfs[-2]
 
+
+def test_putting_wrong_format_in_data_container(img_2x2):
+    with pytest.raises(TypeError):
+        sld.DataContainer(img_2x2, 'Q')
+
+
+def test_selective_stream_too_many_probs(img_2x2):
+    with pytest.raises(ValueError):
+        ppl = slc.SelectiveStream([
+            slt.RandomRotate(rotation_range=(90, 90), p=1),
+            slt.RandomRotate(rotation_range=(-90, -90), p=1),
+        ], n=2, probs=[0.4, 0.3, 0.3])

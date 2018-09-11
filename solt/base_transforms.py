@@ -139,7 +139,6 @@ class BaseTransform(metaclass=ABCMeta):
         None
 
         """
-        pass
 
     def apply(self, data):
         """Applies transformation to a DataContainer items depending on the type.
@@ -217,7 +216,6 @@ class BaseTransform(metaclass=ABCMeta):
         out : numpy.ndarray
 
         """
-        pass
 
     @abstractmethod
     def _apply_mask(self, mask):
@@ -234,7 +232,6 @@ class BaseTransform(metaclass=ABCMeta):
             Result
 
         """
-        pass
 
     @abstractmethod
     def _apply_labels(self, labels):
@@ -251,7 +248,6 @@ class BaseTransform(metaclass=ABCMeta):
             Result
 
         """
-        pass
 
     @abstractmethod
     def _apply_pts(self, pts):
@@ -268,7 +264,6 @@ class BaseTransform(metaclass=ABCMeta):
             Result
 
         """
-        pass
 
 
 class DataDependentSamplingTransform(BaseTransform):
@@ -350,7 +345,6 @@ class DataDependentSamplingTransform(BaseTransform):
         out : numpy.ndarray
 
         """
-        pass
 
     @abstractmethod
     def _apply_mask(self, mask):
@@ -367,7 +361,6 @@ class DataDependentSamplingTransform(BaseTransform):
             Result
 
         """
-        pass
 
     @abstractmethod
     def _apply_labels(self, labels):
@@ -384,7 +377,6 @@ class DataDependentSamplingTransform(BaseTransform):
             Result
 
         """
-        pass
 
     @abstractmethod
     def _apply_pts(self, pts):
@@ -401,7 +393,6 @@ class DataDependentSamplingTransform(BaseTransform):
             Result
 
         """
-        pass
 
 
 class PaddingPropertyHolder(object):
@@ -498,7 +489,6 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         None
 
         """
-        pass
 
     @staticmethod
     def correct_for_frame_change(M, W, H):

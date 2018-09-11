@@ -379,8 +379,6 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
                 h = obj.H
                 w = obj.W
                 break
-            else:
-                continue
 
         pad_w = (self._pad_to[0] - w) // 2
         pad_h = (self._pad_to[1] - h) // 2
@@ -454,7 +452,7 @@ class CropTransform(DataDependentSamplingTransform):
             raise ValueError
 
         if isinstance(crop_size, tuple):
-            if not isinstance(crop_size[0], int):
+            if not isinstance(crop_size[0], int) or not isinstance(crop_size[1], int):
                 raise TypeError
 
         if isinstance(crop_size, int):
@@ -545,8 +543,8 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
         if isinstance(gain_range, float):
             gain_range = (0, gain_range)
 
-        assert gain_range[0] >= 0
-        assert gain_range[1] <= 1
+        if gain_range[0] < 0 or gain_range[1] > 1:
+            raise ValueError
 
         self._gain_range = gain_range
 
@@ -615,23 +613,25 @@ class ImageSaltAndPepper(DataDependentSamplingTransform):
     def __init__(self, p=0.5, gain_range=0.1, salt_p=0.5, data_indices=None):
         super(ImageSaltAndPepper, self).__init__(p=p, data_indices=data_indices)
 
-        assert isinstance(gain_range, float) or isinstance(gain_range, tuple)
-        assert isinstance(salt_p, float) or isinstance(salt_p, tuple)
+        if not isinstance(gain_range, float) and not isinstance(gain_range, tuple):
+            raise TypeError
+        if not isinstance(salt_p, float) and not isinstance(salt_p, tuple):
+            raise TypeError
 
         if isinstance(gain_range, float):
             gain_range = (0, gain_range)
 
         if isinstance(salt_p, float):
-            assert 0 <= salt_p <= 1
             salt_p = (salt_p, salt_p)
 
-        assert len(salt_p) == 2
-        assert salt_p[0] <= salt_p[1]
-        assert 0 <= salt_p[0] <= 1
-        assert 0 <= salt_p[1] <= 1
+        if len(salt_p) != 2 or len(gain_range) != 2:
+            raise ValueError
 
-        assert gain_range[0] >= 0
-        assert gain_range[1] <= 1
+        if not (0 <= salt_p[0] <= 1) or not (salt_p[0] <= salt_p[1]) or not (0 <= salt_p[1] <= 1):
+            raise ValueError
+
+        if gain_range[0] > gain_range[1] or gain_range[0] < 0 or gain_range[1] > 1:
+            raise ValueError
 
         self._gain_range = gain_range
         self._salt_p = salt_p
@@ -645,17 +645,11 @@ class ImageSaltAndPepper(DataDependentSamplingTransform):
         salt_p = np.random.uniform(self._salt_p[0], self._salt_p[1])
         h = None
         w = None
-        c = None
         for obj, t in data:
             if t == 'I':
                 h = obj.shape[0]
                 w = obj.shape[1]
-                c = obj.shape[2]
                 break
-
-        assert w is not None
-        assert h is not None
-        assert c is not None
 
         sp = np.random.rand(h, w) <= gain
         salt = sp.copy() * 1.
