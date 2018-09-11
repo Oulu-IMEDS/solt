@@ -32,7 +32,7 @@ Features
    modules
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 1
    :caption: Examples:
 
    DSBowl18_segmentation
