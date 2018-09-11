@@ -50,8 +50,10 @@ class DataContainer(object):
         if len(fmt) == 1 and not isinstance(data, tuple):
             data = (data,)
 
-        assert isinstance(data, tuple)
-        assert len(data) == len(fmt)
+        if not isinstance(data, tuple):
+            raise TypeError
+        if len(data) != len(fmt):
+            raise ValueError
 
         for t in fmt:
             assert t in allowed_types
@@ -82,7 +84,8 @@ class DataContainer(object):
             Data item (e.g. numpy.ndarray) and its type, e.g. 'I' - image.
 
         """
-        assert isinstance(idx, int)
+        if not isinstance(idx, int):
+            raise TypeError
         return self.__data[idx], self.__fmt[idx]
 
     def __len__(self):

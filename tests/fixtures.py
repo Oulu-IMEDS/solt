@@ -25,7 +25,7 @@ def mask_2x2():
     out : ndarray
         2x2 mask, uint8
     """
-    return np.array([[1, 0], [0, 1]]).reshape((2, 2)).astype(np.uint8)  # Generating the mask as well
+    return np.array([[1, 0], [0, 1]]).reshape((2, 2)).astype(np.uint8)
 
 
 @pytest.fixture
@@ -104,7 +104,7 @@ def img_5x5():
     out : ndarray
         3x4 uint8 image
     """
-    img = np.ones((5,5,1))
+    img = np.ones((5, 5, 1))
 
     img[:, 0] = 2
     img[:, -1] = 2

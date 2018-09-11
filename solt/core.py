@@ -1,11 +1,10 @@
 import numpy as np
 
 from collections import OrderedDict
-from .data import DataContainer
 from .base_transforms import BaseTransform, MatrixTransform, DataDependentSamplingTransform
 import copy
 
-__all__ = ['Stream', 'SelectiveStream',]
+__all__ = ['Stream', 'SelectiveStream', ]
 
 
 class Stream(object):
@@ -201,9 +200,13 @@ class SelectiveStream(Stream):
             How many transform to sample
         """
         super(SelectiveStream, self).__init__(transforms)
-        assert 0 < n <= len(self.transforms)
+        if transforms is None:
+            transforms = []
+        if n < 0 or n > len(transforms):
+            raise ValueError
         if probs is not None:
-            assert len(probs) == n
+            if len(probs) != n:
+                raise ValueError
         self._n = n
         self._probs = probs
 

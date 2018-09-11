@@ -1,12 +1,10 @@
-import solt.core as slc
 import solt.data as sld
 import solt.transforms as slt
 import solt.base_transforms as slb
 import numpy as np
-import cv2
 import pytest
 
-from .fixtures import img_2x2, img_3x3, img_3x4, mask_2x2, mask_3x4, mask_3x3, img_5x5, img_6x6
+from .fixtures import img_2x2, img_3x3, img_3x4, img_6x6, img_5x5
 
 
 def test_parameter_validation_raises_error_when_types_dont_match():
@@ -94,3 +92,4 @@ def test_data_dep_trf_raises_value_error_when_imgs_are_of_different_size(img_1, 
 def test_validate_parameter_raises_value_errors(parameter):
     with pytest.raises(ValueError):
         slb.validate_parameter(parameter, {1, 2}, 1, basic_type=int)
+

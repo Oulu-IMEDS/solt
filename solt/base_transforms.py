@@ -15,7 +15,8 @@ __all__ = ['BaseTransform', 'MatrixTransform',
 
 def validate_parameter(parameter, allowed_modes, default_value, basic_type=str):
     """
-    Validates the parameter and wraps it into a tuple with the inheritance option (if parameter is not a tuple already).
+    Validates the parameter and wraps it into a tuple with the
+    inheritance option (if parameter is not a tuple already).
     In this case the parameter will become a tuple (parameter, 'inherit'),
     which will indicate that the stream settings will override this parameter.
     In case if the parameter is already a tuple specified as parameter=(value, 'strict'), then the parameter
@@ -481,16 +482,12 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         trf : MatrixTransform
 
         """
-        if self.state_dict is None:
-            raise ValueError
-        if trf.state_dict is None:
-            raise ValueError
 
         if trf.padding is not None:
             self.padding = trf.padding
         self.interpolation = trf.interpolation
 
-        self.state_dict['transform_matrix'] = trf.state_dict['transform_matrix'] @ self.state_dict ['transform_matrix']
+        self.state_dict['transform_matrix'] = trf.state_dict['transform_matrix'] @ self.state_dict['transform_matrix']
 
     @abstractmethod
     def sample_transform(self):
@@ -523,7 +520,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         """
         # First we correct the transformation so that it is performed around the origin
         M = M.copy()
-        origin = [(W-1) // 2, (H-1) // 2]
+        origin = [(W - 1) // 2, (H - 1) // 2]
         T_origin = np.array([1, 0, -origin[0],
                              0, 1, -origin[1],
                              0, 0, 1]).reshape((3, 3))
@@ -557,8 +554,8 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         W_new = int(np.round(new_frame[:, 0].max()))
         H_new = int(np.round(new_frame[:, 1].max()))
 
-        M[0, -1] += W_new//2-origin[0]
-        M[1, -1] += H_new//2-origin[1]
+        M[0, -1] += W_new // 2 - origin[0]
+        M[1, -1] += H_new // 2 - origin[1]
 
         return M, W_new, H_new
 

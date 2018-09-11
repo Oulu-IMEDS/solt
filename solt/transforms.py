@@ -95,7 +95,7 @@ class RandomRotate(MatrixTransform):
         M = np.array([np.cos(np.deg2rad(rot)), -np.sin(np.deg2rad(rot)), 0,
                      np.sin(np.deg2rad(rot)), np.cos(np.deg2rad(rot)), 0,
                      0, 0, 1
-                     ]).reshape((3, 3)).astype(np.float32)
+                      ]).reshape((3, 3)).astype(np.float32)
 
         self.state_dict = {'rot': rot, 'transform_matrix': M}
 
@@ -247,7 +247,7 @@ class RandomTranslate(MatrixTransform):
         Padding mode. See allowed_paddings  in constants
     p: probability of applying this transform.
     """
-    def __init__(self, range_x=None, range_y=None,  interpolation='bilinear', padding='z', p=0.5):
+    def __init__(self, range_x=None, range_y=None, interpolation='bilinear', padding='z', p=0.5):
         super(RandomTranslate, self).__init__(interpolation=interpolation, padding=padding, p=p)
         if isinstance(range_x, (int, float)):
             range_x = (min(range_x, -range_x), max(range_x, -range_x))
@@ -502,7 +502,7 @@ class CropTransform(DataDependentSamplingTransform):
 
     def _crop_img_or_mask(self, img):
         x, y = self.state_dict['x'], self.state_dict['y']
-        return img[y:y+self.crop_size[1], x:x+self.crop_size[0]]
+        return img[y:y + self.crop_size[1], x:x + self.crop_size[0]]
 
     @img_shape_checker
     def _apply_img(self, img):
@@ -580,7 +580,8 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
 
     @img_shape_checker
     def _apply_img(self, img):
-        return cv2.addWeighted(img, (1-self.state_dict['gain']), self.state_dict['noise'], self.state_dict['gain'], 0)
+        return cv2.addWeighted(img, (1 - self.state_dict['gain']),
+                               self.state_dict['noise'], self.state_dict['gain'], 0)
 
     def _apply_mask(self, mask):
         return mask
@@ -706,7 +707,7 @@ class ImageGammaCorrection(BaseTransform):
             raise TypeError
 
         if isinstance(gamma_range, float):
-            gamma_range = (1-gamma_range, 1+gamma_range)
+            gamma_range = (1 - gamma_range, 1 + gamma_range)
 
         if gamma_range[0] < 0:
             raise ValueError

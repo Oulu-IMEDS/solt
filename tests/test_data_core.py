@@ -9,7 +9,7 @@ from .fixtures import img_2x2, img_3x4, mask_2x2, mask_3x4, img_5x5
 
 
 def test_data_container_different_length_of_data_and_format(img_2x2):
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         sld.DataContainer((img_2x2,), 'II')
 
 
@@ -35,7 +35,7 @@ def test_stream_empty(img_2x2):
 
 
 def test_empty_stream_selective():
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         slc.SelectiveStream()
 
 

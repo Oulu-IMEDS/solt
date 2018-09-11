@@ -10,6 +10,7 @@ install:
 - conda create -q -y -n solt_test_env python=$TRAVIS_PYTHON_VERSION
 - conda install -y -n solt_test_env pandoc
 - source activate solt_test_env
+- pip install pytest-flake8
 - pip install ipykernel
 - pip install codecov
 - pip install pytest-pep8 coverage pytest-cov -U
@@ -21,6 +22,7 @@ install:
 - pip install -e .
 script:
 - py.test tests --cov solt --cov-report term-missing -v
+- flake8
 - travis-sphinx build --source=./doc/source/
 after_success:
 - codecov
