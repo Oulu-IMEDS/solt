@@ -7,8 +7,19 @@
 [![License](http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE.md)
 ## Description
 Data augmentation libarary for Deep Learning, which supports images, segmentation masks, labels and keypoints. 
-Furthermore, SOLT is fast and has OpenCV in its backend.
+Furthermore, SOLT is fast and has OpenCV in its backend. 
+Full auto-generated docs and 
+examples are available here: [https://mipt-oulu.github.io/solt/](https://mipt-oulu.github.io/solt/).
 
+## Installation
+The most recent version is available in pip:
+```
+pip install solt
+```
+You can fetch the most fresh changes from this repository:
+```
+pip install git+https://github.com/MIPT-Oulu/solt
+```
 
 ## Author
 Aleksei Tiulpin, 
