@@ -30,3 +30,10 @@ Features
    :caption: Modules:
 
    modules
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Examples:
+
+   DSBowl18_segmentation
+   Helen_faces

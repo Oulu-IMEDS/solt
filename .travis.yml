@@ -4,13 +4,21 @@ os:
 python:
 - '3.6'
 install:
-- pip install -U twine
+- wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+- bash miniconda.sh -b -p $HOME/miniconda
+- export OPATH="$PATH" && export PATH="$HOME/miniconda/bin:$PATH"
+- conda create -q -y -n solt_test_env python=$TRAVIS_PYTHON_VERSION
+- conda install -n solt_test_env pandoc
+- source activate solt_test_env
+- pip install ipykernel
 - pip install codecov
 - pip install pytest-pep8 coverage pytest-cov -U
-- pip install -e .
 - pip install travis-sphinx
 - pip install sphinx_rtd_theme
 - pip install msmb_theme
+- pip install nbsphinx
+- pip install git+https://github.com/vidartf/nbsphinx-link
+- pip install -e .
 script:
 - py.test tests --cov solt --cov-report term-missing -v
 - travis-sphinx build --source=./doc/source/
