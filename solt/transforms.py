@@ -12,7 +12,7 @@ from .core import Stream
 __all__ = ['RandomFlip', 'RandomRotate', 'RandomShear',
            'RandomScale', 'RandomTranslate', 'RandomProjection',
            'PadTransform', 'CropTransform', 'ImageAdditiveGaussianNoise',
-           'ImageGammaCorrection', 'ImageSaltAndPepper']
+           'ImageGammaCorrection', 'ImageSaltAndPepper', 'ImageBlur']
 
 
 class RandomFlip(BaseTransform):
@@ -710,7 +710,7 @@ class ImageGammaCorrection(BaseTransform):
         if len(gamma_range) != 2:
             raise ValueError
 
-        if not isinstance(gamma_range[0], float) or not isinstance(gamma_range[1], float):
+        if not isinstance(gamma_range[0], (int, float)) or not isinstance(gamma_range[1], (int, float)):
             raise TypeError
 
         if gamma_range[0] < 0 or gamma_range[1] < 0 or gamma_range[1] < gamma_range[0]:

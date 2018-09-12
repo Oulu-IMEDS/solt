@@ -17,7 +17,22 @@ Features
 * Support of any Computer Vision task.
 * Easy extendability, interfacing with other libraries.
 * High parametrization.
-* High code coverage.
+* Nearly 100% code coverage.
+
+How to install
+--------------
+The most recent stable version is available in pip:
+
+::
+
+   pip install solt
+
+You can also fetch the most fresh changes from our GitHub repository:
+
+::
+
+   pip install -U git+https://github.com/MIPT-Oulu/solt
+
 
 
 .. toctree::
@@ -35,5 +50,6 @@ Features
    :maxdepth: 1
    :caption: Examples:
 
-   DSBowl18_segmentation
+   Basics_of_solt
    Helen_faces
+   DSBowl18_segmentation

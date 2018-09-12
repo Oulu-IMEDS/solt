@@ -692,13 +692,15 @@ def test_random_projection_raises_type_errors(param_set):
 
 
 @pytest.mark.parametrize('gamma_range,to_catch', [
-    ((-1, 1), TypeError),
+    ((-1, 1), ValueError),
     ((-1., 1.), ValueError),
     ((1., -1.), ValueError),
     ([1, 1], TypeError),
     (1000., ValueError),
     ((0.1, 0.8, 0.1), ValueError),
-    ((0.8, 0.1), ValueError)
+    ((0.8, 0.1), ValueError),
+    (('123', 0.1), TypeError),
+    ((0.1, '123'), TypeError)
 ]
 )
 def test_gamma_correction_raises_errors(gamma_range, to_catch):
