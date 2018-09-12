@@ -152,6 +152,7 @@ def test_rotate_90_img_mask_keypoints(img_3x3, mask_3x3):
     np.testing.assert_array_almost_equal(expected_kpts_res, kpts_res.data)
     assert label_res == 1
 
+
 def test_zoom_x_axis_odd(img_5x5):
     stream = slt.RandomScale(range_x=(0.5, 0.5), range_y=(1, 1), same=False, p=1)
     dc = sld.DataContainer((img_5x5,), 'I')
@@ -514,6 +515,23 @@ def test_scale_range_from_number(scale, expected):
             slt.RandomScale(range_x=None, range_y=scale)
 
 
+@pytest.mark.parametrize('same, scale_x, scale_y, expected', [
+    (True, (2, 2), (2, 2), (2, 2)),
+    (True, (2, 2), (1, 1), (2, 2)),
+    (True, (2, 2), None, (2, 2)),
+    (True, None, (2, 2), (2, 2)),
+    (False, (2, 2), (2, 2), (2, 2)),
+    (False, (2, 2), (3, 3), (2, 3)),
+    (False, (2, 2), None, (2, 1)),
+    (False, None, (2, 2), (1, 2)),
+    ]
+)
+def test_scale_sampling_scale(same, scale_x, scale_y, expected):
+    trf = slt.RandomScale(range_x=scale_x, range_y=scale_y, same=same)
+    trf.sample_transform()
+    assert expected == (trf.state_dict['scale_x'], trf.state_dict['scale_y'])
+
+
 @pytest.mark.parametrize('translate,expected', [
     (2, (-2, 2)),
     (2.5, (-2.5, 2.5)),
@@ -528,9 +546,11 @@ def test_translate_range_from_number(translate, expected):
 
 
 @pytest.mark.parametrize('trf_cls,trf_params', [
-    (slt.ImageAdditiveGaussianNoise, {'gain_range': 0.5, }),
+    (slt.ImageAdditiveGaussianNoise, {'gain_range': 0.5, 'p':1}),
     (slt.ImageSaltAndPepper, {'p': 1}),
-    (slt.ImageGammaCorrection, {'p':1})
+    (slt.ImageGammaCorrection, {'p': 1}),
+    (slt.ImageBlur, {'p': 1, 'blur_type': 'g'}),
+    (slt.ImageBlur, {'p': 1, 'blur_type': 'm'})
     ]
 )
 def test_image_trfs_dont_change_mask_labels_kpts(trf_cls, trf_params, img_3x4, mask_3x4):
@@ -597,18 +617,24 @@ def test_wrong_salt_p_salt_and_pepper(salt_p):
         slt.ImageSaltAndPepper(salt_p=salt_p)
 
 
-@pytest.mark.parametrize('gain_range', [
-    (1, 2),
-    (2, 2),
-    (0.7, 0.3),
-    (-0.1),
-    (-0.8, 0.1),
-    (0.3, 0.7, 0.8),
+@pytest.mark.parametrize('trf, gain_range', [
+    (slt.ImageSaltAndPepper, (1, 2)),
+    (slt.ImageSaltAndPepper, (2, 2)),
+    (slt.ImageSaltAndPepper, (0.7, 0.3)),
+    (slt.ImageSaltAndPepper, -0.1),
+    (slt.ImageSaltAndPepper, (-0.8, 0.1)),
+    (slt.ImageSaltAndPepper, (0.3, 0.7, 0.8)),
+    (slt.ImageAdditiveGaussianNoise, (1, 2)),
+    (slt.ImageAdditiveGaussianNoise, (2, 2)),
+    (slt.ImageAdditiveGaussianNoise, (0.7, 0.3)),
+    (slt.ImageAdditiveGaussianNoise, -0.1),
+    (slt.ImageAdditiveGaussianNoise, (-0.8, 0.1)),
+    (slt.ImageAdditiveGaussianNoise, (0.3, 0.7, 0.8)),
 ]
 )
-def test_wrong_gain_range_vals_salt_and_pepper(gain_range):
+def test_wrong_gain_range_in_noises(trf, gain_range):
     with pytest.raises(ValueError):
-        slt.ImageSaltAndPepper(gain_range=gain_range)
+        trf(gain_range=gain_range)
 
 
 def test_wrong_types_in_gain_and_salt_p_salt_and_peper():
@@ -644,3 +670,83 @@ def test_scale_when_range_x_is_none(translate_x, translate_y, expected):
     trf = slt.RandomTranslate(range_x=translate_x, range_y=translate_y, p=1)
     trf.sample_transform()
     assert (trf.state_dict['translate_x'], trf.state_dict['translate_y']) == expected
+
+
+@pytest.mark.parametrize('param_set', [
+    {'affine_transforms': '123'},
+    {'affine_transforms': 123},
+    {'affine_transforms': []},
+    {'affine_transforms': slc.Stream([slt.RandomFlip(), ])},
+    {'affine_transforms': slc.Stream([slt.RandomFlip(), ])},
+    {'v_range': '123'},
+    {'v_range': 123},
+    {'v_range': [0, 0]},
+    {'v_range': ('123', '456')},
+    {'v_range': ((2,), (4,))},
+
+]
+)
+def test_random_projection_raises_type_errors(param_set):
+    with pytest.raises(TypeError):
+        slt.RandomProjection(**param_set)
+
+
+@pytest.mark.parametrize('gamma_range,to_catch', [
+    ((-1, 1), TypeError),
+    ((-1., 1.), ValueError),
+    ((1., -1.), ValueError),
+    ([1, 1], TypeError),
+    (1000., ValueError),
+    ((0.1, 0.8, 0.1), ValueError),
+    ((0.8, 0.1), ValueError)
+]
+)
+def test_gamma_correction_raises_errors(gamma_range, to_catch):
+    with pytest.raises(to_catch):
+        slt.ImageGammaCorrection(gamma_range=gamma_range)
+
+
+@pytest.mark.parametrize('blur_t, k_size, sigma, to_catch', [
+    (None, [1, 3], None, TypeError),
+    (None, '123', None, TypeError),
+    (None, (1, 3, 0), None, ValueError),
+    (None, (1, 3, 5, -7), None, ValueError),
+    (None, (1, 3, 5,), -1, ValueError),
+    (None, (1, 3, 5,), '123', TypeError),
+    (None, (1, 3, 5,), (0, -4), ValueError),
+    (None, (1, 3, 5,), (1, '34'), TypeError),
+]
+)
+def test_blur_arguments(blur_t, k_size, sigma, to_catch):
+    with pytest.raises(to_catch):
+        slt.ImageBlur(blur_type=blur_t, k_size=k_size, gaussian_sigma=sigma)
+
+
+@pytest.mark.parametrize('blur_t, k_size, sigma', [
+    (None, (1, 3), None),
+    (None, 3, None),
+    (None, (1, 3, 5), None),
+    (None, (1, 3, 5,), 1),
+
+    ('g', (1, 3), None),
+    ('g', 3, None),
+    ('g', (1, 3, 5), None),
+    ('g', (1, 3, 5,), 1),
+
+    ('m', (1, 3), None),
+    ('m', 3, None),
+    ('m', (1, 3, 5), None),
+    ('m', (1, 3, 5,), 1),
+]
+)
+def test_blur_samples_correctly(blur_t, k_size, sigma):
+    trf = slt.ImageBlur(blur_type=blur_t, k_size=k_size, gaussian_sigma=sigma)
+    trf.sample_transform()
+
+    if isinstance(k_size, int):
+        k_size = (k_size, )
+    if sigma is None:
+        sigma = 1
+
+    assert trf.state_dict['k_size'] in k_size
+    assert trf.state_dict['sigma'] == sigma

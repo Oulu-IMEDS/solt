@@ -1,10 +1,11 @@
 import numpy as np
 import cv2
 
-from .constants import allowed_paddings, allowed_crops, dtypes_max
+from .constants import allowed_paddings, allowed_crops, dtypes_max, allowed_blurs
 from .data import img_shape_checker
 from .data import KeyPoints, DataContainer
 from .base_transforms import BaseTransform, MatrixTransform, PaddingPropertyHolder, DataDependentSamplingTransform
+from .base_transforms import validate_parameter
 from .core import Stream
 
 
@@ -543,7 +544,10 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
         if isinstance(gain_range, float):
             gain_range = (0, gain_range)
 
-        if gain_range[0] < 0 or gain_range[1] > 1:
+        if len(gain_range) != 2:
+            raise ValueError
+
+        if gain_range[0] > gain_range[1] or gain_range[0] < 0 or gain_range[1] > 1:
             raise ValueError
 
         self._gain_range = gain_range
@@ -703,7 +707,13 @@ class ImageGammaCorrection(BaseTransform):
         if isinstance(gamma_range, float):
             gamma_range = (1 - gamma_range, 1 + gamma_range)
 
-        if gamma_range[0] < 0:
+        if len(gamma_range) != 2:
+            raise ValueError
+
+        if not isinstance(gamma_range[0], float) or not isinstance(gamma_range[1], float):
+            raise TypeError
+
+        if gamma_range[0] < 0 or gamma_range[1] < 0 or gamma_range[1] < gamma_range[0]:
             raise ValueError
 
         self._gamma_range = gamma_range
@@ -728,6 +738,82 @@ class ImageGammaCorrection(BaseTransform):
     def _apply_pts(self, pts):
         return pts
 
+
+class ImageBlur(BaseTransform):
+    """Transform blurs an image
+
+    Parameters
+    ----------
+    p : float
+        Probability of applying this transfor,
+    blur_type : str
+        Bur type. Allowed blurs
+    k_size: int or tuple
+        Kernel sizes of the blur. if int, then sampled from (k_size, k_size). If tuple,
+        then sampled from the whole tuple. All the values here must be odd.
+    gaussian_sigma: int or float or tuple
+        Gaussian sigma value. Used for both X and Y axes. If None, then gaussian_sigma=1.
+    data_indices : tuple or None
+        Indices of the images within the data container to which this transform needs to be applied.
+        Every element within the tuple must be integer numebers.
+        If None, then the transform will be applied to all the images withing the DataContainer.
+
+    """
+    def __init__(self, p=0.5, blur_type=None, k_size=3, gaussian_sigma=None, data_indices=None):
+        super(ImageBlur, self).__init__(p=p, data_indices=data_indices)
+        blur_type = validate_parameter(blur_type, allowed_blurs, 'g', basic_type=str, heritable=False)
+
+        if not isinstance(k_size, (int, tuple)):
+            raise TypeError
+
+        if isinstance(k_size, int):
+            k_size = (k_size, k_size)
+
+        for k in k_size:
+            if k % 2 == 0 or k < 1:
+                raise ValueError
+
+        if gaussian_sigma is None:
+            gaussian_sigma = (1, 1)
+
+        if not isinstance(gaussian_sigma, (int, float, tuple)):
+            raise TypeError
+
+        if isinstance(gaussian_sigma, (int, float)):
+            gaussian_sigma = (gaussian_sigma, gaussian_sigma)
+
+        for g in gaussian_sigma:
+            if not isinstance(g, (int, float)):
+                raise TypeError
+            if g <= 0:
+                raise ValueError
+
+        self._blur = blur_type
+        self._k_size = k_size
+        self._gaussian_sigma = gaussian_sigma
+
+    def sample_transform(self):
+        k = np.random.choice(self._k_size)
+        s = np.random.uniform(self._gaussian_sigma[0], self._gaussian_sigma[1])
+        self.state_dict = {'k_size': k, 'sigma': s}
+
+    @img_shape_checker
+    def _apply_img(self, img):
+        if self._blur == 'g':
+            return cv2.GaussianBlur(img,
+                                    ksize=(self.state_dict['k_size'], self.state_dict['k_size']),
+                                    sigmaX=self.state_dict['sigma'])
+        if self._blur == 'm':
+            return cv2.medianBlur(img, ksize=self.state_dict['k_size'])
+
+    def _apply_mask(self, mask):
+        return mask
+
+    def _apply_labels(self, labels):
+        return labels
+
+    def _apply_pts(self, pts):
+        return pts
 
 
 

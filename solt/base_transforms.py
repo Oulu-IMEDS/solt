@@ -13,7 +13,7 @@ __all__ = ['BaseTransform', 'MatrixTransform',
            'InterpolationPropertyHolder']
 
 
-def validate_parameter(parameter, allowed_modes, default_value, basic_type=str):
+def validate_parameter(parameter, allowed_modes, default_value, basic_type=str, heritable=True):
     """
     Validates the parameter and wraps it into a tuple with the
     inheritance option (if parameter is not a tuple already).
@@ -32,6 +32,8 @@ def validate_parameter(parameter, allowed_modes, default_value, basic_type=str):
         Default value to substitute if the parameter is None
     basic_type : type
         Type of the parameter.
+    heritable : bool
+        Whether to check for heretability option.
 
     Returns
     -------
@@ -43,10 +45,10 @@ def validate_parameter(parameter, allowed_modes, default_value, basic_type=str):
     if parameter is None:
         parameter = default_value
 
-    if isinstance(parameter, basic_type):
+    if isinstance(parameter, basic_type) and heritable:
         parameter = (parameter, 'inherit')
 
-    if isinstance(parameter, tuple):
+    if isinstance(parameter, tuple) and heritable:
         if len(parameter) != 2:
             raise ValueError
         if not isinstance(parameter[0], basic_type):
@@ -55,7 +57,7 @@ def validate_parameter(parameter, allowed_modes, default_value, basic_type=str):
             raise ValueError
         if parameter[1] not in {'inherit', 'strict'}:
             raise ValueError
-    else:
+    elif heritable:
         raise NotImplementedError
 
     return parameter
