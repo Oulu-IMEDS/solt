@@ -1,6 +1,6 @@
 import solt.data as sld
 import solt.transforms as slt
-import solt.base_transforms as slb
+from solt.base_transforms._base_transforms import validate_parameter
 import numpy as np
 import pytest
 
@@ -9,17 +9,17 @@ from .fixtures import img_2x2, img_3x3, img_3x4, img_6x6, img_5x5
 
 def test_parameter_validation_raises_error_when_types_dont_match():
     with pytest.raises(NotImplementedError):
-        slb.validate_parameter([1, 2], {1, 2}, 10, int)
+        validate_parameter([1, 2], {1, 2}, 10, int)
 
 
 def test_parameter_validation_raises_error_when_default_type_is_wrong():
     with pytest.raises(ValueError):
-        slb.validate_parameter(None, {1, 2}, (10, '12345'), int)
+        validate_parameter(None, {1, 2}, (10, '12345'), int)
 
 
 def test_parameter_validation_raises_error_when_default_value_is_wrong_type():
     with pytest.raises(TypeError):
-        slb.validate_parameter(None, {1, 2}, ('10', 'inherit'), int)
+        validate_parameter(None, {1, 2}, ('10', 'inherit'), int)
 
 
 def test_data_indices_cant_be_list():
@@ -91,7 +91,7 @@ def test_data_dep_trf_raises_value_error_when_imgs_are_of_different_size(img_1, 
 )
 def test_validate_parameter_raises_value_errors(parameter):
     with pytest.raises(ValueError):
-        slb.validate_parameter(parameter, {1, 2}, 1, basic_type=int)
+        validate_parameter(parameter, {1, 2}, 1, basic_type=int)
 
 
 def test_transform_returns_original_data_when_not_used_and_applied(img_2x2):
