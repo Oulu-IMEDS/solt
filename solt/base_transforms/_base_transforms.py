@@ -565,7 +565,8 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
 
         interp = allowed_interpolations[self.interpolation[0]]
         padding = allowed_paddings[self.padding[0]]
-        return cv2.warpPerspective(img, M, (W_new, H_new), interp, padding, borderValue=0)
+
+        return cv2.warpPerspective(img, M, (W_new, H_new), flags=interp, borderMode=padding)
 
     @img_shape_checker
     def _apply_img(self, img):
