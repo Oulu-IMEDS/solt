@@ -5,6 +5,7 @@ from ..constants import allowed_paddings, allowed_crops, dtypes_max, allowed_blu
 from ..data import img_shape_checker
 from ..data import KeyPoints, DataContainer
 from ..base_transforms import BaseTransform, MatrixTransform, PaddingPropertyHolder, DataDependentSamplingTransform
+from ..base_transforms import ImageTransform
 from ..base_transforms._base_transforms import validate_parameter
 from ..core import Stream
 
@@ -595,7 +596,7 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
         return pts
 
 
-class ImageSaltAndPepper(DataDependentSamplingTransform):
+class ImageSaltAndPepper(ImageTransform, DataDependentSamplingTransform):
     """Adds salt and pepper noise to an image. Other types of data than the image are ignored.
 
     Parameters
@@ -672,17 +673,8 @@ class ImageSaltAndPepper(DataDependentSamplingTransform):
         img[np.where(self.state_dict['pepper'])] = 0
         return img
 
-    def _apply_mask(self, mask):
-        return mask
 
-    def _apply_labels(self, labels):
-        return labels
-
-    def _apply_pts(self, pts):
-        return pts
-
-
-class ImageGammaCorrection(BaseTransform):
+class ImageGammaCorrection(ImageTransform):
     """Transform applies random gamma correction
 
     Parameters
@@ -729,17 +721,8 @@ class ImageGammaCorrection(BaseTransform):
     def _apply_img(self, img):
         return cv2.LUT(img, self.state_dict['LUT'])
 
-    def _apply_mask(self, mask):
-        return mask
 
-    def _apply_labels(self, labels):
-        return labels
-
-    def _apply_pts(self, pts):
-        return pts
-
-
-class ImageBlur(BaseTransform):
+class ImageBlur(ImageTransform):
     """Transform blurs an image
 
     Parameters
@@ -747,7 +730,7 @@ class ImageBlur(BaseTransform):
     p : float
         Probability of applying this transfor,
     blur_type : str
-        Bur type. Allowed blurs
+        Blur type. Allowed blurs
     k_size: int or tuple
         Kernel sizes of the blur. if int, then sampled from (k_size, k_size). If tuple,
         then sampled from the whole tuple. All the values here must be odd.
@@ -805,16 +788,6 @@ class ImageBlur(BaseTransform):
                                     sigmaX=self.state_dict['sigma'])
         if self._blur == 'm':
             return cv2.medianBlur(img, ksize=self.state_dict['k_size'])
-
-    def _apply_mask(self, mask):
-        return mask
-
-    def _apply_labels(self, labels):
-        return labels
-
-    def _apply_pts(self, pts):
-        return pts
-
 
 
 

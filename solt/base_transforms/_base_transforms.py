@@ -63,9 +63,15 @@ class BaseTransform(metaclass=ABCMeta):
 
     Parameters
     ----------
-    p : probability of executing this transform
+    p : float or None
+        Probability of executing this transform
+    data_indices : tuple or None
+        Indices where the transforms need to be applied
     """
-    def __init__(self, p=0.5, data_indices=None):
+    def __init__(self, p=None, data_indices=None):
+        if p is None:
+            p = 0.5
+
         self.p = p
         self.state_dict = {'use': False}
         if data_indices is not None and not isinstance(data_indices, tuple):
@@ -80,8 +86,7 @@ class BaseTransform(metaclass=ABCMeta):
         self._data_indices = data_indices
 
     def serialize(self, include_state=False):
-        """
-        Method returns an ordered dict, describing the object.
+        """Method returns an ordered dict, describing the object.
 
         Parameters
         ----------
@@ -259,6 +264,38 @@ class BaseTransform(metaclass=ABCMeta):
         -------
         out : KeyPoints
             Result
+
+        """
+
+
+class ImageTransform(BaseTransform):
+    """Abstract class, allowing the application of a transform only to an image
+
+    """
+    def __init__(self, p=None, data_indices=None):
+        super(ImageTransform, self).__init__(p=p, data_indices=data_indices)
+
+    def _apply_mask(self, mask):
+        return mask
+
+    def _apply_pts(self, pts):
+        return pts
+
+    def _apply_labels(self, labels):
+        return labels
+
+    @abstractmethod
+    def _apply_img(self, img):
+        """Abstract method, which determines the transform's behaviour when it is applied to images HxWxC.
+
+        Parameters
+        ----------
+        img : numpy.ndarray
+            Image to be augmented
+
+        Returns
+        -------
+        out : numpy.ndarray
 
         """
 
