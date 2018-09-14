@@ -10,12 +10,6 @@ from ..base_transforms._base_transforms import validate_parameter
 from ..core import Stream
 
 
-__all__ = ['RandomFlip', 'RandomRotate', 'RandomShear',
-           'RandomScale', 'RandomTranslate', 'RandomProjection',
-           'PadTransform', 'CropTransform', 'ImageAdditiveGaussianNoise',
-           'ImageGammaCorrection', 'ImageSaltAndPepper', 'ImageBlur']
-
-
 class RandomFlip(BaseTransform):
     """Random Flipping transform.
 
@@ -728,7 +722,7 @@ class ImageBlur(ImageTransform):
     Parameters
     ----------
     p : float
-        Probability of applying this transfor,
+        Probability of applying this transform,
     blur_type : str
         Blur type. Allowed blurs
     k_size: int or tuple
@@ -790,5 +784,90 @@ class ImageBlur(ImageTransform):
             return cv2.medianBlur(img, ksize=self.state_dict['k_size'])
 
 
+class ImageRandomHSV(ImageTransform):
+    """Transform Performs a random HSV color shift.
 
+    At each sampling step, the transform samples given shift :math:`\Delta h` for Hue, :math:`\Delta s` Saturation and
+    :math:`\Delta v` for Value. When the transform is applied to an image, the new values of Hue, Saturation and Value
+    :math:`(h, s, v)` are computed as
 
+    .. math::
+
+        h ={h_{old}+\Delta h}\pmod{360},
+
+        s = {s_{old}+\Delta s}\pmod{100},
+
+        v = {v_{old}+\Delta v} \pmod {100}.
+
+    Parameters
+    ----------
+    p : float
+        Probability of applying this transform,
+    h_range: tuple or None
+        Hue shift range. If None, than h_range=(0, 0).
+    s_range: tuple or None
+        Saturation shift range. If None, then s_range=(0, 0).
+    v_range: tuple or None
+        Value shift range. If None, then v_range=(0, 0).
+    data_indices : tuple or None
+        Indices of the images within the data container to which this transform needs to be applied.
+        Every element within the tuple must be integer numbers.
+        If None, then the transform will be applied to all the images withing the DataContainer.
+
+    """
+    def __init__(self, p=0.5, h_range=None, s_range=None, v_range=None, data_indices=None):
+        super(ImageRandomHSV, self).__init__(p=p, data_indices=data_indices)
+
+        if h_range is None:
+            h_range = (0, 0)
+
+        if s_range is None:
+            v_range = (0, 0)
+
+        if v_range is None:
+            v_range = (0, 0)
+
+        if not (isinstance(h_range[0], (int, float)) and isinstance(h_range[1], (int, float))):
+            raise TypeError
+
+        if not (isinstance(s_range[0], (int, float)) and isinstance(s_range[1], (int, float))):
+            raise TypeError
+
+        if not (isinstance(v_range[0], (int, float)) and isinstance(v_range[1], (int, float))):
+            raise TypeError
+
+        if h_range[0] < 0 or h_range[1] < 0 or h_range[0] > h_range[1]:
+            raise ValueError
+
+        if s_range[0] < 0 or s_range[1] < 0 or s_range[0] > s_range[1]:
+            raise ValueError
+
+        if v_range[0] < 0 or v_range[1] < 0 or v_range[0] > v_range[1]:
+            raise ValueError
+
+        self._h_range = h_range
+        self._s_range = s_range
+        self._v_range = v_range
+
+    def sample_transform(self):
+        h = np.random.uniform(self._h_range[0], self._h_range[1])
+        s = np.random.uniform(self._s_range[0], self._s_range[1])
+        v = np.random.uniform(self._v_range[0], self._v_range[1])
+        self.state_dict = {'h_mod': h, 's_mod': s, 'v_mod': v}
+
+    @img_shape_checker
+    def _apply_img(self, img):
+        img = img.copy()
+        img_hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+        dtype = img.dtype
+
+        h, s, v = cv2.split(img_hsv)
+
+        h = (h + self.state_dict['h_mod']).astype(dtype)
+        s = (s + self.state_dict['s_mod']).astype(dtype)
+        v = (v + self.state_dict['v_mod']).astype(dtype)
+
+        img_hsv_shifted = cv2.merge((h, s, v))
+        img = cv2.cvtColor(img_hsv_shifted, cv2.COLOR_HSV2RGB)
+
+        return img
