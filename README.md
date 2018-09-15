@@ -65,6 +65,7 @@ dc_res = augs_stream(sld.DataContainer(img, 'I'))
 ````
 
 The last row in this image was obtained using the code snipped above:
+
 ![cat_augmentations](doc/source/_static/cat_augs.png).
 
 
