@@ -58,6 +58,55 @@ def validate_parameter(parameter, allowed_modes, default_value, basic_type=str, 
     return parameter
 
 
+def validate_numeric_range_parameter(parameter, default_val, min_val=None, max_val=None):
+    """Validates the range-type parameter, e.g. angle in Random Rotation.
+
+    Parameters
+    ----------
+    parameter : tuple or None
+        The value of the parameter
+    default_val : tuple
+        Default value of the parameter if it is None.
+    min_val: None or float or int
+        Check whether the parameter is greater or equal than this. Optional.
+    max_val: None or float or int
+        Check whether the parameter is less or equal than this. Optional.
+    Returns
+    -------
+    out : tuple
+        Parameter value, passed all the checks.
+
+    """
+
+    if not isinstance(default_val, tuple):
+        raise TypeError
+
+    if parameter is None:
+        parameter = default_val
+
+    if not isinstance(parameter, tuple):
+        raise TypeError
+
+    if len(parameter) != 2:
+        raise ValueError
+
+    if parameter[0] > parameter[1]:
+        raise ValueError
+
+    if not (isinstance(parameter[0], (int, float)) and isinstance(parameter[1], (int, float))):
+        raise TypeError
+
+    if min_val is not None:
+        if parameter[0] < min_val or parameter[1] < min_val:
+            raise ValueError
+
+    if max_val is not None:
+        if parameter[0] > max_val or parameter[1] > max_val:
+            raise ValueError
+
+    return parameter
+
+
 class BaseTransform(metaclass=ABCMeta):
     """Transformation abstract class.
 

@@ -1,10 +1,15 @@
 import solt.data as sld
 import solt.transforms as slt
-from solt.base_transforms._base_transforms import validate_parameter
+from solt.base_transforms._base_transforms import validate_parameter, validate_numeric_range_parameter
 import numpy as np
 import pytest
 
 from .fixtures import img_2x2, img_3x3, img_3x4, img_6x6, img_5x5
+
+
+def test_parameter_validation_range_default_value_not_tuple():
+    with pytest.raises(TypeError):
+        validate_numeric_range_parameter(123, 123)
 
 
 def test_parameter_validation_raises_error_when_types_dont_match():
