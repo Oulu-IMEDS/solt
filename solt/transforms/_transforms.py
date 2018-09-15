@@ -718,16 +718,7 @@ class ImageRandomHSV(ImageTransform):
     """Transform Performs a random HSV color shift.
 
     At each sampling step, the transform samples given shift :math:`\Delta h` for Hue, :math:`\Delta s` Saturation and
-    :math:`\Delta v` for Value. When the transform is applied to an image, the new values of Hue, Saturation and Value
-    :math:`(h, s, v)` are computed as
-
-    .. math::
-
-        h ={h_{old}+\Delta h}\pmod{360},
-
-        s = {s_{old}+\Delta s}\pmod{100},
-
-        v = {v_{old}+\Delta v} \pmod {100}.
+    :math:`\Delta v` for Value.
 
     Parameters
     ----------
