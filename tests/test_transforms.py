@@ -752,3 +752,45 @@ def test_blur_samples_correctly(blur_t, k_size, sigma):
 
     assert trf.state_dict['k_size'] in k_size
     assert trf.state_dict['sigma'] == sigma
+
+
+@pytest.mark.parametrize('h_range, s_range, v_range', [
+    ((0, 0), None, None),
+    (None, (0, 0), None),
+    (None, None, (0, 0)),
+])
+def test_hsv_doesnt_change_an_image(h_range, s_range, v_range, img_6x6):
+    trf = slt.ImageRandomHSV(p=1, h_range=h_range, s_range=s_range, v_range=v_range)
+    img_rgb = np.dstack((img_6x6, img_6x6, img_6x6)).astype(np.uint8)*255
+    dc = sld.DataContainer(img_rgb, 'I')
+
+    dc_res = trf(dc)
+
+    assert 0 == trf.state_dict['h_mod']
+    assert 0 == trf.state_dict['s_mod']
+    assert 0 == trf.state_dict['v_mod']
+
+    np.testing.assert_array_equal(img_rgb, dc_res.data[0])
+
+
+@pytest.mark.parametrize('dtype', [
+    np.float16,
+    np.int32,
+    np.float64,
+    np.int64,
+])
+def test_hsv_trying_use_not_uint8(dtype, img_6x6):
+    trf = slt.ImageRandomHSV(p=1)
+    img_rgb = np.dstack((img_6x6, img_6x6, img_6x6)).astype(dtype)
+    dc = sld.DataContainer(img_rgb, 'I')
+
+    with pytest.raises(TypeError):
+        trf(dc)
+
+
+def test_hsv_doesnt_work_for_1_channel(img_6x6):
+    trf = slt.ImageRandomHSV(p=1)
+    dc = sld.DataContainer(img_6x6.astype(np.uint8), 'I')
+
+    with pytest.raises(ValueError):
+        trf(dc)

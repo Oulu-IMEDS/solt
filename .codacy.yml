@@ -3,3 +3,4 @@ exclude_paths:
   - 'notebooks/**'
   - 'doc/**'
   - 'solt/__init__.py'
+  - 'solt/**/__init__.py'

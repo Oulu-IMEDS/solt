@@ -4,13 +4,8 @@ import cv2
 import numpy as np
 import copy
 
-from .data import DataContainer, img_shape_checker, KeyPoints
-from .constants import allowed_interpolations, allowed_paddings
-
-
-__all__ = ['BaseTransform', 'MatrixTransform',
-           'DataDependentSamplingTransform', 'PaddingPropertyHolder',
-           'InterpolationPropertyHolder']
+from ..data import DataContainer, img_shape_checker, KeyPoints
+from ..constants import allowed_interpolations, allowed_paddings
 
 
 def validate_parameter(parameter, allowed_modes, default_value, basic_type=str, heritable=True):
@@ -63,14 +58,69 @@ def validate_parameter(parameter, allowed_modes, default_value, basic_type=str, 
     return parameter
 
 
+def validate_numeric_range_parameter(parameter, default_val, min_val=None, max_val=None):
+    """Validates the range-type parameter, e.g. angle in Random Rotation.
+
+    Parameters
+    ----------
+    parameter : tuple or None
+        The value of the parameter
+    default_val : tuple
+        Default value of the parameter if it is None.
+    min_val: None or float or int
+        Check whether the parameter is greater or equal than this. Optional.
+    max_val: None or float or int
+        Check whether the parameter is less or equal than this. Optional.
+    Returns
+    -------
+    out : tuple
+        Parameter value, passed all the checks.
+
+    """
+
+    if not isinstance(default_val, tuple):
+        raise TypeError
+
+    if parameter is None:
+        parameter = default_val
+
+    if not isinstance(parameter, tuple):
+        raise TypeError
+
+    if len(parameter) != 2:
+        raise ValueError
+
+    if parameter[0] > parameter[1]:
+        raise ValueError
+
+    if not (isinstance(parameter[0], (int, float)) and isinstance(parameter[1], (int, float))):
+        raise TypeError
+
+    if min_val is not None:
+        if parameter[0] < min_val or parameter[1] < min_val:
+            raise ValueError
+
+    if max_val is not None:
+        if parameter[0] > max_val or parameter[1] > max_val:
+            raise ValueError
+
+    return parameter
+
+
 class BaseTransform(metaclass=ABCMeta):
     """Transformation abstract class.
 
     Parameters
     ----------
-    p : probability of executing this transform
+    p : float or None
+        Probability of executing this transform
+    data_indices : tuple or None
+        Indices where the transforms need to be applied
     """
-    def __init__(self, p=0.5, data_indices=None):
+    def __init__(self, p=None, data_indices=None):
+        if p is None:
+            p = 0.5
+
         self.p = p
         self.state_dict = {'use': False}
         if data_indices is not None and not isinstance(data_indices, tuple):
@@ -85,8 +135,7 @@ class BaseTransform(metaclass=ABCMeta):
         self._data_indices = data_indices
 
     def serialize(self, include_state=False):
-        """
-        Method returns an ordered dict, describing the object.
+        """Method returns an ordered dict, describing the object.
 
         Parameters
         ----------
@@ -264,6 +313,38 @@ class BaseTransform(metaclass=ABCMeta):
         -------
         out : KeyPoints
             Result
+
+        """
+
+
+class ImageTransform(BaseTransform):
+    """Abstract class, allowing the application of a transform only to an image
+
+    """
+    def __init__(self, p=None, data_indices=None):
+        super(ImageTransform, self).__init__(p=p, data_indices=data_indices)
+
+    def _apply_mask(self, mask):
+        return mask
+
+    def _apply_pts(self, pts):
+        return pts
+
+    def _apply_labels(self, labels):
+        return labels
+
+    @abstractmethod
+    def _apply_img(self, img):
+        """Abstract method, which determines the transform's behaviour when it is applied to images HxWxC.
+
+        Parameters
+        ----------
+        img : numpy.ndarray
+            Image to be augmented
+
+        Returns
+        -------
+        out : numpy.ndarray
 
         """
 
@@ -570,7 +651,8 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
 
         interp = allowed_interpolations[self.interpolation[0]]
         padding = allowed_paddings[self.padding[0]]
-        return cv2.warpPerspective(img, M, (W_new, H_new), interp, padding, borderValue=0)
+
+        return cv2.warpPerspective(img, M, (W_new, H_new), flags=interp, borderMode=padding)
 
     @img_shape_checker
     def _apply_img(self, img):
