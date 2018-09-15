@@ -3,6 +3,7 @@ language: python
 matrix:
   include:
     - python: 3.6
+    - python: 3.7
       dist: xenial
       sudo: true
 
@@ -22,6 +23,7 @@ install:
 - pip install msmb_theme
 - pip install nbsphinx
 - pip install git+https://github.com/vidartf/nbsphinx-link
+- pip install sphinx==1.7.9 -U
 - pip install .
 script:
 - py.test tests --cov solt --cov-report term-missing -v
