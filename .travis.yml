@@ -1,6 +1,8 @@
 language: python
 os:
 - linux
+  dist: xenial
+  sudo: true
 python:
 - '3.6'
 - '3.7'
@@ -20,7 +22,7 @@ install:
 - pip install msmb_theme
 - pip install nbsphinx
 - pip install git+https://github.com/vidartf/nbsphinx-link
-- pip install -e .
+- pip install .
 script:
 - py.test tests --cov solt --cov-report term-missing -v
 - flake8
