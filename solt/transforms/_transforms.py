@@ -1,18 +1,13 @@
 import numpy as np
 import cv2
 
-from .constants import allowed_paddings, allowed_crops, dtypes_max, allowed_blurs
-from .data import img_shape_checker
-from .data import KeyPoints, DataContainer
-from .base_transforms import BaseTransform, MatrixTransform, PaddingPropertyHolder, DataDependentSamplingTransform
-from .base_transforms import validate_parameter
-from .core import Stream
-
-
-__all__ = ['RandomFlip', 'RandomRotate', 'RandomShear',
-           'RandomScale', 'RandomTranslate', 'RandomProjection',
-           'PadTransform', 'CropTransform', 'ImageAdditiveGaussianNoise',
-           'ImageGammaCorrection', 'ImageSaltAndPepper', 'ImageBlur']
+from ..constants import allowed_paddings, allowed_crops, dtypes_max, allowed_blurs
+from ..data import img_shape_checker
+from ..data import KeyPoints, DataContainer
+from ..base_transforms import BaseTransform, MatrixTransform, PaddingPropertyHolder, DataDependentSamplingTransform
+from ..base_transforms import ImageTransform
+from ..base_transforms._base_transforms import validate_parameter, validate_numeric_range_parameter
+from ..core import Stream
 
 
 class RandomFlip(BaseTransform):
@@ -75,13 +70,9 @@ class RandomRotate(MatrixTransform):
     """
     def __init__(self, rotation_range=None, interpolation='bilinear', padding='z', p=0.5, data_indices=None):
         super(RandomRotate, self).__init__(interpolation=interpolation, padding=padding, p=p)
-        if rotation_range is None:
-            rotation_range = (0, 0)
-
         if isinstance(rotation_range, (int, float)):
             rotation_range = (-rotation_range, rotation_range)
-
-        self.__range = rotation_range
+        self.__range = validate_numeric_range_parameter(rotation_range, (0, 0))
 
     @property
     def rotation_range(self):
@@ -123,19 +114,14 @@ class RandomShear(MatrixTransform):
     """
     def __init__(self, range_x=None, range_y=None, interpolation='bilinear', padding='z', p=0.5):
         super(RandomShear, self).__init__(p=p, padding=padding, interpolation=interpolation)
-        if range_x is None:
-            range_x = (0, 0)
-        if range_y is None:
-            range_y = (0, 0)
-
         if isinstance(range_x, (int, float)):
             range_x = (-range_x, range_x)
 
         if isinstance(range_y, (int, float)):
             range_y = (-range_y, range_y)
 
-        self.__range_x = range_x
-        self.__range_y = range_y
+        self.__range_x = validate_numeric_range_parameter(range_x, (0, 0))
+        self.__range_y = validate_numeric_range_parameter(range_y, (0, 0))
 
     @property
     def shear_range_x(self):
@@ -188,16 +174,9 @@ class RandomScale(MatrixTransform):
         if isinstance(range_y, (int, float)):
             range_y = (min(1, range_y), max(1, range_y))
 
-        if range_x is not None:
-            if not (range_x[0] > 0 and range_x[1] > 0):
-                raise ValueError
-        if range_y is not None:
-            if not (range_y[0] > 0 and range_y[1] > 0):
-                raise ValueError
-
         self.__same = same
-        self.__range_x = range_x
-        self.__range_y = range_y
+        self.__range_x = None if range_x is None else validate_numeric_range_parameter(range_x, (1, 1), min_val=0)
+        self.__range_y = None if range_y is None else validate_numeric_range_parameter(range_y, (1, 1), min_val=0)
 
     @property
     def scale_range_x(self):
@@ -256,8 +235,8 @@ class RandomTranslate(MatrixTransform):
         if isinstance(range_y, (int, float)):
             range_y = (min(range_y, -range_y), max(range_y, -range_y))
 
-        self.__range_x = range_x
-        self.__range_y = range_y
+        self.__range_x = validate_numeric_range_parameter(range_x, (0, 0))
+        self.__range_y = validate_numeric_range_parameter(range_y, (0, 0))
 
     @property
     def translate_range_x(self):
@@ -268,15 +247,8 @@ class RandomTranslate(MatrixTransform):
         return self.__range_y
 
     def sample_transform(self):
-        if self.translate_range_x is None:
-            tx = 0
-        else:
-            tx = np.random.uniform(self.translate_range_x[0], self.translate_range_x[1])
-
-        if self.translate_range_y is None:
-            ty = 0
-        else:
-            ty = np.random.uniform(self.translate_range_y[0], self.translate_range_y[1])
+        tx = np.random.uniform(self.translate_range_x[0], self.translate_range_x[1])
+        ty = np.random.uniform(self.translate_range_y[0], self.translate_range_y[1])
 
         M = np.array([1, 0, tx,
                       0, 1, ty,
@@ -309,22 +281,14 @@ class RandomProjection(MatrixTransform):
                 RandomRotate(rotation_range=0, interpolation=interpolation)
             ])
 
-        if v_range is None:
-            v_range = (0, 0)
         if not isinstance(affine_transforms, Stream):
             raise TypeError
         for trf in affine_transforms.transforms:
             if not isinstance(trf, MatrixTransform):
                 raise TypeError
 
-        if not isinstance(v_range, tuple):
-            raise TypeError
-        for limit in v_range:
-            if not isinstance(limit, (int, float)):
-                raise TypeError
-
         self.__affine_transforms = affine_transforms
-        self.__vrange = v_range  # projection components.
+        self.__vrange = validate_numeric_range_parameter(v_range, (0, 0))  # projection components.
 
     def sample_transform(self):
         if len(self.__affine_transforms.transforms) > 1:
@@ -530,9 +494,9 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
     ----------
     p : float
         Probability of applying this transfor,
-    gain_range : tuple or float
+    gain_range : tuple or float or None
         Gain of the noise. Final image is created as (1-gain)*img + gain*noise.
-        If float, then gain_range = (0, gain_range).
+        If float, then gain_range = (0, gain_range). If None, then gain_range=(0, 0).
     data_indices : tuple or None
         Indices of the images within the data container to which this transform needs to be applied.
         Every element within the tuple must be integer numbers.
@@ -544,13 +508,7 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
         if isinstance(gain_range, float):
             gain_range = (0, gain_range)
 
-        if len(gain_range) != 2:
-            raise ValueError
-
-        if gain_range[0] > gain_range[1] or gain_range[0] < 0 or gain_range[1] > 1:
-            raise ValueError
-
-        self._gain_range = gain_range
+        self._gain_range = validate_numeric_range_parameter(gain_range, (0, 0), min_val=0, max_val=1)
 
     def sample_transform(self):
         raise NotImplementedError
@@ -595,17 +553,17 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
         return pts
 
 
-class ImageSaltAndPepper(DataDependentSamplingTransform):
+class ImageSaltAndPepper(ImageTransform, DataDependentSamplingTransform):
     """Adds salt and pepper noise to an image. Other types of data than the image are ignored.
 
     Parameters
     ----------
     p : float
-        Probability of applying this transfor,
-    gain_range : tuple or float
+        Probability of applying this transform,
+    gain_range : tuple or float or None
         Gain of the noise. Indicates percentage of indices, which will be changed.
         If float, then gain_range = (0, gain_range).
-    salt_p : float or tuple
+    salt_p : float or tuple or None
         Percentage of salt. Percentage of pepper is 1-salt_p. If tuple, then salt_p is chosen uniformly from the
         given range.
     data_indices : tuple or None
@@ -616,7 +574,6 @@ class ImageSaltAndPepper(DataDependentSamplingTransform):
     """
     def __init__(self, p=0.5, gain_range=0.1, salt_p=0.5, data_indices=None):
         super(ImageSaltAndPepper, self).__init__(p=p, data_indices=data_indices)
-
         if not isinstance(gain_range, float) and not isinstance(gain_range, tuple):
             raise TypeError
         if not isinstance(salt_p, float) and not isinstance(salt_p, tuple):
@@ -628,17 +585,8 @@ class ImageSaltAndPepper(DataDependentSamplingTransform):
         if isinstance(salt_p, float):
             salt_p = (salt_p, salt_p)
 
-        if len(salt_p) != 2 or len(gain_range) != 2:
-            raise ValueError
-
-        if not (0 <= salt_p[0] <= 1) or not (salt_p[0] <= salt_p[1]) or not (0 <= salt_p[1] <= 1):
-            raise ValueError
-
-        if gain_range[0] > gain_range[1] or gain_range[0] < 0 or gain_range[1] > 1:
-            raise ValueError
-
-        self._gain_range = gain_range
-        self._salt_p = salt_p
+        self._gain_range = validate_numeric_range_parameter(gain_range, (0, 0), 0, 1)
+        self._salt_p = validate_numeric_range_parameter(salt_p, (0, 0), 0, 1)
 
     def sample_transform(self):
         raise NotImplementedError
@@ -672,24 +620,15 @@ class ImageSaltAndPepper(DataDependentSamplingTransform):
         img[np.where(self.state_dict['pepper'])] = 0
         return img
 
-    def _apply_mask(self, mask):
-        return mask
 
-    def _apply_labels(self, labels):
-        return labels
-
-    def _apply_pts(self, pts):
-        return pts
-
-
-class ImageGammaCorrection(BaseTransform):
+class ImageGammaCorrection(ImageTransform):
     """Transform applies random gamma correction
 
     Parameters
     ----------
     p : float
         Probability of applying this transfor,
-    gamma_range : tuple or float
+    gamma_range : tuple or float or None
         Gain of the noise. Indicates percentage of indices, which will be changed.
         If float, then gain_range = (1-gamma_range, 1+gamma_range).
     data_indices : tuple or None
@@ -707,16 +646,7 @@ class ImageGammaCorrection(BaseTransform):
         if isinstance(gamma_range, float):
             gamma_range = (1 - gamma_range, 1 + gamma_range)
 
-        if len(gamma_range) != 2:
-            raise ValueError
-
-        if not isinstance(gamma_range[0], (int, float)) or not isinstance(gamma_range[1], (int, float)):
-            raise TypeError
-
-        if gamma_range[0] < 0 or gamma_range[1] < 0 or gamma_range[1] < gamma_range[0]:
-            raise ValueError
-
-        self._gamma_range = gamma_range
+        self._gamma_range = validate_numeric_range_parameter(gamma_range, (1, 1), 0)
 
     def sample_transform(self):
         gamma = np.random.uniform(self._gamma_range[0], self._gamma_range[1])
@@ -729,25 +659,16 @@ class ImageGammaCorrection(BaseTransform):
     def _apply_img(self, img):
         return cv2.LUT(img, self.state_dict['LUT'])
 
-    def _apply_mask(self, mask):
-        return mask
 
-    def _apply_labels(self, labels):
-        return labels
-
-    def _apply_pts(self, pts):
-        return pts
-
-
-class ImageBlur(BaseTransform):
+class ImageBlur(ImageTransform):
     """Transform blurs an image
 
     Parameters
     ----------
     p : float
-        Probability of applying this transfor,
+        Probability of applying this transform,
     blur_type : str
-        Bur type. Allowed blurs
+        Blur type. Allowed blurs
     k_size: int or tuple
         Kernel sizes of the blur. if int, then sampled from (k_size, k_size). If tuple,
         then sampled from the whole tuple. All the values here must be odd.
@@ -755,14 +676,12 @@ class ImageBlur(BaseTransform):
         Gaussian sigma value. Used for both X and Y axes. If None, then gaussian_sigma=1.
     data_indices : tuple or None
         Indices of the images within the data container to which this transform needs to be applied.
-        Every element within the tuple must be integer numebers.
+        Every element within the tuple must be integer numbers.
         If None, then the transform will be applied to all the images withing the DataContainer.
 
     """
     def __init__(self, p=0.5, blur_type=None, k_size=3, gaussian_sigma=None, data_indices=None):
         super(ImageBlur, self).__init__(p=p, data_indices=data_indices)
-        blur_type = validate_parameter(blur_type, allowed_blurs, 'g', basic_type=str, heritable=False)
-
         if not isinstance(k_size, (int, tuple)):
             raise TypeError
 
@@ -770,27 +689,15 @@ class ImageBlur(BaseTransform):
             k_size = (k_size, k_size)
 
         for k in k_size:
-            if k % 2 == 0 or k < 1:
+            if k % 2 == 0 or k < 1 or not isinstance(k, int):
                 raise ValueError
-
-        if gaussian_sigma is None:
-            gaussian_sigma = (1, 1)
-
-        if not isinstance(gaussian_sigma, (int, float, tuple)):
-            raise TypeError
 
         if isinstance(gaussian_sigma, (int, float)):
             gaussian_sigma = (gaussian_sigma, gaussian_sigma)
 
-        for g in gaussian_sigma:
-            if not isinstance(g, (int, float)):
-                raise TypeError
-            if g <= 0:
-                raise ValueError
-
-        self._blur = blur_type
+        self._blur = validate_parameter(blur_type, allowed_blurs, 'g', basic_type=str, heritable=False)
         self._k_size = k_size
-        self._gaussian_sigma = gaussian_sigma
+        self._gaussian_sigma = validate_numeric_range_parameter(gaussian_sigma, (1, 1), 0)
 
     def sample_transform(self):
         k = np.random.choice(self._k_size)
@@ -806,16 +713,68 @@ class ImageBlur(BaseTransform):
         if self._blur == 'm':
             return cv2.medianBlur(img, ksize=self.state_dict['k_size'])
 
-    def _apply_mask(self, mask):
-        return mask
 
-    def _apply_labels(self, labels):
-        return labels
+class ImageRandomHSV(ImageTransform):
+    """Transform Performs a random HSV color shift.
 
-    def _apply_pts(self, pts):
-        return pts
+    At each sampling step, the transform samples given shift :math:`\Delta h` for Hue, :math:`\Delta s` Saturation and
+    :math:`\Delta v` for Value. When the transform is applied to an image, the new values of Hue, Saturation and Value
+    :math:`(h, s, v)` are computed as
 
+    .. math::
 
+        h ={h_{old}+\Delta h}\pmod{360},
 
+        s = {s_{old}+\Delta s}\pmod{100},
 
+        v = {v_{old}+\Delta v} \pmod {100}.
 
+    Parameters
+    ----------
+    p : float
+        Probability of applying this transform,
+    h_range: tuple or None
+        Hue shift range. If None, than h_range=(0, 0).
+    s_range: tuple or None
+        Saturation shift range. If None, then s_range=(0, 0).
+    v_range: tuple or None
+        Value shift range. If None, then v_range=(0, 0).
+    data_indices : tuple or None
+        Indices of the images within the data container to which this transform needs to be applied.
+        Every element within the tuple must be integer numbers.
+        If None, then the transform will be applied to all the images withing the DataContainer.
+
+    """
+    def __init__(self, p=0.5, h_range=None, s_range=None, v_range=None, data_indices=None):
+        super(ImageRandomHSV, self).__init__(p=p, data_indices=data_indices)
+        self._h_range = validate_numeric_range_parameter(h_range, (0, 0))
+        self._s_range = validate_numeric_range_parameter(s_range, (0, 0))
+        self._v_range = validate_numeric_range_parameter(v_range, (0, 0))
+
+    def sample_transform(self):
+        h = np.random.uniform(self._h_range[0], self._h_range[1])
+        s = np.random.uniform(self._s_range[0], self._s_range[1])
+        v = np.random.uniform(self._v_range[0], self._v_range[1])
+        self.state_dict = {'h_mod': h, 's_mod': s, 'v_mod': v}
+
+    @img_shape_checker
+    def _apply_img(self, img):
+        img = img.copy()
+        dtype = img.dtype
+        if img.shape[-1] != 3:
+            raise ValueError
+
+        if dtype != np.uint8:
+            raise TypeError
+
+        img_hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+        h, s, v = cv2.split(img_hsv.astype(np.int32))
+
+        h = np.clip(abs((h + self.state_dict['h_mod']) % 180), 0, 180).astype(dtype)
+        s = np.clip(s + self.state_dict['s_mod'], 0, 255).astype(dtype)
+        v = np.clip(v + self.state_dict['v_mod'], 0, 255).astype(dtype)
+
+        img_hsv_shifted = cv2.merge((h, s, v))
+        img = cv2.cvtColor(img_hsv_shifted, cv2.COLOR_HSV2RGB)
+
+        return img

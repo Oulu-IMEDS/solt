@@ -22,3 +22,8 @@ build/*
 dist/*
 .DS_Store
 docs/.DS_Store
+solt/base_transforms/__pycache__/*
+solt/constants/__pycache__/*
+solt/core/__pycache__/*
+solt/data/__pycache__/*
+solt/transforms/__pycache__/*
