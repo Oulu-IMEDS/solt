@@ -836,13 +836,13 @@ class ImageRandomHSV(ImageTransform):
         if not (isinstance(v_range[0], (int, float)) and isinstance(v_range[1], (int, float))):
             raise TypeError
 
-        if h_range[0] < 0 or h_range[1] < 0 or h_range[0] > h_range[1]:
+        if h_range[0] > h_range[1]:
             raise ValueError
 
-        if s_range[0] < 0 or s_range[1] < 0 or s_range[0] > s_range[1]:
+        if s_range[0] > s_range[1]:
             raise ValueError
 
-        if v_range[0] < 0 or v_range[1] < 0 or v_range[0] > v_range[1]:
+        if v_range[0] > v_range[1]:
             raise ValueError
 
         self._h_range = h_range
@@ -861,11 +861,14 @@ class ImageRandomHSV(ImageTransform):
         img_hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
         dtype = img.dtype
 
-        h, s, v = cv2.split(img_hsv)
+        if dtype != np.uint8:
+            raise TypeError
 
-        h = (h + self.state_dict['h_mod']).astype(dtype)
-        s = (s + self.state_dict['s_mod']).astype(dtype)
-        v = (v + self.state_dict['v_mod']).astype(dtype)
+        h, s, v = cv2.split(img_hsv.astype(np.int32))
+
+        h = np.clip(abs((h + self.state_dict['h_mod']) % 180), 0, 180).astype(dtype)
+        s = np.clip(s + self.state_dict['s_mod'], 0, 255).astype(dtype)
+        v = np.clip(v + self.state_dict['v_mod'], 0, 255).astype(dtype)
 
         img_hsv_shifted = cv2.merge((h, s, v))
         img = cv2.cvtColor(img_hsv_shifted, cv2.COLOR_HSV2RGB)

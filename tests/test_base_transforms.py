@@ -27,6 +27,11 @@ def test_data_indices_cant_be_list():
         slt.ImageSaltAndPepper(data_indices=[])
 
 
+def test_base_transform_can_take_none_prop_and_it_becomes_0_5():
+    trf = slt.RandomFlip(p=None)
+    assert 0.5 == trf.p
+
+
 def test_data_indices_can_be_only_int():
     with pytest.raises(TypeError):
         slt.ImageSaltAndPepper(data_indices=('2', 34))
