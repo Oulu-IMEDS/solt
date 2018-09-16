@@ -2,11 +2,11 @@ import numpy as np
 import cv2
 
 from ..constants import allowed_paddings, allowed_crops, dtypes_max, allowed_blurs
-from ..data import img_shape_checker
+from ..utils import img_shape_checker
 from ..data import KeyPoints, DataContainer
 from ..base_transforms import BaseTransform, MatrixTransform, PaddingPropertyHolder, DataDependentSamplingTransform
 from ..base_transforms import ImageTransform
-from ..base_transforms._base_transforms import validate_parameter, validate_numeric_range_parameter
+from ..utils import validate_parameter, validate_numeric_range_parameter
 from ..core import Stream
 
 
