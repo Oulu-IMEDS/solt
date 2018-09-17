@@ -718,9 +718,6 @@ class ImageBlur(ImageTransform):
 class ImageRandomHSV(ImageTransform):
     """Transform Performs a random HSV color shift.
 
-    At each sampling step, the transform samples given shift :math:`\Delta h` for Hue, :math:`\Delta s` Saturation and
-    :math:`\Delta v` for Value.
-
     Parameters
     ----------
     p : float
@@ -789,11 +786,11 @@ class ImageColorTransform(ImageTransform):
         Indices of the images within the data container to which this transform needs to be applied.
         Every element within the tuple must be integer numbers.
         If None, then the transform will be applied to all the images withing the DataContainer.
+
     """
     def __init__(self, mode=None, data_indices=None):
         super(ImageColorTransform, self).__init__(p=1, data_indices=data_indices)
-        self._mode = validate_parameter(mode, 'none',
-                                        allowed_color_conversions, heritable=False)
+        self._mode = validate_parameter(mode, 'none', allowed_color_conversions, heritable=False)
 
     @property
     def mode(self):
@@ -813,8 +810,6 @@ class ImageColorTransform(ImageTransform):
                 return np.dstack((img, img, img))
             elif img.shape[-1] == 3:
                 return img
-            else:
-                raise ValueError
         elif self.mode == 'rgb2gs':
             if len(img.shape) != 3:
                 raise ValueError
@@ -822,9 +817,6 @@ class ImageColorTransform(ImageTransform):
                 return img
             elif img.shape[-1] == 3:
                 return cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-            else:
-                raise ValueError
-
 
 
 

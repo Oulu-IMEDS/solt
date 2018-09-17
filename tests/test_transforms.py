@@ -805,7 +805,7 @@ def test_hsv_doesnt_work_for_1_channel(img_6x6):
     ('rgb2gs', img_6x6_rgb(), img_6x6()),
     ('rgb2gs', img_6x6(), img_6x6()),
 ])
-def test_hsv_trying_use_not_uint8(mode, img, expected):
+def test_hsv_returns_expected_results(mode, img, expected):
     trf = slt.ImageColorTransform(mode=mode)
     dc = sld.DataContainer(img, 'I')
     dc_res = trf(dc)
@@ -816,8 +816,8 @@ def test_hsv_trying_use_not_uint8(mode, img, expected):
     'gs2rgb',
     'rgb2gs'
 ])
-def image_color_conversion_raises_error(mode, mask_3x4):
+def test_image_color_conversion_raises_error(mode, mask_3x4):
     trf = slt.ImageColorTransform(mode=mode)
-    dc = sld.DataContainer(mask_3x4, 'I')
+    dc = sld.DataContainer(mask_3x4.squeeze(), 'I')
     with pytest.raises(ValueError):
         trf(dc)
