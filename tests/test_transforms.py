@@ -6,7 +6,8 @@ import numpy as np
 import cv2
 import pytest
 
-from .fixtures import img_2x2, img_3x3, img_3x4, mask_2x2, mask_3x4, mask_3x3, img_5x5, img_6x6
+from .fixtures import img_2x2, img_3x3, img_3x4, \
+    mask_2x2, mask_3x4, mask_3x3, img_5x5, img_6x6, img_6x6_rgb
 
 
 def test_img_mask_vertical_flip(img_3x4, mask_3x4):
@@ -666,7 +667,7 @@ def test_scale_when_range_x_is_none(scale_x, scale_y, same, expected):
     (None, None, (0, 0)),
 ]
 )
-def test_scale_when_range_x_is_none(translate_x, translate_y, expected):
+def test_translate_when_range_x_is_none(translate_x, translate_y, expected):
     trf = slt.RandomTranslate(range_x=translate_x, range_y=translate_y, p=1)
     trf.sample_transform()
     assert (trf.state_dict['translate_x'], trf.state_dict['translate_y']) == expected
@@ -792,5 +793,31 @@ def test_hsv_doesnt_work_for_1_channel(img_6x6):
     trf = slt.ImageRandomHSV(p=1)
     dc = sld.DataContainer(img_6x6.astype(np.uint8), 'I')
 
+    with pytest.raises(ValueError):
+        trf(dc)
+
+
+@pytest.mark.parametrize('mode, img, expected', [
+    ('none', img_6x6(), img_6x6()),
+    ('none', img_6x6_rgb(), img_6x6_rgb()),
+    ('gs2rgb', img_6x6(), img_6x6_rgb()),
+    ('gs2rgb', img_6x6_rgb(), img_6x6_rgb()),
+    ('rgb2gs', img_6x6_rgb(), img_6x6()),
+    ('rgb2gs', img_6x6(), img_6x6()),
+])
+def test_hsv_returns_expected_results(mode, img, expected):
+    trf = slt.ImageColorTransform(mode=mode)
+    dc = sld.DataContainer(img, 'I')
+    dc_res = trf(dc)
+    np.testing.assert_array_equal(expected, dc_res.data[0])
+
+
+@pytest.mark.parametrize('mode', [
+    'gs2rgb',
+    'rgb2gs'
+])
+def test_image_color_conversion_raises_error(mode, mask_3x4):
+    trf = slt.ImageColorTransform(mode=mode)
+    dc = sld.DataContainer(mask_3x4.squeeze(), 'I')
     with pytest.raises(ValueError):
         trf(dc)

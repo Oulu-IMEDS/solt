@@ -6,4 +6,5 @@ allowed_interpolations = {'bilinear': cv2.INTER_LINEAR, 'bicubic': cv2.INTER_CUB
 allowed_crops = {'c', 'r'}
 allowed_types = {'I', 'M', 'P', 'L'}
 allowed_blurs = {'g', 'm'}
+allowed_color_conversions = {'gs2rgb', 'rgb2gs', 'none'}
 dtypes_max = {np.dtype('uint8'): 255, np.dtype('uint16'): 255}

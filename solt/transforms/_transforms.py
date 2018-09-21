@@ -1,12 +1,13 @@
 import numpy as np
 import cv2
 
-from ..constants import allowed_paddings, allowed_crops, dtypes_max, allowed_blurs
-from ..data import img_shape_checker
+from ..constants import allowed_paddings, allowed_crops, \
+    dtypes_max, allowed_blurs, allowed_color_conversions
+from ..utils import img_shape_checker
 from ..data import KeyPoints, DataContainer
 from ..base_transforms import BaseTransform, MatrixTransform, PaddingPropertyHolder, DataDependentSamplingTransform
 from ..base_transforms import ImageTransform
-from ..base_transforms._base_transforms import validate_parameter, validate_numeric_range_parameter
+from ..utils import validate_parameter, validate_numeric_range_parameter
 from ..core import Stream
 
 
@@ -633,7 +634,7 @@ class ImageGammaCorrection(ImageTransform):
         If float, then gain_range = (1-gamma_range, 1+gamma_range).
     data_indices : tuple or None
         Indices of the images within the data container to which this transform needs to be applied.
-        Every element within the tuple must be integer numebers.
+        Every element within the tuple must be integer numbers.
         If None, then the transform will be applied to all the images withing the DataContainer.
 
     """
@@ -717,9 +718,6 @@ class ImageBlur(ImageTransform):
 class ImageRandomHSV(ImageTransform):
     """Transform Performs a random HSV color shift.
 
-    At each sampling step, the transform samples given shift :math:`\Delta h` for Hue, :math:`\Delta s` Saturation and
-    :math:`\Delta v` for Value.
-
     Parameters
     ----------
     p : float
@@ -769,3 +767,56 @@ class ImageRandomHSV(ImageTransform):
         img = cv2.cvtColor(img_hsv_shifted, cv2.COLOR_HSV2RGB)
 
         return img
+
+
+class ImageColorTransform(ImageTransform):
+    """RGB to grayscale or grayscale to RGB image conversion.
+
+    If converting from grayscale to RGB, then the gs channel is simply clonned.
+    If converting from RGB to grayscale, then opencv is used.
+
+    Parameters
+    ----------
+    mode : str
+        Color conversion mode. If None, then no conversion happens and mode=none.
+        If `mode == 'rgb2gs'` and the image is already grayscale,
+        then nothing happens. If `mode == 'gs2rgb'` and the image is already RGB,
+        then also nothing happens.
+    data_indices : tuple or None
+        Indices of the images within the data container to which this transform needs to be applied.
+        Every element within the tuple must be integer numbers.
+        If None, then the transform will be applied to all the images withing the DataContainer.
+
+    """
+    def __init__(self, mode=None, data_indices=None):
+        super(ImageColorTransform, self).__init__(p=1, data_indices=data_indices)
+        self._mode = validate_parameter(mode, 'none', allowed_color_conversions, heritable=False)
+
+    @property
+    def mode(self):
+        return self._mode
+
+    def sample_transform(self):
+        pass
+
+    @img_shape_checker
+    def _apply_img(self, img):
+        if self._mode == 'none':
+            return img
+        elif self.mode == 'gs2rgb':
+            if len(img.shape) != 3:
+                raise ValueError
+            if img.shape[-1] == 1:
+                return np.dstack((img, img, img))
+            elif img.shape[-1] == 3:
+                return img
+        elif self.mode == 'rgb2gs':
+            if len(img.shape) != 3:
+                raise ValueError
+            if img.shape[-1] == 1:
+                return img
+            elif img.shape[-1] == 3:
+                return cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+
+
+

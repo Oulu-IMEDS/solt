@@ -1,34 +1,5 @@
-from functools import wraps
 from copy import deepcopy
 from ..constants import allowed_types
-
-
-def img_shape_checker(method):
-    """Decorator to ensure that the image has always 3 dimensions: WxHC
-
-    Parameters
-    ----------
-    method : _apply_img method of BaseTransform
-
-    Returns
-    -------
-    out : method of a class
-        Result
-
-    """
-    @wraps(method)
-    def wrapper(self, *args, **kwargs):
-        res = method(self, *args, **kwargs)
-        if len(res.shape) == 2:
-            h, w = res.shape
-            c = 1
-        elif len(res.shape) == 3:
-            h, w, c = res.shape
-        else:
-            raise ValueError
-
-        return res.reshape((h, w, c))
-    return wrapper
 
 
 class DataContainer(object):

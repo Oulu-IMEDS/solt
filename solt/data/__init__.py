@@ -1,3 +1,3 @@
-from ._data import img_shape_checker, DataContainer, KeyPoints
+from ._data import DataContainer, KeyPoints
 
-__all__ = ['img_shape_checker', 'DataContainer', 'KeyPoints']
+__all__ = ['DataContainer', 'KeyPoints']

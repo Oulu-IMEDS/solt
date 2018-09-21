@@ -1,6 +1,7 @@
 import solt.core as slc
 import solt.data as sld
 import solt.transforms as slt
+import solt.utils as slu
 import numpy as np
 import pytest
 import cv2
@@ -10,7 +11,7 @@ from .fixtures import img_2x2, img_3x4, mask_2x2, mask_3x4, img_5x5
 
 def test_img_shape_checker_decorator_shape_check():
     img = np.random.rand(3, 4, 5, 6)
-    func = sld.img_shape_checker(lambda x: x)
+    func = slu.img_shape_checker(lambda x: x)
     with pytest.raises(ValueError):
         func(img)
 

@@ -102,7 +102,7 @@ def img_5x5():
     Returns
     -------
     out : ndarray
-        3x4 uint8 image
+        3x5 uint8 image
     """
     img = np.ones((5, 5, 1))
 
@@ -110,7 +110,7 @@ def img_5x5():
     img[:, -1] = 2
     img[0, :] = 2
     img[-1, :] = 2
-    return img
+    return img.astype(np.uint8)
 
 
 @pytest.fixture
@@ -128,4 +128,23 @@ def img_6x6():
     img[:, -1] = 2
     img[0, :] = 2
     img[-1, :] = 2
-    return img
+    return img.astype(np.uint8)*255
+
+
+@pytest.fixture
+def img_6x6_rgb():
+    """
+    Generates a gs image 5x5. It is all ones, besides the edges
+
+    Returns
+    -------
+    out : ndarray
+        6x6 uint8 image
+    """
+    img = np.ones((6, 6, 1))
+    img[:, 0] = 2
+    img[:, -1] = 2
+    img[0, :] = 2
+    img[-1, :] = 2
+    return np.dstack((img, img, img)).astype(np.uint8)*255
+
