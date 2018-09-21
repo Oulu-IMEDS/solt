@@ -14,10 +14,20 @@ matrix:
       sudo: true
       python: 3.7
 
+    - name: "OSX/ Python 3.6"
+      os: osx
+      language: generic
+      env: TRAVIS_PYTHON_VERSION=3.6
+
+    - name: "OSX / Python 3.7"
+      os: osx
+      language: generic
+      env: TRAVIS_PYTHON_VERSION=3.7
+
 
 install:
 - sh ci/conda_setup.sh
-- bash miniconda.sh -b -p $HOME/miniconda
+- bash $HOME/miniconda.sh -b -p $HOME/miniconda
 - export OPATH="$PATH" && export PATH="$HOME/miniconda/bin:$PATH"
 - conda create -q -y -n solt_test_env python=$TRAVIS_PYTHON_VERSION
 - conda install -y -n solt_test_env pandoc
