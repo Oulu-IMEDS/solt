@@ -2,7 +2,7 @@ language: python
 
 matrix:
   include:
-    - name: "Linux / Python 3.7"
+    - name: "Linux / Python 3.6"
       os: linux
       dist: xenial
       sudo: true
