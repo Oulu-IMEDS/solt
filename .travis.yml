@@ -1,16 +1,13 @@
 language: python
+os:
+  - linux
+  - osx
 
-matrix:
-  include:
-    - python: 3.6
-    - python: 3.7
-      dist: xenial
-      sudo: true
-jobs:
-  include:
-    - stage:
+python: 3.6
+python: 3.7
+
 install:
-- wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+- sh ci/conda_setup.sh
 - bash miniconda.sh -b -p $HOME/miniconda
 - export OPATH="$PATH" && export PATH="$HOME/miniconda/bin:$PATH"
 - conda create -q -y -n solt_test_env python=$TRAVIS_PYTHON_VERSION
@@ -32,13 +29,15 @@ script:
 - flake8
 after_success:
 - codecov
-- travis-sphinx build --source=./doc/source/
-- travis-sphinx deploy
 deploy:
-  on:
-    tags: true
-  provider: pypi
-  distributions: sdist
-  user: lext
-  password:
-    secure: BuC3Uf+aqgyOhCjhKIh/LwmdeaBle8DydFSIC3derHzLzsmtqIt1B4cLPbbJhfnm40pUlDWmIqoU+OvY0XlOWbixmNesxX5XA9AXDPLKMOCjMy4eQcDpB5irSeHvVpBjE082nYL9dfwMqpl0YcIhYoWdftSvITdlpPSVTjoFZ7ayp+WAT6faA3Hrd7AGGWWUiagFcoS0Sb87KQ42siXk8Y3kkhKDNoEs3MU3YPTqjx1kVrsfKqISEvKsz8/Ru8fKFyxEnW89aXw2dG18Lw/vuHiulWU0ZnoS/Udov9U+OaSFM0EcUBIUNfjTrnKqfP1asr7cj7Ih+0WNRUMXV2OiPeVfeIFh9KNineoVUlS/Olku0OFuObvtV6JjCcORfPPqTq4LZbtqqO68zb5ALYCMFzOPofn+u2Kh6oTO3c/hr3j1Sz1J+Uu9vPnHDHzsFE3yqXIrG1ZbjWbogB744Nc82T8lILLup1965/BLI6Sk2XGNFRHdo+KEYxgGmhyRvReYXOO3GJgbcGqIwTt7xMhn7JmHEOei1wM22X4RSwE6WnpUC9yAJByzXI2gbR+rjhz94WH2lbtILFZgOKJkj6ghgh3gdZcpWtZpd/HYuD7xoEGFCOjn9/bMvASzwSk+5R03QwUMqX6bwTlRSoG9ryAZFx91oUazOfAWgw4f/UXq5jY=
+  - provider: pypi
+    distributions: sdist
+    user: lext
+    password:
+      secure: BuC3Uf+aqgyOhCjhKIh/LwmdeaBle8DydFSIC3derHzLzsmtqIt1B4cLPbbJhfnm40pUlDWmIqoU+OvY0XlOWbixmNesxX5XA9AXDPLKMOCjMy4eQcDpB5irSeHvVpBjE082nYL9dfwMqpl0YcIhYoWdftSvITdlpPSVTjoFZ7ayp+WAT6faA3Hrd7AGGWWUiagFcoS0Sb87KQ42siXk8Y3kkhKDNoEs3MU3YPTqjx1kVrsfKqISEvKsz8/Ru8fKFyxEnW89aXw2dG18Lw/vuHiulWU0ZnoS/Udov9U+OaSFM0EcUBIUNfjTrnKqfP1asr7cj7Ih+0WNRUMXV2OiPeVfeIFh9KNineoVUlS/Olku0OFuObvtV6JjCcORfPPqTq4LZbtqqO68zb5ALYCMFzOPofn+u2Kh6oTO3c/hr3j1Sz1J+Uu9vPnHDHzsFE3yqXIrG1ZbjWbogB744Nc82T8lILLup1965/BLI6Sk2XGNFRHdo+KEYxgGmhyRvReYXOO3GJgbcGqIwTt7xMhn7JmHEOei1wM22X4RSwE6WnpUC9yAJByzXI2gbR+rjhz94WH2lbtILFZgOKJkj6ghgh3gdZcpWtZpd/HYuD7xoEGFCOjn9/bMvASzwSk+5R03QwUMqX6bwTlRSoG9ryAZFx91oUazOfAWgw4f/UXq5jY=
+    on:
+      tags: true
+  - provider: script
+    script: sh ci/doc_build.sh
+    on:
+      branch: master
