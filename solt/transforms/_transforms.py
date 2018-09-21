@@ -770,7 +770,7 @@ class ImageRandomHSV(ImageTransform):
 
 
 class ImageColorTransform(ImageTransform):
-    """RGB to grayscale or grayscale to RGB image conevrsion.
+    """RGB to grayscale or grayscale to RGB image conversion.
 
     If converting from grayscale to RGB, then the gs channel is simply clonned.
     If converting from RGB to grayscale, then opencv is used.

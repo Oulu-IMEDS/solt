@@ -53,3 +53,4 @@ You can also fetch the most fresh changes from our GitHub repository:
    Basics_of_solt
    Helen_faces
    DSBowl18_segmentation
+   Medical_Data_Augmentation_CXR14.nblink
