@@ -51,4 +51,4 @@ deploy:
   - provider: script
     script: sh ci/doc_build.sh
     on:
-      condition: [TRAVIS_PYTHON_VERSION = 3.7 ] && [ $TRAVIS_OS_NAME = "linux"] && echo true
+      condition: [[ $TRAVIS_PYTHON_VERSION = 3.7 ]] && [[ $TRAVIS_OS_NAME = "linux" ]]
