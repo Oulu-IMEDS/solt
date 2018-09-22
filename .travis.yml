@@ -24,21 +24,20 @@ matrix:
       language: generic
       env: TRAVIS_PYTHON_VERSION=3.7
 
-  install:
-    - sh ci/conda_setup.sh
-    - bash $HOME/miniconda.sh -b -p $HOME/miniconda
-    - export OPATH="$PATH" && export PATH="$HOME/miniconda/bin:$PATH"
-    - conda create -q -y -n solt_test_env python=$TRAVIS_PYTHON_VERSION
-    - conda install -y -n solt_test_env pandoc
-    - source activate solt_test_env
-    - pip install pytest-flake8
-    - pip install -r ci/requirements.txt
-    - pip install .
-  script:
-    - py.test tests --cov solt --cov-report term-missing -v
-    - flake8
-  after_success:
-    - codecov
+install:
+  - sh ci/conda_setup.sh
+  - bash $HOME/miniconda.sh -b -p $HOME/miniconda
+  - export OPATH="$PATH" && export PATH="$HOME/miniconda/bin:$PATH"
+  - conda create -q -y -n solt_test_env python=$TRAVIS_PYTHON_VERSION
+  - conda install -y -n solt_test_env pandoc
+  - source activate solt_test_env
+  - pip install -r ci/requirements.txt
+  - pip install .
+script:
+  - py.test tests --cov solt --cov-report term-missing -v
+  - flake8
+after_success:
+  - codecov
 
 deploy:
   - provider: pypi
@@ -51,4 +50,4 @@ deploy:
   - provider: script
     script: sh ci/doc_build.sh
     on:
-      condition: [TRAVIS_PYTHON_VERSION = 3.7 ] && [ $TRAVIS_OS_NAME = "linux"] && echo true
+      branch: master
