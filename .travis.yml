@@ -24,30 +24,20 @@ matrix:
       language: generic
       env: TRAVIS_PYTHON_VERSION=3.7
 
-  install:
-    - sh ci/conda_setup.sh
-    - bash $HOME/miniconda.sh -b -p $HOME/miniconda
-    - export OPATH="$PATH" && export PATH="$HOME/miniconda/bin:$PATH"
-    - conda create -q -y -n solt_test_env python=$TRAVIS_PYTHON_VERSION
-    - conda install -y -n solt_test_env pandoc
-    - source activate solt_test_env
-    - pip install pytest-flake8==1.0.2
-    - pip install ipykernel==4.8.2
-    - pip install codecov==2.0.15
-    - pip install pytest-pep8==1.0.6
-    - pip install coverage==4.5.1
-    - pip install pytest-cov==2.6.0
-    - pip install sphinx==1.8.0
-    - pip install nbsphinx-link==1.1.1
-    - pip install travis-sphinx==2.2.1
-    - pip install sphinx-rtd-theme==0.4.1
-    - pip install msmb-theme==1.2.0
-    - pip install .
-  script:
-    - py.test tests --cov solt --cov-report term-missing -v
-    - flake8
-  after_success:
-    - codecov
+install:
+  - sh ci/conda_setup.sh
+  - bash $HOME/miniconda.sh -b -p $HOME/miniconda
+  - export OPATH="$PATH" && export PATH="$HOME/miniconda/bin:$PATH"
+  - conda create -q -y -n solt_test_env python=$TRAVIS_PYTHON_VERSION
+  - conda install -y -n solt_test_env pandoc
+  - source activate solt_test_env
+  - pip install -r ci/requirements.txt
+  - pip install .
+script:
+  - py.test tests --cov solt --cov-report term-missing -v
+  - flake8
+after_success:
+  - codecov
 
 deploy:
   - provider: pypi

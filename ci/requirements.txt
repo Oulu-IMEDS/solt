@@ -1,0 +1,11 @@
+pytest-flake8==1.0.2
+ipykernel==4.8.2
+codecov==2.0.15
+pytest-pep8==1.0.6
+coverage==4.5.1
+pytest-cov==2.6.0
+sphinx==1.8.0
+nbsphinx-link==1.1.1
+travis-sphinx==2.2.1
+msmb-theme==1.2.0
+sphinx-rtd-theme==0.4.1
