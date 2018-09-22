@@ -50,4 +50,4 @@ deploy:
   - provider: script
     script: sh ci/doc_build.sh
     on:
-      tags: true
+      branch: master
