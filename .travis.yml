@@ -31,7 +31,6 @@ matrix:
     - conda create -q -y -n solt_test_env python=$TRAVIS_PYTHON_VERSION
     - conda install -y -n solt_test_env pandoc
     - source activate solt_test_env
-    - pip install pytest-flake8
     - pip install -r ci/requirements.txt
     - pip install .
   script:
