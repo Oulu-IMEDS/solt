@@ -49,3 +49,5 @@ deploy:
       tags: true
   - provider: script
     script: sh ci/doc_build.sh
+    on:
+      all_branches: true
