@@ -30,6 +30,8 @@ setup(
         'Natural Language :: English',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Operating System :: MacOS',
+        'Operating System :: POSIX :: Linux'
     ],
     description="Optimized data augmentation library for Deep Learning",
     install_requires=requirements,
