@@ -2,10 +2,12 @@ import numpy as np
 import cv2
 
 from ..constants import allowed_paddings, allowed_crops, \
-    dtypes_max, allowed_blurs, allowed_color_conversions
+    dtypes_max, allowed_blurs, allowed_color_conversions, allowed_interpolations
 from ..utils import img_shape_checker
 from ..data import KeyPoints, DataContainer
-from ..base_transforms import BaseTransform, MatrixTransform, PaddingPropertyHolder, DataDependentSamplingTransform
+from ..base_transforms import BaseTransform, MatrixTransform, \
+    PaddingPropertyHolder, DataDependentSamplingTransform, InterpolationPropertyHolder
+
 from ..base_transforms import ImageTransform
 from ..utils import validate_parameter, validate_numeric_range_parameter
 from ..core import Stream
@@ -394,6 +396,60 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
         pts_data[:, 1] += pad_h_top
 
         return KeyPoints(pts_data, pad_h_top + pts.H + pad_h_bottom, pad_w_left + pts.W + pad_w_right)
+
+
+class ResizeTransform(BaseTransform, InterpolationPropertyHolder):
+    """Transformation, which resize the input to a given size
+
+    Parameters
+    ----------
+    resize_to : tuple or int
+        Target size (W_new, Y_new).
+    interpolation :
+        Interpolation type.
+
+    """
+    def __init__(self, resize_to, interpolation='bilinear'):
+        BaseTransform.__init__(p=1)
+        InterpolationPropertyHolder.__init__(interpolation=interpolation)
+        if not isinstance(resize_to, tuple) and not isinstance(resize_to, int):
+            raise TypeError
+        if isinstance(resize_to, int):
+            resize_to = (resize_to, resize_to)
+
+        self._resize_to = resize_to
+
+    def sample_transform(self):
+        pass
+
+    def _apply_img_or_mask(self, img):
+        inter = allowed_interpolations[self.interpolation[0]]
+        return cv2.resize(img, self._resize_to, interpolation=inter)
+
+    @img_shape_checker
+    def _apply_img(self, img):
+        return self._apply_img_or_mask(img)
+
+    def _apply_mask(self, mask):
+        return self._apply_img_or_mask(mask)
+
+    def _apply_labels(self, labels):
+        return labels
+
+    def _apply_pts(self, pts):
+        if self.padding[0] != 'z':
+            raise ValueError
+        pts_data = pts.data.copy()
+
+        resize_x, resize_y = self._resize_to
+
+        scale_x = resize_x / pts.W
+        scale_y = resize_y / pts.H
+
+        pts_data[:, 0] *= scale_x
+        pts_data[:, 1] *= scale_y
+
+        return KeyPoints(pts_data, resize_y, resize_x)
 
 
 class CropTransform(DataDependentSamplingTransform):
