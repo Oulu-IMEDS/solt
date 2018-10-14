@@ -203,7 +203,7 @@ class SelectiveStream(Stream):
         if n < 0 or n > len(transforms):
             raise ValueError
         if probs is not None:
-            if len(probs) != n:
+            if len(probs) != len(transforms):
                 raise ValueError
         self._n = n
         self._probs = probs
