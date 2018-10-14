@@ -410,8 +410,8 @@ class ResizeTransform(BaseTransform, InterpolationPropertyHolder):
 
     """
     def __init__(self, resize_to, interpolation='bilinear'):
-        BaseTransform.__init__(p=1)
-        InterpolationPropertyHolder.__init__(interpolation=interpolation)
+        BaseTransform.__init__(self, p=1)
+        InterpolationPropertyHolder.__init__(self, interpolation=interpolation)
         if not isinstance(resize_to, tuple) and not isinstance(resize_to, int):
             raise TypeError
         if isinstance(resize_to, int):
@@ -437,9 +437,7 @@ class ResizeTransform(BaseTransform, InterpolationPropertyHolder):
         return labels
 
     def _apply_pts(self, pts):
-        if self.padding[0] != 'z':
-            raise ValueError
-        pts_data = pts.data.copy()
+        pts_data = pts.data.copy().astype(float)
 
         resize_x, resize_y = self._resize_to
 
@@ -448,6 +446,8 @@ class ResizeTransform(BaseTransform, InterpolationPropertyHolder):
 
         pts_data[:, 0] *= scale_x
         pts_data[:, 1] *= scale_y
+
+        pts_data = pts_data.astype(int)
 
         return KeyPoints(pts_data, resize_y, resize_x)
 

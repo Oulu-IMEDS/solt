@@ -7,7 +7,7 @@ import cv2
 import pytest
 
 from .fixtures import img_2x2, img_3x3, img_3x4, \
-    mask_2x2, mask_3x4, mask_3x3, img_5x5, img_6x6, img_6x6_rgb
+    mask_2x2, mask_3x4, mask_3x3, img_5x5, img_6x6, img_6x6_rgb, mask_6x6, mask_5x5
 
 
 def test_img_mask_vertical_flip(img_3x4, mask_3x4):
@@ -291,6 +291,60 @@ def test_pad_to_20x20_img_mask_keypoints_3x3(img_3x3, mask_3x3):
     assert np.array_equal(res[2][0].data, np.array([[8, 8], [8, 10], [10, 10], [10, 8]]).reshape((4, 2)))
 
 
+@pytest.mark.parametrize('img, mask, resize_to', [
+    (img_6x6(), mask_6x6(), (20, 20)),
+    (img_6x6(), mask_6x6(), 20),
+    (img_6x6(), mask_6x6(), (3, 3)),
+    (img_6x6(), mask_6x6(), 3),
+    (img_6x6(), mask_6x6(), (5, 5)),
+    (img_6x6(), mask_6x6(), 5),
+    (img_6x6(), mask_6x6(), (4, 4)),
+    (img_6x6(), mask_6x6(), 4),
+    (img_6x6(), mask_6x6(), (7, 6)),
+    (img_6x6(), mask_6x6(), (5, 7)),
+    (img_6x6(), mask_6x6(), 6),
+    (img_6x6(), mask_6x6(), (2, 3)),
+    (img_5x5(), mask_5x5(), (20, 20)),
+    (img_5x5(), mask_5x5(), 20),
+    (img_5x5(), mask_5x5(), (3, 3)),
+    (img_5x5(), mask_5x5(), 3),
+    (img_5x5(), mask_5x5(), (5, 5)),
+    (img_5x5(), mask_5x5(), 5),
+    (img_5x5(), mask_5x5(), (4, 4)),
+    (img_5x5(), mask_5x5(), 4),
+    (img_5x5(), mask_5x5(), (7, 6)),
+    (img_5x5(), mask_5x5(), (5, 7)),
+    (img_5x5(), mask_5x5(), 6),
+    (img_5x5(), mask_5x5(), (2, 3)),
+    ]
+)
+def test_resize_img_to_arbitrary_size(img, mask, resize_to):
+    # Setting up the data
+    kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))  # Top left corner
+    kpts = sld.KeyPoints(kpts_data.copy(), img.shape[0], img.shape[1])
+
+    dc = sld.DataContainer((img, mask, kpts,), 'IMP')
+    transf = slt.ResizeTransform(resize_to=resize_to)
+    res = transf(dc).data
+
+    if isinstance(resize_to, int):
+        resize_to = (resize_to, resize_to)
+
+    scale_x = resize_to[0] / img.shape[1]
+    scale_y = resize_to[1] / img.shape[0]
+
+    assert transf._resize_to == resize_to
+    assert (res[0].shape[0] == resize_to[1]) and (res[0].shape[1] == resize_to[0])
+    assert (res[1].shape[0] == resize_to[1]) and (res[1].shape[1] == resize_to[0])
+    assert (res[2].H == resize_to[1]) and (res[2].W == resize_to[0])
+
+    kpts_data = kpts_data.astype(float)
+    kpts_data[:, 0] *= scale_x
+    kpts_data[:, 1] *= scale_y
+    kpts_data = kpts_data.astype(int)
+    assert np.array_equal(res[2].data, kpts_data)
+
+
 def test_pad_to_20x20_img_mask_keypoints_3x3_kpts_first(img_3x3, mask_3x3):
     # Setting up the data
     kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
@@ -330,7 +384,7 @@ def test_3x3_pad_to_20x20_center_crop_3x3_shape_stayes_unchanged(img_3x3, mask_3
 @pytest.mark.parametrize('pad_size,crop_size', [
     (20, 2),
     (20, (2, 2)),
-    ((20,20), (2, 2)),
+    ((20, 20), (2, 2)),
     ((20, 20), 2),
     ]
 )

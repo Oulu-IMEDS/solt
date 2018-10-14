@@ -102,14 +102,33 @@ def img_5x5():
     Returns
     -------
     out : ndarray
-        3x5 uint8 image
+        5x5 uint8 image
     """
     img = np.ones((5, 5, 1))
 
-    img[:, 0] = 2
-    img[:, -1] = 2
-    img[0, :] = 2
-    img[-1, :] = 2
+    img[:, 0] = 0
+    img[:, -1] = 0
+    img[0, :] = 0
+    img[-1, :] = 0
+    return img.astype(np.uint8)
+
+
+@pytest.fixture
+def mask_5x5():
+    """
+    Generates a mask 5x5. It is all ones, besides the edges
+
+    Returns
+    -------
+    out : ndarray
+        5x5 uint8 image
+    """
+    img = np.ones((5, 5, 1))
+
+    img[:, :2] = 2
+    img[:, -2:] = 2
+    img[:2, :] = 2
+    img[-2, :] = 2
     return img.astype(np.uint8)
 
 
@@ -121,20 +140,39 @@ def img_6x6():
     Returns
     -------
     out : ndarray
-        3x4 uint8 image
+        6x6 uint8 image
     """
     img = np.ones((6, 6, 1))
-    img[:, 0] = 2
-    img[:, -1] = 2
-    img[0, :] = 2
-    img[-1, :] = 2
+    img[:, 0] = 0
+    img[:, -1] = 0
+    img[0, :] = 0
+    img[-1, :] = 0
     return img.astype(np.uint8)*255
+
+
+@pytest.fixture
+def mask_6x6():
+    """
+    Generates a mask 6x6. It is all ones, besides the edges
+
+    Returns
+    -------
+    out : ndarray
+        3x5 uint8 image
+    """
+    img = np.ones((6, 6))
+
+    img[:, 0] = 0
+    img[:, -1] = 0
+    img[0, :] = 0
+    img[-1, :] = 0
+    return img.astype(np.uint8)
 
 
 @pytest.fixture
 def img_6x6_rgb():
     """
-    Generates a gs image 5x5. It is all ones, besides the edges
+    Generates an RGB image 6x6. It is all ones, besides the edges
 
     Returns
     -------
@@ -142,9 +180,9 @@ def img_6x6_rgb():
         6x6 uint8 image
     """
     img = np.ones((6, 6, 1))
-    img[:, 0] = 2
-    img[:, -1] = 2
-    img[0, :] = 2
-    img[-1, :] = 2
+    img[:, 0] = 0
+    img[:, -1] = 0
+    img[0, :] = 0
+    img[-1, :] = 0
     return np.dstack((img, img, img)).astype(np.uint8)*255
 
