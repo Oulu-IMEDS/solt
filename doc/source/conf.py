@@ -25,9 +25,9 @@ copyright = '2018, Aleksei Tiulpin, Research Unit of Medical Imaging, Physics an
 author = 'Aleksei Tiulpin'
 
 # The short X.Y version
-version = 'v0.0.8'
+version = 'v0.0.9'
 # The full version, including alpha/beta/rc tags
-release = 'v0.0.8'
+release = 'v0.0.9'
 
 
 # -- General configuration ---------------------------------------------------
