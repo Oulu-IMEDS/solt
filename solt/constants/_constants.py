@@ -7,4 +7,4 @@ allowed_crops = {'c', 'r'}
 allowed_types = {'I', 'M', 'P', 'L'}
 allowed_blurs = {'g', 'm'}
 allowed_color_conversions = {'gs2rgb', 'rgb2gs', 'none'}
-dtypes_max = {np.dtype('uint8'): 255, np.dtype('uint16'): 255}
+dtypes_max = {np.dtype('uint8'): 255, np.dtype('uint16'): 65536}

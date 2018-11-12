@@ -71,7 +71,7 @@ class RandomRotate(MatrixTransform):
         Probability of using this transform
 
     """
-    def __init__(self, rotation_range=None, interpolation='bilinear', padding='z', p=0.5, data_indices=None):
+    def __init__(self, rotation_range=None, interpolation='bilinear', padding='z', p=0.5):
         super(RandomRotate, self).__init__(interpolation=interpolation, padding=padding, p=p)
         if isinstance(rotation_range, (int, float)):
             rotation_range = (-rotation_range, rotation_range)
@@ -692,7 +692,7 @@ class ImageGammaCorrection(ImageTransform):
     Parameters
     ----------
     p : float
-        Probability of applying this transfor,
+        Probability of applying this transform,
     gamma_range : tuple or float or None
         Gain of the noise. Indicates percentage of indices, which will be changed.
         If float, then gain_range = (1-gamma_range, 1+gamma_range).
@@ -719,6 +719,44 @@ class ImageGammaCorrection(ImageTransform):
         lut = np.array([((i / 255.0) ** inv_gamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
 
         self.state_dict = {'gamma': gamma, 'LUT': lut}
+
+    @img_shape_checker
+    def _apply_img(self, img):
+        return cv2.LUT(img, self.state_dict['LUT'])
+
+
+class ImageRandomContrast(ImageTransform):
+    """Transform randomly changes the contrast
+
+    Parameters
+    ----------
+    p : float
+        Probability of applying this transform,
+    contrast_range : tuple or float or None
+        Gain of the noise. Indicates percentage of indices, which will be changed.
+        If float, then gain_range = (1-contrast_range, 1+contrast_range).
+    data_indices : tuple or None
+        Indices of the images within the data container to which this transform needs to be applied.
+        Every element within the tuple must be integer numbers.
+        If None, then the transform will be applied to all the images withing the DataContainer.
+
+    """
+    def __init__(self, p=0.5, contrast_range=0.1, data_indices=None):
+        super(ImageRandomContrast, self).__init__(p=p, data_indices=data_indices)
+
+        if not isinstance(contrast_range, float) and not isinstance(contrast_range, tuple):
+            raise TypeError
+
+        if isinstance(contrast_range, float):
+            contrast_range = (1 - contrast_range, 1 + contrast_range)
+
+        self._contrast_range = validate_numeric_range_parameter(contrast_range, (1, 1), 0)
+
+    def sample_transform(self):
+        contrast_mul = np.random.uniform(self._contrast_range[0], self._contrast_range[1])
+        lut = np.array([i*contrast_mul for i in np.arange(0, 256)])
+        lut = np.clip(lut, 0, 255).astype("uint8")
+        self.state_dict = {'contrast_mul': contrast_mul, 'LUT': lut}
 
     @img_shape_checker
     def _apply_img(self, img):
