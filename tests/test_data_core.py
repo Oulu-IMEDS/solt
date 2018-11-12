@@ -350,9 +350,23 @@ def test_putting_wrong_format_in_data_container(img_2x2):
         sld.DataContainer(img_2x2, 'Q')
 
 
-def test_selective_stream_too_many_probs(img_2x2):
+def test_selective_stream_too_many_probs():
     with pytest.raises(ValueError):
         ppl = slc.SelectiveStream([
             slt.RandomRotate(rotation_range=(90, 90), p=1),
             slt.RandomRotate(rotation_range=(-90, -90), p=1),
         ], n=2, probs=[0.4, 0.3, 0.3])
+
+
+def test_selective_stream_low_prob_transform_should_not_change_the_data(img_5x5):
+    img = img_5x5
+    dc = sld.DataContainer((img,), 'I')
+
+    ppl = slc.SelectiveStream([
+        slt.RandomRotate(rotation_range=(90, 90), p=0),
+        slt.RandomRotate(rotation_range=(-90, -90), p=0)
+    ])
+
+    dc_res = ppl(dc)
+
+    np.array_equal(dc.data, dc_res.data)

@@ -295,12 +295,20 @@ class RandomProjection(MatrixTransform):
 
     def sample_transform(self):
         if len(self.__affine_transforms.transforms) > 1:
-            trf = Stream.optimize_stack(self.__affine_transforms.transforms)[0]
+            trf = Stream.optimize_stack(self.__affine_transforms.transforms)
+            if len(trf) == 0:
+                trf = None
+            else:
+                trf = trf[0]
         else:
             trf = self.__affine_transforms.transforms[0]
             trf.sample_transform()
 
-        M = trf.state_dict['transform_matrix'].copy()
+        if trf is None:
+            M = np.eye(3)
+        else:
+            M = trf.state_dict['transform_matrix'].copy()
+
         M[-1, 0] = np.random.uniform(self.__vrange[0], self.__vrange[1])
         M[-1, 1] = np.random.uniform(self.__vrange[0], self.__vrange[1])
         self.state_dict['transform_matrix'] = M

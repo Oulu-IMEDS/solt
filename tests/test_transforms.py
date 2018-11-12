@@ -893,3 +893,18 @@ def test_image_color_conversion_raises_error(mode, mask_3x4):
     dc = sld.DataContainer(mask_3x4.squeeze(), 'I')
     with pytest.raises(ValueError):
         trf(dc)
+
+
+def test_random_proj_and_selective_stream(img_5x5):
+    img = img_5x5
+    dc = sld.DataContainer((img,), 'I')
+
+    ppl = slt.RandomProjection(slc.SelectiveStream([
+        slt.RandomRotate(rotation_range=(90, 90), p=0),
+        slt.RandomScale(range_y=(0, 0.1),same=True, p=0),
+        slt.RandomShear(range_y=(-0.1, 0.1), p=0),
+    ], n=3), v_range=(0, 0))
+
+    dc_res = ppl(dc)
+
+    assert np.array_equal(dc.data, dc_res.data)
