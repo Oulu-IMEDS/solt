@@ -623,6 +623,7 @@ def test_translate_range_from_number(translate, expected):
     (slt.ImageSaltAndPepper, {'p': 1}),
     (slt.ImageGammaCorrection, {'p': 1}),
     (slt.ImageRandomContrast, {'p': 1}),
+    (slt.ImageRandomBrightness, {'p': 1}),
     (slt.ImageBlur, {'p': 1, 'blur_type': 'g'}),
     (slt.ImageBlur, {'p': 1, 'blur_type': 'm'})
     ]

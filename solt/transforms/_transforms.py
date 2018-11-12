@@ -725,6 +725,7 @@ class ImageGammaCorrection(ImageTransform):
         return cv2.LUT(img, self.state_dict['LUT'])
 
 
+
 class ImageRandomContrast(ImageTransform):
     """Transform randomly changes the contrast
 
@@ -869,6 +870,22 @@ class ImageRandomHSV(ImageTransform):
         img = cv2.cvtColor(img_hsv_shifted, cv2.COLOR_HSV2RGB)
 
         return img
+
+
+class ImageRandomBrightness(ImageRandomHSV):
+    def __init__(self, brightness_range=None, data_indices=None, p=0.5):
+        super(ImageRandomBrightness, self).__init__(p=p,
+                                                    h_range=(0, 0),
+                                                    s_range=(0, 0),
+                                                    v_range=brightness_range,
+                                                    data_indices=data_indices
+                                                    )
+
+    @img_shape_checker
+    def _apply_img(self, img):
+        if img.shape[-1] == 1:
+            img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+        return super(ImageRandomBrightness, self)._apply_img(img)
 
 
 class ImageColorTransform(ImageTransform):
