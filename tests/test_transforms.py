@@ -622,6 +622,7 @@ def test_translate_range_from_number(translate, expected):
     (slt.ImageAdditiveGaussianNoise, {'gain_range': 0.5, 'p':1}),
     (slt.ImageSaltAndPepper, {'p': 1}),
     (slt.ImageGammaCorrection, {'p': 1}),
+    (slt.ImageRandomContrast, {'p': 1}),
     (slt.ImageBlur, {'p': 1, 'blur_type': 'g'}),
     (slt.ImageBlur, {'p': 1, 'blur_type': 'm'})
     ]
@@ -764,7 +765,7 @@ def test_random_projection_raises_type_errors(param_set):
         slt.RandomProjection(**param_set)
 
 
-@pytest.mark.parametrize('gamma_range,to_catch', [
+@pytest.mark.parametrize('value_range,to_catch', [
     ((-1, 1), ValueError),
     ((-1., 1.), ValueError),
     ((1., -1.), ValueError),
@@ -776,9 +777,12 @@ def test_random_projection_raises_type_errors(param_set):
     ((0.1, '123'), TypeError)
 ]
 )
-def test_gamma_correction_raises_errors(gamma_range, to_catch):
+def test_lut_transforms_raise_errors(value_range, to_catch):
     with pytest.raises(to_catch):
-        slt.ImageGammaCorrection(gamma_range=gamma_range)
+        slt.ImageGammaCorrection(gamma_range=value_range)
+
+    with pytest.raises(to_catch):
+        slt.ImageRandomContrast(contrast_range=value_range)
 
 
 @pytest.mark.parametrize('blur_t, k_size, sigma, to_catch', [
@@ -908,3 +912,13 @@ def test_random_proj_and_selective_stream(img_5x5):
     dc_res = ppl(dc)
 
     assert np.array_equal(dc.data, dc_res.data)
+
+
+def test_random_contrast_multiplies_the_data(img_5x5):
+    img = img_5x5
+    dc = sld.DataContainer((img,), 'I')
+
+    ppl = slt.ImageRandomContrast(p=1, contrast_range=(2, 2))
+    dc_res = ppl(dc)
+
+    assert np.array_equal(dc.data[0]*2, dc_res.data[0])
