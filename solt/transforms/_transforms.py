@@ -399,7 +399,7 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
 
 
 class ResizeTransform(BaseTransform, InterpolationPropertyHolder):
-    """Transformation, which resize the input to a given size
+    """Transformation, which resizes the input to a given size
 
     Parameters
     ----------

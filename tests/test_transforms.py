@@ -345,6 +345,24 @@ def test_resize_img_to_arbitrary_size(img, mask, resize_to):
     assert np.array_equal(res[2].data, kpts_data)
 
 
+@pytest.mark.parametrize('resize_to', [
+    '1123',
+    [123, 123],
+    None,
+    123.
+])
+def test_wrong_resize_types(resize_to):
+    with pytest.raises(TypeError):
+        slt.ResizeTransform(resize_to=resize_to)
+
+
+def test_resize_does_not_change_labels():
+    trf = slt.ResizeTransform(resize_to=(5, 5))
+    dc = sld.DataContainer((1, ), 'L')
+    dc = trf(dc)
+    assert dc.data[0] == 1
+
+
 def test_pad_to_20x20_img_mask_keypoints_3x3_kpts_first(img_3x3, mask_3x3):
     # Setting up the data
     kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
