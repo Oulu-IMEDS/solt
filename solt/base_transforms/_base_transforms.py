@@ -561,7 +561,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
 
         padding = allowed_paddings[self.padding[0]]
         if settings['padding'][1] == 'strict':
-            interp = allowed_paddings[settings['padding'][0]]
+            padding = allowed_paddings[settings['padding'][0]]
 
         return cv2.warpPerspective(img, M, (W_new, H_new), flags=interp, borderMode=padding)
 

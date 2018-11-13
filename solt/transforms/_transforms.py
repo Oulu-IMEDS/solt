@@ -307,7 +307,7 @@ class RandomProjection(MatrixTransform):
 
         if affine_transforms is None:
             affine_transforms = Stream([
-                RandomRotate(rotation_range=0, interpolation=interpolation)
+                RandomRotate(rotation_range=0, interpolation=interpolation, p=1)
             ])
 
         if not isinstance(affine_transforms, Stream):
@@ -326,6 +326,8 @@ class RandomProjection(MatrixTransform):
                 trf = None
             else:
                 trf = trf[0]
+        elif len(self.__affine_transforms.transforms) == 0:
+            trf = None
         else:
             trf = self.__affine_transforms.transforms[0]
             trf.sample_transform()

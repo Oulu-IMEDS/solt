@@ -151,6 +151,25 @@ def img_6x6():
 
 
 @pytest.fixture
+def img_7x7():
+    """
+    Generates a gs image 7x7. It is all ones, besides the edges
+
+    Returns
+    -------
+    out : ndarray
+        6x6 uint8 image
+    """
+    img = np.ones((7, 7, 1))
+    img[:, 0] = 0
+    img[:, -1] = 0
+    img[0, :] = 0
+    img[-1, :] = 0
+    return img.astype(np.uint8)*255
+
+
+
+@pytest.fixture
 def mask_6x6():
     """
     Generates a mask 6x6. It is all ones, besides the edges

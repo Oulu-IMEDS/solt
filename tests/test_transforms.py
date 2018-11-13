@@ -8,7 +8,7 @@ import cv2
 import pytest
 
 from .fixtures import img_2x2, img_3x3, img_3x4, \
-    mask_2x2, mask_3x4, mask_3x3, img_5x5, img_6x6, img_6x6_rgb, mask_6x6, mask_5x5
+    mask_2x2, mask_3x4, mask_3x3, img_5x5, img_6x6, img_6x6_rgb, mask_6x6, mask_5x5, img_7x7
 
 
 def test_img_mask_vertical_flip(img_3x4, mask_3x4):
@@ -197,7 +197,6 @@ def test_rotate_90_trnsforms_have_same_bahaviour(k):
     assert np.array_equal(trf_1.state_dict['transform_matrix'], trf_2.state_dict['transform_matrix'])
 
 
-
 def test_zoom_x_axis_odd(img_5x5):
     stream = slt.RandomScale(range_x=(0.5, 0.5), range_y=(1, 1), same=False, p=1)
     dc = sld.DataContainer((img_5x5,), 'I')
@@ -256,7 +255,6 @@ def test_keypoints_assert_reflective(img_3x3, mask_3x3):
     stream = slt.RandomRotate(rotation_range=(20, 20), p=1, padding='r')
     with pytest.raises(ValueError):
         stream(dc)
-
 
 def test_padding_img_2x2_4x4(img_2x2):
     img = img_2x2
@@ -550,8 +548,25 @@ def test_translate_forward_backward_sampling():
     assert np.array_equal(trf.state_dict['transform_matrix'], np.eye(3))
 
 
-def test_projection_empty_sampling():
-    trf = slt.RandomProjection(p=1)
+def test_projection_empty_sampling_no_trf():
+    trf = slt.RandomProjection(affine_transforms=slc.Stream(), p=1)
+    trf.sample_transform()
+    assert np.array_equal(trf.state_dict['transform_matrix'], np.eye(3))
+
+
+def test_projection_empty_sampling_low_prob_trf():
+    trf = slt.RandomProjection(affine_transforms=slc.Stream([
+        slt.RandomRotate(p=0)
+    ]), p=1)
+    trf.sample_transform()
+    assert np.array_equal(trf.state_dict['transform_matrix'], np.eye(3))
+
+def test_projection_empty_sampling_from_many_low_prob_trf():
+    trf = slt.RandomProjection(affine_transforms=slc.Stream([
+        slt.RandomRotate(p=0),
+        slt.RandomRotate(p=0),
+        slt.RandomRotate(p=0)
+    ]), p=1)
     trf.sample_transform()
     assert np.array_equal(trf.state_dict['transform_matrix'], np.eye(3))
 
@@ -734,6 +749,17 @@ def test_wrong_crop_size_types(crop_size):
 def test_wrong_salt_p_salt_and_pepper(salt_p):
     with pytest.raises(ValueError):
         slt.ImageSaltAndPepper(salt_p=salt_p)
+
+
+@pytest.mark.parametrize('inp, transform_settings, expected', [
+    (np.ones((5, 5, 1), dtype=np.uint8), None, img_7x7()//255),
+    (np.ones((5, 5, 1), dtype=np.uint8), {0: {'padding': 'z'}}, img_7x7()//255),
+    (np.ones((5, 5, 1), dtype=np.uint8), {0: {'padding': 'r'}}, np.ones((7, 7, 1))),
+])
+def test_padding_for_item(inp, transform_settings, expected):
+    dc = sld.DataContainer((inp, ), 'I', transform_settings)
+    dc_res = slt.PadTransform(pad_to=(7, 7))(dc)
+    assert np.array_equal(expected, dc_res.data[0])
 
 
 @pytest.mark.parametrize('trf, gain_range', [
@@ -982,3 +1008,4 @@ def test_different_interpolations_per_item_per_transform(img_6x6, transform_sett
     if transform_settings is not None:
         interp = allowed_interpolations[transform_settings[0]['interpolation'][0]]
     assert np.array_equal(cv2.resize(img_6x6, (10, 15), interpolation=interp).reshape(15, 10, 1), dc_res.data[0])
+
