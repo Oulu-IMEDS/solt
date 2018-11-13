@@ -55,7 +55,7 @@ class RandomFlip(BaseTransform):
 
 
 class RandomRotate(MatrixTransform):
-    """Random rotation around the center.
+    """Random rotation around the center clockwise
 
     Parameters
     ----------
@@ -96,7 +96,7 @@ class RandomRotate(MatrixTransform):
 
 
 class RandomRotate90(RandomRotate):
-    """Random rotation around the center by 90 degrees counter-clockwise.
+    """Random rotation around the center by 90 degrees.
 
     Parameters
     ----------
