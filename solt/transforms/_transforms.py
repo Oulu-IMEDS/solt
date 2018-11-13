@@ -108,9 +108,10 @@ class RandomRotate90(RandomRotate):
 
     """
     def __init__(self, k=0, p=0.5):
-        k *= -1
+        if not isinstance(k, int):
+            raise TypeError
         super(RandomRotate90, self).__init__(p=p, rotation_range=(k * 90, k * 90))
-        self.__k = k
+        self.__k = -k
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray):

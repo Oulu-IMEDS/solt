@@ -155,14 +155,14 @@ def test_rotate_90_img_mask_keypoints_destructive(img_3x3, mask_3x3):
 
 
 @pytest.mark.parametrize('k', list(range(-4, 5)))
-def test_rotate_90_img_mask_destructive(k, img_3x3, mask_3x3):
+def test_rotate_90_img_mask_nondestructive(k, img_3x3, mask_3x3):
     # Setting up the data
     img, mask = img_3x3, mask_3x3
     H, W = mask.shape
 
     dc = sld.DataContainer((img, mask), 'IM')
     # Defining the 90 degrees transform (counterclockwise)
-    stream = slt.RandomRotate90(k=k)
+    stream = slt.RandomRotate90(k=k, p=1)
     dc_res = stream(dc)
 
     img_res, _ = dc_res[0]
@@ -173,6 +173,28 @@ def test_rotate_90_img_mask_destructive(k, img_3x3, mask_3x3):
 
     assert np.array_equal(expected_img_res, img_res)
     assert np.array_equal(expected_mask_res, mask_res)
+
+
+@pytest.mark.parametrize('k', [
+    None,
+    '123',
+    123.
+])
+def test_rotate_nondestructive_does_not_accept_non_int_k(k):
+    with pytest.raises(TypeError):
+        slt.RandomRotate90(k=k)
+
+
+@pytest.mark.parametrize('k', list(range(-4, 5)))
+def test_rotate_90_trnsforms_have_same_bahvaiour(k):
+    trf_1 = slt.RandomRotate(rotation_range=(k*90, k*90), p=1)
+    trf_1.sample_transform()
+
+    trf_2 = slt.RandomRotate90(k=k, p=1)
+    trf_2.sample_transform()
+
+    assert np.array_equal(trf_1.state_dict['transform_matrix'], trf_2.state_dict['transform_matrix'])
+
 
 
 def test_zoom_x_axis_odd(img_5x5):
