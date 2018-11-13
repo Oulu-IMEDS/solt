@@ -404,8 +404,11 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
     def _apply_img_or_mask(self, img: np.ndarray, settings: dict):
         pad_h_top, pad_h_bottom = self.state_dict['pad_h']
         pad_w_left, pad_w_right = self.state_dict['pad_w']
-
         padding = allowed_paddings[self.padding[0]]
+
+        if settings['padding'][1] == 'strict':
+            padding = allowed_paddings[settings['padding'][0]]
+
         return cv2.copyMakeBorder(img, pad_h_top, pad_h_bottom, pad_w_left, pad_w_right, padding, value=0)
 
     @img_shape_checker
@@ -457,8 +460,11 @@ class ResizeTransform(BaseTransform, InterpolationPropertyHolder):
         pass
 
     def _apply_img_or_mask(self, img: np.ndarray, settings: dict):
-        inter = allowed_interpolations[self.interpolation[0]]
-        return cv2.resize(img, self._resize_to, interpolation=inter)
+        interp = allowed_interpolations[self.interpolation[0]]
+        if settings['interpolation'][1] == 'strict':
+            interp = allowed_interpolations[settings['interpolation'][0]]
+
+        return cv2.resize(img, self._resize_to, interpolation=interp)
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):

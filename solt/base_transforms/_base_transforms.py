@@ -556,7 +556,12 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, img.shape[1], img.shape[0])
 
         interp = allowed_interpolations[self.interpolation[0]]
+        if settings['interpolation'][1] == 'strict':
+            interp = allowed_interpolations[settings['interpolation'][0]]
+
         padding = allowed_paddings[self.padding[0]]
+        if settings['padding'][1] == 'strict':
+            interp = allowed_paddings[settings['padding'][0]]
 
         return cv2.warpPerspective(img, M, (W_new, H_new), flags=interp, borderMode=padding)
 

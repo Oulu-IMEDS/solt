@@ -19,8 +19,10 @@ class DataContainer(object):
     transform_settings : dict or None
         Settings for each data item. At this stage, the settings include only padding and interpolation.
         The key in this dict corresponds to the index of the element in the given data tuple.
-        The value is another dict, which has all the settings.
-        Example: transform_settings={0:{'interpolation':'bilinear'}, 1: {'interpolation':'nearest'}}
+        The value is another dict, which has all the settings. Segmentation masks have nearest neighbor interpolation
+        by default, this can be changed manually if needed.
+
+        Example: transform_settings={0:{'interpolation':'bilinear'}, 1: {'interpolation':'bicubic'}}
 
     """
     def __init__(self, data, fmt, transform_settings=None):
@@ -47,8 +49,9 @@ class DataContainer(object):
                 transform_settings[idx] = {}
 
             if fmt[idx] == 'I' or fmt[idx] == 'M':
+                val = ('nearest', 'strict') if fmt[idx] == 'M' else None
                 if 'interpolation' not in transform_settings[idx]:
-                    transform_settings[idx]['interpolation'] = validate_parameter(None, allowed_interpolations,
+                    transform_settings[idx]['interpolation'] = validate_parameter(val, allowed_interpolations,
                                                                                   'bilinear', str, True)
                 else:
                     transform_settings[idx]['interpolation'] = validate_parameter((
