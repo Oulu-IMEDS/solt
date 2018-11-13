@@ -2,7 +2,7 @@ import solt.core as slc
 import solt.data as sld
 import solt.transforms as slt
 import solt.base_transforms as slb
-from solt.constants import allowed_interpolations
+from solt.constants import allowed_interpolations, allowed_paddings
 import numpy as np
 import cv2
 import pytest
@@ -128,14 +128,23 @@ def test_shear_range_none():
     assert trf.shear_range_y == (0, 0)
 
 
-def test_rotate_90_img_mask_keypoints_destructive(img_3x3, mask_3x3):
+@pytest.mark.parametrize('transform_settings', [
+    None,
+    {0: {'interpolation': 'nearest', 'padding': 'z'}},
+    {0: {'interpolation': 'nearest', 'padding': 'r'}},
+    {0: {'interpolation': 'bilinear', 'padding': 'z'}},
+    {0: {'interpolation': 'bilinear', 'padding': 'r'}},
+    {0: {'interpolation': 'bicubic', 'padding': 'z'}},
+    {0: {'interpolation': 'bicubic', 'padding': 'r'}},
+])
+def test_rotate_90_img_mask_keypoints_destructive(img_3x3, mask_3x3, transform_settings):
     # Setting up the data
     kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
     kpts = sld.KeyPoints(kpts_data, 3, 3)
     img, mask = img_3x3, mask_3x3
     H, W = mask.shape
 
-    dc = sld.DataContainer((img, mask, kpts, 1), 'IMPL')
+    dc = sld.DataContainer((img, mask, kpts, 1), 'IMPL', transform_settings=transform_settings)
     # Defining the 90 degrees transform (clockwise)
     stream = slt.RandomRotate(rotation_range=(90, 90), p=1)
     dc_res = stream(dc)
@@ -145,7 +154,14 @@ def test_rotate_90_img_mask_keypoints_destructive(img_3x3, mask_3x3):
     kpts_res, _, _ = dc_res[2]
     label_res, _, _ = dc_res[3]
     M = cv2.getRotationMatrix2D((W // 2, H // 2), -90, 1)
-    expected_img_res = cv2.warpAffine(img, M, (W, H)).reshape((H, W, 1))
+
+    img_inter = allowed_interpolations['bicubic']
+    img_pad = allowed_paddings['z']
+    if transform_settings is not None:
+        img_inter = allowed_interpolations[transform_settings[0]['interpolation'][0]]
+        img_pad = allowed_paddings[transform_settings[0]['padding'][0]]
+
+    expected_img_res = cv2.warpAffine(img, M, (W, H), flags=img_inter, borderMode=img_pad).reshape((H, W, 1))
     expected_mask_res = cv2.warpAffine(mask, M, (W, H))
     expected_kpts_res = np.array([[2, 0], [0, 0], [0, 2], [2, 2]]).reshape((4, 2))
 
