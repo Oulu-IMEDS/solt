@@ -725,7 +725,6 @@ class ImageGammaCorrection(ImageTransform):
         return cv2.LUT(img, self.state_dict['LUT'])
 
 
-
 class ImageRandomContrast(ImageTransform):
     """Transform randomly changes the contrast
 
@@ -755,7 +754,7 @@ class ImageRandomContrast(ImageTransform):
 
     def sample_transform(self):
         contrast_mul = np.random.uniform(self._contrast_range[0], self._contrast_range[1])
-        lut = np.array([i*contrast_mul for i in np.arange(0, 256)])
+        lut = np.array([i * contrast_mul for i in np.arange(0, 256)])
         lut = np.clip(lut, 0, 255).astype("uint8")
         self.state_dict = {'contrast_mul': contrast_mul, 'LUT': lut}
 
