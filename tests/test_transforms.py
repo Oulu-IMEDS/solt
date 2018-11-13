@@ -127,7 +127,7 @@ def test_shear_range_none():
     assert trf.shear_range_y == (0, 0)
 
 
-def test_rotate_90_img_mask_keypoints(img_3x3, mask_3x3):
+def test_rotate_90_img_mask_keypoints_destructive(img_3x3, mask_3x3):
     # Setting up the data
     kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
     kpts = sld.KeyPoints(kpts_data, 3, 3)
@@ -152,6 +152,27 @@ def test_rotate_90_img_mask_keypoints(img_3x3, mask_3x3):
     assert np.array_equal(expected_mask_res, mask_res)
     np.testing.assert_array_almost_equal(expected_kpts_res, kpts_res.data)
     assert label_res == 1
+
+
+@pytest.mark.parametrize('k', list(range(-4, 5)))
+def test_rotate_90_img_mask_destructive(k, img_3x3, mask_3x3):
+    # Setting up the data
+    img, mask = img_3x3, mask_3x3
+    H, W = mask.shape
+
+    dc = sld.DataContainer((img, mask), 'IM')
+    # Defining the 90 degrees transform (counterclockwise)
+    stream = slt.RandomRotate90(k=k)
+    dc_res = stream(dc)
+
+    img_res, _ = dc_res[0]
+    mask_res, _ = dc_res[1]
+
+    expected_img_res = np.rot90(img, -k).reshape((H, W, 1))
+    expected_mask_res = np.rot90(mask, -k)
+
+    assert np.array_equal(expected_img_res, img_res)
+    assert np.array_equal(expected_mask_res, mask_res)
 
 
 def test_zoom_x_axis_odd(img_5x5):

@@ -296,7 +296,7 @@ class DataDependentSamplingTransform(BaseTransform):
                 if prev_w != w:
                     raise ValueError
 
-    def __call__(self, data):
+    def __call__(self, data: DataContainer):
         """Applies the transform to a DataContainer
 
         Parameters
@@ -317,7 +317,7 @@ class DataDependentSamplingTransform(BaseTransform):
             return data
 
     @abstractmethod
-    def _apply_img(self, img):
+    def _apply_img(self, img: np.ndarray):
         """Abstract method, which determines the transform's behaviour when it is applied to images HxWxC.
 
         Parameters
@@ -332,7 +332,7 @@ class DataDependentSamplingTransform(BaseTransform):
         """
 
     @abstractmethod
-    def _apply_mask(self, mask):
+    def _apply_mask(self, mask: np.ndarray):
         """Abstract method, which determines the transform's behaviour when it is applied to masks HxW.
 
         Parameters
@@ -364,7 +364,7 @@ class DataDependentSamplingTransform(BaseTransform):
         """
 
     @abstractmethod
-    def _apply_pts(self, pts):
+    def _apply_pts(self, pts: KeyPoints):
         """Abstract method, which determines the transform's behaviour when it is applied to keypoints.
 
         Parameters
@@ -476,7 +476,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         """
 
     @staticmethod
-    def correct_for_frame_change(M, W, H):
+    def correct_for_frame_change(M: np.ndarray, W, H):
         """Method takes a matrix transform, and modifies its origin.
 
         Parameters
@@ -534,7 +534,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
 
         return M, W_new, H_new
 
-    def _apply_img_or_mask(self, img):
+    def _apply_img_or_mask(self, img: np.ndarray):
         """Applies a transform to an image or mask without controlling the shapes.
 
         Parameters
@@ -557,7 +557,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         return cv2.warpPerspective(img, M, (W_new, H_new), flags=interp, borderMode=padding)
 
     @img_shape_checker
-    def _apply_img(self, img):
+    def _apply_img(self, img: np.ndarray):
         """Applies a matrix transform to an image.
         If padding is None, the default behavior (zero padding) is expected.
 
@@ -575,7 +575,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
 
         return self._apply_img_or_mask(img)
 
-    def _apply_mask(self, mask):
+    def _apply_mask(self, mask: np.ndarray):
         """Abstract method, which defines the transform's behaviour when it is applied to masks HxW.
 
         If padding is None, the default behavior (zero padding) is expected.
@@ -609,7 +609,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         """
         return labels
 
-    def _apply_pts(self, pts):
+    def _apply_pts(self, pts: KeyPoints):
         """Abstract method, which defines the transform's behaviour when it is applied to keypoints.
 
         Parameters

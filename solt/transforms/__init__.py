@@ -3,11 +3,11 @@ from ._transforms import RandomFlip, RandomRotate, \
     PadTransform, CropTransform, ImageAdditiveGaussianNoise, \
     ImageGammaCorrection, ImageSaltAndPepper, ImageBlur, \
     ImageRandomHSV, ImageColorTransform, ResizeTransform, \
-    ImageRandomContrast, ImageRandomBrightness
+    ImageRandomContrast, ImageRandomBrightness, RandomRotate90
 
 __all__ = ['RandomFlip', 'RandomRotate', 'RandomShear',
            'RandomScale', 'RandomTranslate', 'RandomProjection',
            'PadTransform', 'CropTransform', 'ImageAdditiveGaussianNoise',
            'ImageGammaCorrection', 'ImageSaltAndPepper', 'ImageBlur',
            'ImageRandomHSV', 'ImageColorTransform', 'ResizeTransform',
-           'ImageRandomContrast', 'ImageRandomBrightness']
+           'ImageRandomContrast', 'ImageRandomBrightness', 'RandomRotate90']

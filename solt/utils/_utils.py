@@ -86,7 +86,7 @@ def validate_numeric_range_parameter(parameter, default_val, min_val=None, max_v
     ----------
     parameter : tuple or None
         The value of the parameter
-    default_val : tuple
+    default_val : object
         Default value of the parameter if it is None.
     min_val: None or float or int
         Check whether the parameter is greater or equal than this. Optional.

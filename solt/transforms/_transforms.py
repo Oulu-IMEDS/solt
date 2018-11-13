@@ -33,18 +33,18 @@ class RandomFlip(BaseTransform):
         pass
 
     @img_shape_checker
-    def _apply_img(self, img):
+    def _apply_img(self, img: np.ndarray):
         img = cv2.flip(img, self.__axis)
         return img
 
-    def _apply_mask(self, mask):
+    def _apply_mask(self, mask: np.ndarray):
         mask_new = cv2.flip(mask, self.__axis)
         return mask_new
 
     def _apply_labels(self, labels):
         return labels
 
-    def _apply_pts(self, pts):
+    def _apply_pts(self, pts: KeyPoints):
         # We should guarantee that we do not change the original data.
         pts_data = pts.data.copy()
         if self.__axis == 0:
@@ -93,6 +93,31 @@ class RandomRotate(MatrixTransform):
                       ]).reshape((3, 3)).astype(np.float32)
 
         self.state_dict = {'rot': rot, 'transform_matrix': M}
+
+
+class RandomRotate90(RandomRotate):
+    """Random rotation around the center by 90 degrees counter-clockwise.
+
+    Parameters
+    ----------
+    k : int
+        How many times to rotate the data. If positive, indicates the clockwise direction.
+        Zero by default.
+    p : float
+        Probability of using this transform
+
+    """
+    def __init__(self, k=0, p=0.5):
+        k *= -1
+        super(RandomRotate90, self).__init__(p=p, rotation_range=(k * 90, k * 90))
+        self.__k = k
+
+    @img_shape_checker
+    def _apply_img(self, img: np.ndarray):
+        return np.ascontiguousarray(np.rot90(img, self.__k))
+
+    def _apply_mask(self, mask: np.ndarray):
+        return np.ascontiguousarray(np.rot90(mask, self.__k))
 
 
 class RandomShear(MatrixTransform):
@@ -375,7 +400,7 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
 
         self.state_dict = {'pad_h': (pad_h_top, pad_h_bottom), 'pad_w': (pad_w_left, pad_w_right)}
 
-    def _apply_img_or_mask(self, img):
+    def _apply_img_or_mask(self, img: np.ndarray):
         pad_h_top, pad_h_bottom = self.state_dict['pad_h']
         pad_w_left, pad_w_right = self.state_dict['pad_w']
 
@@ -383,16 +408,16 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
         return cv2.copyMakeBorder(img, pad_h_top, pad_h_bottom, pad_w_left, pad_w_right, padding, value=0)
 
     @img_shape_checker
-    def _apply_img(self, img):
+    def _apply_img(self, img: np.ndarray):
         return self._apply_img_or_mask(img)
 
-    def _apply_mask(self, mask):
+    def _apply_mask(self, mask: np.ndarray):
         return self._apply_img_or_mask(mask)
 
     def _apply_labels(self, labels):
         return labels
 
-    def _apply_pts(self, pts):
+    def _apply_pts(self, pts: KeyPoints):
         if self.padding[0] != 'z':
             raise ValueError
         pts_data = pts.data.copy()
@@ -430,21 +455,21 @@ class ResizeTransform(BaseTransform, InterpolationPropertyHolder):
     def sample_transform(self):
         pass
 
-    def _apply_img_or_mask(self, img):
+    def _apply_img_or_mask(self, img: np.ndarray):
         inter = allowed_interpolations[self.interpolation[0]]
         return cv2.resize(img, self._resize_to, interpolation=inter)
 
     @img_shape_checker
-    def _apply_img(self, img):
+    def _apply_img(self, img: np.ndarray):
         return self._apply_img_or_mask(img)
 
-    def _apply_mask(self, mask):
+    def _apply_mask(self, mask: np.ndarray):
         return self._apply_img_or_mask(mask)
 
     def _apply_labels(self, labels):
         return labels
 
-    def _apply_pts(self, pts):
+    def _apply_pts(self, pts: KeyPoints):
         pts_data = pts.data.copy().astype(float)
 
         resize_x, resize_y = self._resize_to
@@ -502,7 +527,7 @@ class CropTransform(DataDependentSamplingTransform):
     def sample_transform(self):
         raise NotImplementedError
 
-    def sample_transform_from_data(self, data):
+    def sample_transform_from_data(self, data: DataContainer):
         DataDependentSamplingTransform.sample_transform_from_data(self, data)
         for obj, t in data:
             if t == 'M' or t == 'I':
@@ -528,21 +553,21 @@ class CropTransform(DataDependentSamplingTransform):
 
         self.state_dict = {'x': x, 'y': y}
 
-    def _crop_img_or_mask(self, img):
+    def _crop_img_or_mask(self, img: np.ndarray):
         x, y = self.state_dict['x'], self.state_dict['y']
         return img[y:y + self.crop_size[1], x:x + self.crop_size[0]]
 
     @img_shape_checker
-    def _apply_img(self, img):
+    def _apply_img(self, img: np.ndarray):
         return self._crop_img_or_mask(img)
 
-    def _apply_mask(self, mask):
+    def _apply_mask(self, mask: np.ndarray):
         return self._crop_img_or_mask(mask)
 
     def _apply_labels(self, labels):
         return labels
 
-    def _apply_pts(self, pts):
+    def _apply_pts(self, pts: KeyPoints):
         pts_data = pts.data.copy()
         x, y = self.state_dict['x'], self.state_dict['y']
 
@@ -584,6 +609,7 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
         h = None
         w = None
         c = None
+        obj = None
         for obj, t in data:
             if t == 'I':
                 h = obj.shape[0]
@@ -604,17 +630,17 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
         self.state_dict = {'noise': noise_img, 'gain': gain}
 
     @img_shape_checker
-    def _apply_img(self, img):
+    def _apply_img(self, img: np.ndarray):
         return cv2.addWeighted(img, (1 - self.state_dict['gain']),
                                self.state_dict['noise'], self.state_dict['gain'], 0)
 
-    def _apply_mask(self, mask):
+    def _apply_mask(self, mask: np.ndarray):
         return mask
 
     def _apply_labels(self, labels):
         return labels
 
-    def _apply_pts(self, pts):
+    def _apply_pts(self, pts: KeyPoints):
         return pts
 
 
@@ -679,7 +705,7 @@ class ImageSaltAndPepper(ImageTransform, DataDependentSamplingTransform):
         self.state_dict = {'salt': salt, 'pepper': pepper}
 
     @img_shape_checker
-    def _apply_img(self, img):
+    def _apply_img(self, img: np.ndarray):
         img = img.copy()
         img[np.where(self.state_dict['salt'])] = dtypes_max[img.dtype]
         img[np.where(self.state_dict['pepper'])] = 0
@@ -721,7 +747,7 @@ class ImageGammaCorrection(ImageTransform):
         self.state_dict = {'gamma': gamma, 'LUT': lut}
 
     @img_shape_checker
-    def _apply_img(self, img):
+    def _apply_img(self, img: np.ndarray):
         return cv2.LUT(img, self.state_dict['LUT'])
 
 
@@ -759,7 +785,7 @@ class ImageRandomContrast(ImageTransform):
         self.state_dict = {'contrast_mul': contrast_mul, 'LUT': lut}
 
     @img_shape_checker
-    def _apply_img(self, img):
+    def _apply_img(self, img: np.ndarray):
         return cv2.LUT(img, self.state_dict['LUT'])
 
 
@@ -808,7 +834,7 @@ class ImageBlur(ImageTransform):
         self.state_dict = {'k_size': k, 'sigma': s}
 
     @img_shape_checker
-    def _apply_img(self, img):
+    def _apply_img(self, img: np.ndarray):
         if self._blur == 'g':
             return cv2.GaussianBlur(img,
                                     ksize=(self.state_dict['k_size'], self.state_dict['k_size']),
@@ -849,7 +875,7 @@ class ImageRandomHSV(ImageTransform):
         self.state_dict = {'h_mod': h, 's_mod': s, 'v_mod': v}
 
     @img_shape_checker
-    def _apply_img(self, img):
+    def _apply_img(self, img: np.ndarray):
         img = img.copy()
         dtype = img.dtype
         if img.shape[-1] != 3:
@@ -881,7 +907,7 @@ class ImageRandomBrightness(ImageRandomHSV):
                                                     )
 
     @img_shape_checker
-    def _apply_img(self, img):
+    def _apply_img(self, img: np.ndarray):
         if img.shape[-1] == 1:
             img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
         return super(ImageRandomBrightness, self)._apply_img(img)
@@ -908,7 +934,7 @@ class ImageColorTransform(ImageTransform):
     """
     def __init__(self, mode=None, data_indices=None):
         super(ImageColorTransform, self).__init__(p=1, data_indices=data_indices)
-        self._mode = validate_parameter(mode, 'none', allowed_color_conversions, heritable=False)
+        self._mode = validate_parameter(mode, allowed_color_conversions, 'none', heritable=False)
 
     @property
     def mode(self):
@@ -918,7 +944,7 @@ class ImageColorTransform(ImageTransform):
         pass
 
     @img_shape_checker
-    def _apply_img(self, img):
+    def _apply_img(self, img: np.ndarray):
         if self._mode == 'none':
             return img
         elif self.mode == 'gs2rgb':
