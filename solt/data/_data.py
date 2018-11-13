@@ -1,5 +1,8 @@
 from copy import deepcopy
 from ..constants import allowed_types
+from ..constants import allowed_interpolations
+from ..constants import allowed_paddings
+from ..utils import validate_parameter
 
 
 class DataContainer(object):
@@ -13,16 +16,56 @@ class DataContainer(object):
         Data items stored in a tuple
     fmt : str
         Data format. Example: 'IMMM' - image and three masks.
+    transform_settings : dict or None
+        Settings for each data item. At this stage, the settings include only padding and interpolation.
+        The key in this dict corresponds to the index of the element in the given data tuple.
+        The value is another dict, which has all the settings.
+        Example: transform_settings={0:{'interpolation':'bilinear'}, 1: {'interpolation':'nearest'}}
 
     """
-    def __init__(self, data, fmt):
+    def __init__(self, data, fmt, transform_settings=None):
         if len(fmt) == 1 and not isinstance(data, tuple):
             if not isinstance(data, list):
                 data = (data,)
 
         if not isinstance(data, tuple):
             raise TypeError
+
         if len(data) != len(fmt):
+            raise ValueError
+
+        if transform_settings is not None:
+            if not isinstance(transform_settings, dict):
+                raise TypeError
+        else:
+            transform_settings = {}
+
+        # Element-wise settings
+        # If no settings provided for certain items, they will be created
+        for idx in range(len(data)):
+            if idx not in transform_settings:
+                transform_settings[idx] = {}
+
+            if fmt[idx] == 'I' or fmt[idx] == 'M':
+                if 'interpolation' not in transform_settings[idx]:
+                    transform_settings[idx]['interpolation'] = validate_parameter(None, allowed_interpolations,
+                                                                                  'bilinear', str, True)
+                else:
+                    transform_settings[idx]['interpolation'] = validate_parameter((
+                        transform_settings[idx]['interpolation'], 'strict'),
+                        allowed_interpolations,
+                        'bilinear', str, True)
+
+                if 'padding' not in transform_settings[idx]:
+                    transform_settings[idx]['padding'] = validate_parameter(None, allowed_paddings,
+                                                                            'z', str, True)
+                else:
+                    transform_settings[idx]['padding'] = validate_parameter((
+                        transform_settings[idx]['padding'], 'strict'),
+                        allowed_paddings,
+                        'z', str, True)
+
+        if len(data) != len(transform_settings):
             raise ValueError
 
         for t in fmt:
@@ -31,6 +74,7 @@ class DataContainer(object):
 
         self.__data = deepcopy(data)
         self.__fmt = fmt
+        self.__transform_settings = transform_settings
 
     @property
     def data_format(self):
@@ -39,6 +83,10 @@ class DataContainer(object):
     @property
     def data(self):
         return self.__data
+
+    @property
+    def transform_settings(self):
+        return self.__transform_settings
 
     def __getitem__(self, idx):
         """
@@ -52,10 +100,11 @@ class DataContainer(object):
         Returns
         -------
         out : tuple
-            Data item (e.g. numpy.ndarray) and its type, e.g. 'I' - image.
+            Data item (e.g. numpy.ndarray), its type, e.g. 'I' - image and the transform settings,
+            e.g. interpolation
 
         """
-        return self.__data[idx], self.__fmt[idx]
+        return self.__data[idx], self.__fmt[idx], self.__transform_settings[idx]
 
     def __len__(self):
         return len(self.__data)

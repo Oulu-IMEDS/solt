@@ -44,7 +44,7 @@ def test_stream_empty(img_2x2):
     img = img_2x2
     dc = sld.DataContainer((img,), 'I')
     stream = slc.Stream()
-    res, _ = stream(dc)[0]
+    res, _, _ = stream(dc)[0]
     assert np.all(res == img)
 
 
@@ -67,8 +67,8 @@ def test_nested_stream(img_3x4, mask_3x4):
     ])
 
     dc = stream(dc)
-    img_res, t0 = dc[0]
-    mask_res, t1 = dc[1]
+    img_res, t0, _ = dc[0]
+    mask_res, t1, _ = dc[1]
 
     assert np.array_equal(img, img_res)
     assert np.array_equal(mask, mask_res)
@@ -88,7 +88,7 @@ def test_image_shape_equal_3_after_nested_flip(img_3x4):
     ])
 
     dc = stream(dc)
-    img_res, _ = dc[0]
+    img_res, _, _ = dc[0]
 
     assert np.array_equal(len(img.shape), 3)
 

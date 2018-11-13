@@ -19,8 +19,8 @@ def test_img_mask_vertical_flip(img_3x4, mask_3x4):
     ])
 
     dc = stream(dc)
-    img_res, _ = dc[0]
-    mask_res, _ = dc[1]
+    img_res, _, _ = dc[0]
+    mask_res, _, _ = dc[1]
 
     h, w = mask.shape
     assert np.array_equal(cv2.flip(img, 0).reshape(h, w, 1), img_res)
@@ -36,8 +36,8 @@ def test_img_mask_mask_vertical_flip(img_3x4, mask_3x4):
     ])
 
     dc = stream(dc)
-    img_res, _ = dc[0]
-    mask_res, _ = dc[1]
+    img_res, _, _ = dc[0]
+    mask_res, _, _ = dc[1]
 
     h, w = mask.shape
     assert np.array_equal(cv2.flip(img, 0).reshape(h, w, 1), img_res)
@@ -53,8 +53,8 @@ def test_img_mask_horizontal_flip(img_3x4, mask_3x4):
     ])
 
     dc = stream(dc)
-    img_res, _ = dc[0]
-    mask_res, _ = dc[1]
+    img_res, _, _ = dc[0]
+    mask_res, _, _ = dc[1]
 
     h, w = mask.shape
     assert np.array_equal(cv2.flip(img, 1).reshape(h, w, 1), img_res)
@@ -71,8 +71,8 @@ def test_img_mask_vertical_horizontal_flip(img_3x4, mask_3x4):
     ])
 
     dc = stream(dc)
-    img_res, _ = dc[0]
-    mask_res, _ = dc[1]
+    img_res, _, _ = dc[0]
+    mask_res, _, _ = dc[1]
 
     h, w = mask.shape
     assert np.array_equal(cv2.flip(cv2.flip(img, 0), 1).reshape(h, w, 1), img_res)
@@ -139,10 +139,10 @@ def test_rotate_90_img_mask_keypoints_destructive(img_3x3, mask_3x3):
     stream = slt.RandomRotate(rotation_range=(90, 90), p=1)
     dc_res = stream(dc)
 
-    img_res, _ = dc_res[0]
-    mask_res, _ = dc_res[1]
-    kpts_res, _ = dc_res[2]
-    label_res, _ = dc_res[3]
+    img_res, _, _ = dc_res[0]
+    mask_res, _, _ = dc_res[1]
+    kpts_res, _, _ = dc_res[2]
+    label_res, _, _ = dc_res[3]
     M = cv2.getRotationMatrix2D((W // 2, H // 2), -90, 1)
     expected_img_res = cv2.warpAffine(img, M, (W, H)).reshape((H, W, 1))
     expected_mask_res = cv2.warpAffine(mask, M, (W, H))
@@ -165,8 +165,8 @@ def test_rotate_90_img_mask_nondestructive(k, img_3x3, mask_3x3):
     stream = slt.RandomRotate90(k=k, p=1)
     dc_res = stream(dc)
 
-    img_res, _ = dc_res[0]
-    mask_res, _ = dc_res[1]
+    img_res, _, _ = dc_res[0]
+    mask_res, _, _ = dc_res[1]
 
     expected_img_res = np.rot90(img, -k).reshape((H, W, 1))
     expected_mask_res = np.rot90(mask, -k)
@@ -186,7 +186,7 @@ def test_rotate_nondestructive_does_not_accept_non_int_k(k):
 
 
 @pytest.mark.parametrize('k', list(range(-4, 5)))
-def test_rotate_90_trnsforms_have_same_bahvaiour(k):
+def test_rotate_90_trnsforms_have_same_bahaviour(k):
     trf_1 = slt.RandomRotate(rotation_range=(k*90, k*90), p=1)
     trf_1.sample_transform()
 
