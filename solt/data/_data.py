@@ -21,7 +21,6 @@ class DataContainer(object):
         The key in this dict corresponds to the index of the element in the given data tuple.
         The value is another dict, which has all the settings. Segmentation masks have nearest neighbor interpolation
         by default, this can be changed manually if needed.
-
         Example: transform_settings={0:{'interpolation':'bilinear'}, 1: {'interpolation':'bicubic'}}
 
     """

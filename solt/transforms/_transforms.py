@@ -914,7 +914,7 @@ class ImageRandomBrightness(ImageRandomHSV):
     p : float
         Probability of applying this transform,
     brightness_range: tuple or None
-        brightness_range shift range (0-255). If None, then v_range=(0, 0).
+        brightness_range shift range (0-255). If None, then brightness_range=(0, 0).
     data_indices : tuple or None
         Indices of the images within the data container to which this transform needs to be applied.
         Every element within the tuple must be integer numbers.
