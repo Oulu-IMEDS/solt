@@ -851,7 +851,7 @@ class ImageBlur(ImageTransform):
 
 
 class ImageRandomHSV(ImageTransform):
-    """Transform Performs a random HSV color shift.
+    """Performs a random HSV color shift.
 
     Parameters
     ----------
@@ -905,6 +905,20 @@ class ImageRandomHSV(ImageTransform):
 
 
 class ImageRandomBrightness(ImageRandomHSV):
+    """Performs a random brightness augmentation
+
+    Parameters
+    ----------
+    p : float
+        Probability of applying this transform,
+    brightness_range: tuple or None
+        brightness_range shift range (0-255). If None, then v_range=(0, 0).
+    data_indices : tuple or None
+        Indices of the images within the data container to which this transform needs to be applied.
+        Every element within the tuple must be integer numbers.
+        If None, then the transform will be applied to all the images withing the DataContainer.
+
+    """
     def __init__(self, brightness_range=None, data_indices=None, p=0.5):
         super(ImageRandomBrightness, self).__init__(p=p,
                                                     h_range=(0, 0),
