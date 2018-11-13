@@ -29,6 +29,8 @@ class DataContainer(object):
         if len(fmt) == 1 and not isinstance(data, tuple):
             if not isinstance(data, list):
                 data = (data,)
+            else:
+                raise TypeError
 
         if not isinstance(data, tuple):
             raise TypeError
@@ -67,6 +69,9 @@ class DataContainer(object):
                         transform_settings[idx]['padding'], 'strict'),
                         allowed_paddings,
                         'z', str, True)
+            else:
+                if 'interpolation' in transform_settings[idx] or 'padding' in transform_settings[idx]:
+                    raise TypeError
 
         if len(data) != len(transform_settings):
             raise ValueError
@@ -119,7 +124,7 @@ class KeyPoints(object):
     Parameters
     ----------
     pts : numpy.ndarray
-        Key points as an numpy.ndarray, (x, y) format.
+        Key points as an numpy.ndarray in (x, y) format.
     H : int
         Height of the coordinate frame.
     W : int

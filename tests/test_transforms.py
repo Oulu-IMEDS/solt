@@ -2,6 +2,7 @@ import solt.core as slc
 import solt.data as sld
 import solt.transforms as slt
 import solt.base_transforms as slb
+from solt.constants import allowed_interpolations
 import numpy as np
 import cv2
 import pytest
@@ -966,3 +967,18 @@ def test_random_contrast_multiplies_the_data(img_5x5):
     dc_res = ppl(dc)
 
     assert np.array_equal(dc.data[0]*2, dc_res.data[0])
+
+
+@pytest.mark.parametrize('transform_settings', [
+    None,
+    {0: {'interpolation': 'nearest'}},
+    {0: {'interpolation': 'bicubic'}},
+])
+def test_different_interpolations_per_item_per_transform(img_6x6, transform_settings):
+    dc = sld.DataContainer((img_6x6,), 'I', transform_settings=transform_settings)
+    dc_res = slt.ResizeTransform(resize_to=(10, 15), interpolation='bilinear')(dc)
+
+    interp = allowed_interpolations['bilinear']
+    if transform_settings is not None:
+        interp = allowed_interpolations[transform_settings[0]['interpolation'][0]]
+    assert np.array_equal(cv2.resize(img_6x6, (10, 15), interpolation=interp).reshape(15, 10, 1), dc_res.data[0])

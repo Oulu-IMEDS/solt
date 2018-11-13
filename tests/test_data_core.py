@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import cv2
 
-from .fixtures import img_2x2, img_3x4, mask_2x2, mask_3x4, img_5x5
+from .fixtures import img_2x2, img_3x4, mask_2x2, mask_3x4, img_5x5, mask_5x5
 
 
 def test_img_shape_checker_decorator_shape_check():
@@ -27,9 +27,14 @@ def test_data_container_create_from_any_data(img_2x2):
     assert d.data_format == 'I'
 
 
-def test_data_container_can_be_only_tuple_if_iterable(img_2x2):
+def test_data_container_can_be_only_tuple_if_iterable_single(img_2x2):
     with pytest.raises(TypeError):
         sld.DataContainer([img_2x2, ], 'I')
+
+
+def test_data_container_can_be_only_tuple_if_iterable_multple(img_2x2):
+    with pytest.raises(TypeError):
+        sld.DataContainer([img_2x2, img_2x2], 'II')
 
 
 def test_data_item_create_img(img_2x2):
@@ -352,7 +357,7 @@ def test_putting_wrong_format_in_data_container(img_2x2):
 
 def test_selective_stream_too_many_probs():
     with pytest.raises(ValueError):
-        ppl = slc.SelectiveStream([
+        slc.SelectiveStream([
             slt.RandomRotate(rotation_range=(90, 90), p=1),
             slt.RandomRotate(rotation_range=(-90, -90), p=1),
         ], n=2, probs=[0.4, 0.3, 0.3])
@@ -370,3 +375,51 @@ def test_selective_stream_low_prob_transform_should_not_change_the_data(img_5x5)
     dc_res = ppl(dc)
 
     np.array_equal(dc.data, dc_res.data)
+
+
+def test_manually_specified_padding_and_interpolation(img_5x5, mask_5x5):
+    dc = sld.DataContainer((img_5x5, img_5x5, mask_5x5, mask_5x5, 1), 'IIMML',
+                           {0: {'interpolation': 'bicubic', 'padding': 'z'},
+                            2: {'interpolation': 'bilinear'},
+                            3: {'padding': 'r'}
+                            })
+
+    assert dc.transform_settings[0]['interpolation'] == ('bicubic', 'strict')
+    assert dc.transform_settings[1]['interpolation'] == ('bilinear', 'inherit')
+    assert dc.transform_settings[2]['interpolation'] == ('bilinear', 'strict')
+    assert dc.transform_settings[3]['interpolation'] == ('nearest', 'strict')
+
+    assert dc.transform_settings[0]['padding'] == ('z', 'strict')
+    assert dc.transform_settings[1]['padding'] == ('z', 'inherit')
+    assert dc.transform_settings[2]['padding'] == ('z', 'inherit')
+    assert dc.transform_settings[3]['padding'] == ('r', 'strict')
+
+
+def test_transform_settings_wrong_type(img_5x5):
+    with pytest.raises(TypeError):
+        sld.DataContainer((img_5x5, img_5x5, 1), 'IIL', ())
+
+
+def test_transform_settings_wrong_length(img_5x5):
+    with pytest.raises(ValueError):
+        sld.DataContainer((img_5x5, img_5x5, 1), 'IIL', {1: {}, 2: {}, 3: {}, 4: {}})
+
+
+def test_transform_settings_wrong_type_for_item(img_5x5):
+    with pytest.raises(TypeError):
+        sld.DataContainer((img_5x5, img_5x5, 1), 'IIL', {1: 123, 0: None})
+
+
+@pytest.mark.parametrize('setting', [
+    {'interpolation': 'bilinear'},
+    {'interpolation': 'bilinear', 'padding': 'z'},
+    {'padding': 'z'}
+])
+def test_interpolation_or_padding_settings_for_labels_or_keypoints(setting):
+    kpts = sld.KeyPoints(pts=np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2)), H=3, W=3)
+    with pytest.raises(TypeError):
+        sld.DataContainer(data=(kpts,),
+                          fmt='P',
+                          transform_settings={0: setting})
+
+
