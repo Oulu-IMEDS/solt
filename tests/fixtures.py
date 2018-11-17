@@ -191,7 +191,7 @@ def mask_6x6():
 @pytest.fixture
 def img_6x6_rgb():
     """
-    Generates an RGB image 6x6. It is all ones, besides the edges
+    Generates an RGB image 6x6. It is all 255, besides the edges
 
     Returns
     -------

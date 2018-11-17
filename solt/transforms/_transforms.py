@@ -931,8 +931,14 @@ class ImageRandomBrightness(ImageRandomHSV):
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
+        gs = False
         if img.shape[-1] == 1:
             img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+            gs = True
+
+        if gs:
+            return super(ImageRandomBrightness, self)._apply_img(img, settings)[:, :, 0]
+
         return super(ImageRandomBrightness, self)._apply_img(img, settings)
 
 
