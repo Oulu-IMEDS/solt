@@ -21,12 +21,15 @@ class RandomFlip(BaseTransform):
     p : float
         Probability of flip
     axis : int
-        Axis of flip. Here, 0 stands for horizontal flipping, 1 stands for the vertical one.
-
+        Axis of flip. Here, 1 stands for horizontal flipping, 0 stands for the vertical one. -1 stands for
+        both axes.
     """
     def __init__(self, p=0.5, axis=1, data_indices=None):
 
         super(RandomFlip, self).__init__(p=p, data_indices=data_indices)
+        if axis not in [-1, 0, 1]:
+            raise ValueError
+
         self.__axis = axis
 
     def sample_transform(self):
@@ -49,8 +52,12 @@ class RandomFlip(BaseTransform):
         pts_data = pts.data.copy()
         if self.__axis == 0:
             pts_data[:, 1] = pts.H - 1 - pts_data[:, 1]
-        if self.__axis == 1:
+        elif self.__axis == 1:
             pts_data[:, 0] = pts.W - 1 - pts_data[:, 0]
+        elif self.__axis == -1:
+            pts_data[:, 1] = pts.H - 1 - pts_data[:, 1]
+            pts_data[:, 0] = pts.W - 1 - pts_data[:, 0]
+
         return KeyPoints(pts=pts_data, H=pts.H, W=pts.W)
 
 

@@ -1,7 +1,6 @@
 import solt.core as slc
 import solt.data as sld
 import solt.transforms as slt
-import solt.base_transforms as slb
 from solt.constants import allowed_interpolations, allowed_paddings
 import numpy as np
 import cv2
@@ -26,6 +25,11 @@ def test_img_mask_vertical_flip(img_3x4, mask_3x4):
     h, w = mask.shape
     assert np.array_equal(cv2.flip(img, 0).reshape(h, w, 1), img_res)
     assert np.array_equal(cv2.flip(mask, 0), mask_res)
+
+
+def test_flip_invalid_axis():
+    with pytest.raises(ValueError):
+        slt.RandomFlip(p=1, axis=100)
 
 
 def test_img_mask_mask_vertical_flip(img_3x4, mask_3x4):
@@ -78,6 +82,45 @@ def test_img_mask_vertical_horizontal_flip(img_3x4, mask_3x4):
     h, w = mask.shape
     assert np.array_equal(cv2.flip(cv2.flip(img, 0), 1).reshape(h, w, 1), img_res)
     assert np.array_equal(cv2.flip(cv2.flip(mask, 0), 1), mask_res)
+
+
+def test_img_mask_vertical_horizontal_flip_negative_axes(img_3x4, mask_3x4):
+    img, mask = img_3x4, mask_3x4
+    dc = sld.DataContainer((img, mask), 'IM')
+
+    stream = slt.RandomFlip(p=1, axis=-1)
+
+    dc = stream(dc)
+    img_res, _, _ = dc[0]
+    mask_res, _, _ = dc[1]
+
+    h, w = mask.shape
+    assert np.array_equal(cv2.flip(cv2.flip(img, 0), 1).reshape(h, w, 1), img_res)
+    assert np.array_equal(cv2.flip(cv2.flip(mask, 0), 1), mask_res)
+
+
+def test_img_mask__kptsvertical_horizontal_flip_negative_axes(img_3x4, mask_3x4):
+    img, mask = img_3x4, mask_3x4
+
+    kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
+    kpts = sld.KeyPoints(kpts_data.copy(), 3, 4)
+    dc = sld.DataContainer((img, mask, kpts), 'IMP')
+
+    stream = slt.RandomFlip(p=1, axis=-1)
+
+    dc = stream(dc)
+    img_res, _, _ = dc[0]
+    mask_res, _, _ = dc[1]
+    kpts_res, _, _ = dc[2]
+
+    h, w = mask.shape
+    assert np.array_equal(cv2.flip(cv2.flip(img, 0), 1).reshape(h, w, 1), img_res)
+    assert np.array_equal(cv2.flip(cv2.flip(mask, 0), 1), mask_res)
+
+    kpts_data[:, 0] = 4 - 1 - kpts_data[:, 0]
+    kpts_data[:, 1] = 3 - 1 - kpts_data[:, 1]
+
+    assert np.array_equal(kpts_data, kpts_res.data)
 
 
 def test_keypoints_vertical_flip():
