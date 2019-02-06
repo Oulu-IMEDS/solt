@@ -9,6 +9,7 @@ from ..constants import allowed_interpolations, allowed_paddings
 from ..utils import validate_parameter, img_shape_checker
 import random
 
+
 class BaseTransform(metaclass=ABCMeta):
     """Transformation abstract class.
 
