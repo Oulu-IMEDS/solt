@@ -1085,3 +1085,10 @@ def test_different_interpolations_per_item_per_transform(img_6x6, transform_sett
         interp = allowed_interpolations[transform_settings[0]['interpolation'][0]]
     assert np.array_equal(cv2.resize(img_6x6, (10, 15), interpolation=interp).reshape(15, 10, 1), dc_res.data[0])
 
+
+def test_data_container_source_data_changes_when_copy_false(img_6x6):
+    dc = sld.DataContainer((img_6x6,), 'I')
+    ppl = slt.ImageRandomContrast(p=1, contrast_range=(2, 2))
+    dc_res = ppl(dc)
+
+    assert np.array_equal(dc_res.data[0], dc.data[0])
