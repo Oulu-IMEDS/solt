@@ -1,4 +1,3 @@
-from copy import deepcopy
 from ..constants import allowed_types
 from ..constants import allowed_interpolations
 from ..constants import allowed_paddings
