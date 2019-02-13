@@ -77,7 +77,7 @@ class BaseTransform(metaclass=ABCMeta):
         out : bool
             Boolean flag. True if the transform is used.
         """
-        if random.random() < self.p:
+        if random.random() <= self.p:
             self.state_dict['use'] = True
             return True
 
@@ -564,8 +564,6 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         if settings['padding'][1] == 'strict':
             padding = allowed_paddings[settings['padding'][0]]
 
-        if M[2, 0] == 0 and M[2, 1] == 0 and M[2, 2] == 1:
-            return cv2.warpAffine(img, M[:-1, :], (W_new, H_new), flags=interp, borderMode=padding)
         return cv2.warpPerspective(img, M, (W_new, H_new), flags=interp, borderMode=padding)
 
     @img_shape_checker

@@ -205,3 +205,21 @@ def img_6x6_rgb():
     img[-1, :] = 0
     return np.dstack((img, img, img)).astype(np.uint8)*255
 
+
+@pytest.fixture
+def img_6x6_lc():
+    """
+    Generates an RGB image 6x6. It is all 7x7, besides the edges (low contrast)
+
+    Returns
+    -------
+    out : ndarray
+        6x6 uint8 image
+    """
+    img = np.ones((6, 6, 1))
+    img[:, 0] = 0
+    img[:, -1] = 0
+    img[0, :] = 0
+    img[-1, :] = 0
+    return np.dstack((img, img, img)).astype(np.uint8)*127
+

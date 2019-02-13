@@ -5,8 +5,8 @@ from solt.constants import allowed_interpolations, allowed_paddings
 import numpy as np
 import cv2
 import pytest
-
-from .fixtures import img_2x2, img_3x3, img_3x4, \
+from copy import deepcopy
+from .fixtures import img_2x2, img_3x3, img_3x4, img_6x6_lc, \
     mask_2x2, mask_3x4, mask_3x3, img_5x5, img_6x6, img_6x6_rgb, mask_6x6, mask_5x5, img_7x7
 
 
@@ -1085,10 +1085,3 @@ def test_different_interpolations_per_item_per_transform(img_6x6, transform_sett
         interp = allowed_interpolations[transform_settings[0]['interpolation'][0]]
     assert np.array_equal(cv2.resize(img_6x6, (10, 15), interpolation=interp).reshape(15, 10, 1), dc_res.data[0])
 
-
-def test_data_container_source_data_changes_when_copy_false(img_6x6):
-    dc = sld.DataContainer((img_6x6,), 'I')
-    ppl = slt.ImageRandomContrast(p=1, contrast_range=(2, 2))
-    dc_res = ppl(dc)
-
-    assert np.array_equal(dc_res.data[0], dc.data[0])

@@ -22,11 +22,9 @@ class DataContainer(object):
         The value is another dict, which has all the settings. Segmentation masks have nearest neighbor interpolation
         by default, this can be changed manually if needed.
         Example: transform_settings={0:{'interpolation':'bilinear'}, 1: {'interpolation':'bicubic'}}
-    copy_source_data : bool
-        Whether to deepcopy the data before wrapping it into a data container.
 
     """
-    def __init__(self, data, fmt, transform_settings=None, copy_source_data=False):
+    def __init__(self, data, fmt, transform_settings=None):
         if len(fmt) == 1 and not isinstance(data, tuple):
             if not isinstance(data, list):
                 data = (data,)
@@ -81,10 +79,7 @@ class DataContainer(object):
             if t not in allowed_types:
                 raise TypeError
 
-        if copy_source_data:
-            self.__data = deepcopy(data)
-        else:
-            self.__data = data
+        self.__data = data
         self.__fmt = fmt
         self.__transform_settings = transform_settings
 
