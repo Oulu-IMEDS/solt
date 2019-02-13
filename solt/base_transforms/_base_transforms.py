@@ -7,6 +7,7 @@ import copy
 from ..data import DataContainer, KeyPoints
 from ..constants import allowed_interpolations, allowed_paddings
 from ..utils import validate_parameter, img_shape_checker
+import random
 
 
 class BaseTransform(metaclass=ABCMeta):
@@ -76,7 +77,7 @@ class BaseTransform(metaclass=ABCMeta):
         out : bool
             Boolean flag. True if the transform is used.
         """
-        if np.random.rand() < self.p:
+        if random.random() <= self.p:
             self.state_dict['use'] = True
             return True
 

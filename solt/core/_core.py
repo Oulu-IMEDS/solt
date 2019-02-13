@@ -3,6 +3,7 @@ import numpy as np
 from collections import OrderedDict
 from ..base_transforms import BaseTransform, MatrixTransform, DataDependentSamplingTransform
 import copy
+import random
 
 
 class Stream(object):
@@ -223,7 +224,8 @@ class SelectiveStream(Stream):
             Result
         """
         if len(self.transforms) > 0:
-            trfs = np.random.choice(self.transforms, self._n, replace=False, p=self._probs)
+            random_state = np.random.RandomState(random.randint(0, 2 ** 32 - 1))
+            trfs = random_state.choice(self.transforms, self._n, replace=False, p=self._probs)
             trfs = [copy.deepcopy(x) for x in trfs]
             trfs = Stream.optimize_stack(trfs)
             data = Stream.exec_stream(trfs, data)

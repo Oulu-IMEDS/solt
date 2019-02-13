@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import random
 
 from ..constants import allowed_paddings, allowed_crops, \
     dtypes_max, allowed_blurs, allowed_color_conversions, allowed_interpolations
@@ -93,7 +94,7 @@ class RandomRotate(MatrixTransform):
         Samples random rotation within specified range and saves it as an object state.
 
         """
-        rot = np.random.uniform(self.__range[0], self.__range[1])
+        rot = random.uniform(self.__range[0], self.__range[1])
         M = np.array([np.cos(np.deg2rad(rot)), -np.sin(np.deg2rad(rot)), 0,
                      np.sin(np.deg2rad(rot)), np.cos(np.deg2rad(rot)), 0,
                      0, 0, 1
@@ -168,8 +169,8 @@ class RandomShear(MatrixTransform):
         return self.__range_y
 
     def sample_transform(self):
-        shear_x = np.random.uniform(self.shear_range_x[0], self.shear_range_x[1])
-        shear_y = np.random.uniform(self.shear_range_y[0], self.shear_range_y[1])
+        shear_x = random.uniform(self.shear_range_x[0], self.shear_range_x[1])
+        shear_y = random.uniform(self.shear_range_y[0], self.shear_range_y[1])
 
         M = np.array([1, shear_x, 0,
                      shear_y, 1, 0,
@@ -226,12 +227,12 @@ class RandomScale(MatrixTransform):
         if self.scale_range_x is None:
             scale_x = 1
         else:
-            scale_x = np.random.uniform(self.scale_range_x[0], self.scale_range_x[1])
+            scale_x = random.uniform(self.scale_range_x[0], self.scale_range_x[1])
 
         if self.scale_range_y is None:
             scale_y = 1
         else:
-            scale_y = np.random.uniform(self.scale_range_y[0], self.scale_range_y[1])
+            scale_y = random.uniform(self.scale_range_y[0], self.scale_range_y[1])
 
         if self.__same:
             if self.__range_x is None:
@@ -283,8 +284,8 @@ class RandomTranslate(MatrixTransform):
         return self.__range_y
 
     def sample_transform(self):
-        tx = np.random.uniform(self.translate_range_x[0], self.translate_range_x[1])
-        ty = np.random.uniform(self.translate_range_y[0], self.translate_range_y[1])
+        tx = random.uniform(self.translate_range_x[0], self.translate_range_x[1])
+        ty = random.uniform(self.translate_range_y[0], self.translate_range_y[1])
 
         M = np.array([1, 0, tx,
                       0, 1, ty,
@@ -344,8 +345,8 @@ class RandomProjection(MatrixTransform):
         else:
             M = trf.state_dict['transform_matrix'].copy()
 
-        M[-1, 0] = np.random.uniform(self.__vrange[0], self.__vrange[1])
-        M[-1, 1] = np.random.uniform(self.__vrange[0], self.__vrange[1])
+        M[-1, 0] = random.uniform(self.__vrange[0], self.__vrange[1])
+        M[-1, 1] = random.uniform(self.__vrange[0], self.__vrange[1])
         self.state_dict['transform_matrix'] = M
 
 
@@ -564,8 +565,8 @@ class CropTransform(DataDependentSamplingTransform):
             x = w // 2 - self.crop_size[0] // 2
             y = h // 2 - self.crop_size[1] // 2
         elif self.crop_mode == 'r':
-            x = np.random.randint(0, w - self.crop_size[0])
-            y = np.random.randint(0, h - self.crop_size[1])
+            x = random.randint(0, w - self.crop_size[0])
+            y = random.randint(0, h - self.crop_size[1])
 
         self.state_dict = {'x': x, 'y': y}
 
@@ -621,7 +622,7 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
 
     def sample_transform_from_data(self, data: DataContainer):
         DataDependentSamplingTransform.sample_transform_from_data(self, data)
-        gain = np.random.uniform(self._gain_range[0], self._gain_range[1])
+        gain = random.uniform(self._gain_range[0], self._gain_range[1])
         h = None
         w = None
         c = None
@@ -636,7 +637,8 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
         if w is None or h is None or c is None:
             raise ValueError
 
-        noise_img = np.random.randn(h, w, c)
+        random_state = np.random.RandomState(random.randint(0, 2 ** 32 - 1))
+        noise_img = random_state.randn(h, w, c)
 
         noise_img -= noise_img.min()
         noise_img /= noise_img.max()
@@ -700,8 +702,8 @@ class ImageSaltAndPepper(ImageTransform, DataDependentSamplingTransform):
 
     def sample_transform_from_data(self, data: DataContainer):
         DataDependentSamplingTransform.sample_transform_from_data(self, data)
-        gain = np.random.uniform(self._gain_range[0], self._gain_range[1])
-        salt_p = np.random.uniform(self._salt_p[0], self._salt_p[1])
+        gain = random.uniform(self._gain_range[0], self._gain_range[1])
+        salt_p = random.uniform(self._salt_p[0], self._salt_p[1])
         h = None
         w = None
         for obj, t, settings in data:
@@ -710,10 +712,11 @@ class ImageSaltAndPepper(ImageTransform, DataDependentSamplingTransform):
                 w = obj.shape[1]
                 break
 
-        sp = np.random.rand(h, w) <= gain
+        random_state = np.random.RandomState(random.randint(0, 2 ** 32 - 1))
+        sp = random_state.rand(h, w) <= gain
         salt = sp.copy() * 1.
         pepper = sp.copy() * 1.
-        salt_mask = (np.random.rand(sp.sum()) <= salt_p)
+        salt_mask = (random_state.rand(sp.sum()) <= salt_p)
         pepper_mask = 1 - salt_mask
         salt[np.where(salt)] *= salt_mask
         pepper[np.where(pepper)] *= pepper_mask
@@ -756,7 +759,7 @@ class ImageGammaCorrection(ImageTransform):
         self._gamma_range = validate_numeric_range_parameter(gamma_range, (1, 1), 0)
 
     def sample_transform(self):
-        gamma = np.random.uniform(self._gamma_range[0], self._gamma_range[1])
+        gamma = random.uniform(self._gamma_range[0], self._gamma_range[1])
         inv_gamma = 1.0 / gamma
         lut = np.array([((i / 255.0) ** inv_gamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
 
@@ -795,7 +798,7 @@ class ImageRandomContrast(ImageTransform):
         self._contrast_range = validate_numeric_range_parameter(contrast_range, (1, 1), 0)
 
     def sample_transform(self):
-        contrast_mul = np.random.uniform(self._contrast_range[0], self._contrast_range[1])
+        contrast_mul = random.uniform(self._contrast_range[0], self._contrast_range[1])
         lut = np.array([i * contrast_mul for i in np.arange(0, 256)])
         lut = np.clip(lut, 0, 255).astype("uint8")
         self.state_dict = {'contrast_mul': contrast_mul, 'LUT': lut}
@@ -845,8 +848,8 @@ class ImageBlur(ImageTransform):
         self._gaussian_sigma = validate_numeric_range_parameter(gaussian_sigma, (1, 1), 0)
 
     def sample_transform(self):
-        k = np.random.choice(self._k_size)
-        s = np.random.uniform(self._gaussian_sigma[0], self._gaussian_sigma[1])
+        k = random.choice(self._k_size)
+        s = random.uniform(self._gaussian_sigma[0], self._gaussian_sigma[1])
         self.state_dict = {'k_size': k, 'sigma': s}
 
     @img_shape_checker
@@ -885,9 +888,9 @@ class ImageRandomHSV(ImageTransform):
         self._v_range = validate_numeric_range_parameter(v_range, (0, 0))
 
     def sample_transform(self):
-        h = np.random.uniform(self._h_range[0], self._h_range[1])
-        s = np.random.uniform(self._s_range[0], self._s_range[1])
-        v = np.random.uniform(self._v_range[0], self._v_range[1])
+        h = random.uniform(self._h_range[0], self._h_range[1])
+        s = random.uniform(self._s_range[0], self._s_range[1])
+        v = random.uniform(self._v_range[0], self._v_range[1])
         self.state_dict = {'h_mod': h, 's_mod': s, 'v_mod': v}
 
     @img_shape_checker

@@ -1,4 +1,3 @@
-from copy import deepcopy
 from ..constants import allowed_types
 from ..constants import allowed_interpolations
 from ..constants import allowed_paddings
@@ -79,7 +78,7 @@ class DataContainer(object):
             if t not in allowed_types:
                 raise TypeError
 
-        self.__data = deepcopy(data)
+        self.__data = data
         self.__fmt = fmt
         self.__transform_settings = transform_settings
 

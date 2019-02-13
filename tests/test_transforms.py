@@ -5,8 +5,8 @@ from solt.constants import allowed_interpolations, allowed_paddings
 import numpy as np
 import cv2
 import pytest
-
-from .fixtures import img_2x2, img_3x3, img_3x4, \
+from copy import deepcopy
+from .fixtures import img_2x2, img_3x3, img_3x4, img_6x6_lc, \
     mask_2x2, mask_3x4, mask_3x3, img_5x5, img_6x6, img_6x6_rgb, mask_6x6, mask_5x5, img_7x7
 
 
