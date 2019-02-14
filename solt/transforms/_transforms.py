@@ -541,30 +541,25 @@ class CropTransform(DataDependentSamplingTransform):
     def sample_transform_from_data(self, data: DataContainer):
         h, w = DataDependentSamplingTransform.sample_transform_from_data(self, data)
 
-        if self.crop_size[0] > w:
-            raise ValueError
-        if self.crop_size[1] > h:
+        if self.crop_size[0] > w or self.crop_size[1] > h:
             raise ValueError
 
-        if self.crop_mode == 'c':
-            x = w // 2 - self.crop_size[0] // 2
-            y = h // 2 - self.crop_size[1] // 2
-        elif self.crop_mode == 'r':
-            x = random.randint(0, w - self.crop_size[0])
-            y = random.randint(0, h - self.crop_size[1])
+        if self.crop_mode == 'r':
+            self.state_dict['x'] = int(random.random()*(w - self.crop_size[0]))
+            self.state_dict['y'] = int(random.random()*(h - self.crop_size[1]))
 
-        self.state_dict = {'x': x, 'y': y}
-
-    def _crop_img_or_mask(self, img: np.ndarray):
-        x, y = self.state_dict['x'], self.state_dict['y']
-        return img[y:y + self.crop_size[1], x:x + self.crop_size[0]]
+        else:
+            self.state_dict['x'] = w // 2 - self.crop_size[0] // 2
+            self.state_dict['y'] = h // 2 - self.crop_size[1] // 2
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
-        return self._crop_img_or_mask(img)
+        return img[self.state_dict['y']:self.state_dict['y'] + self.crop_size[1],
+                   self.state_dict['x']:self.state_dict['x'] + self.crop_size[0]]
 
     def _apply_mask(self, mask: np.ndarray, settings: dict):
-        return self._crop_img_or_mask(mask)
+        return mask[self.state_dict['y']:self.state_dict['y'] + self.crop_size[1],
+                    self.state_dict['x']:self.state_dict['x'] + self.crop_size[0]]
 
     def _apply_labels(self, labels, settings: dict):
         return labels

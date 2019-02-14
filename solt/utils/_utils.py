@@ -19,13 +19,11 @@ def img_shape_checker(method):
         res = method(self, *args, **kwargs)
         if len(res.shape) == 2:
             h, w = res.shape
-            c = 1
-        elif len(res.shape) == 3:
-            h, w, c = res.shape
-        else:
+            return res.reshape((h, w, 1))
+        elif len(res.shape) != 3:
             raise ValueError
 
-        return res.reshape((h, w, c))
+        return res
     return wrapper
 
 
