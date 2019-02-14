@@ -38,8 +38,12 @@ class RandomFlip(BaseTransform):
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
-        img = cv2.flip(img, self.__axis)
-        return img
+        if self.__axis == 0:
+            return np.ascontiguousarray(img[::-1, ...])
+        elif self.__axis == 1:
+            return np.ascontiguousarray(img[:, ::-1, ...])
+        else:
+            return np.ascontiguousarray(img[::-1, ::-1, ...])
 
     def _apply_mask(self, mask: np.ndarray, settings: dict):
         mask_new = cv2.flip(mask, self.__axis)
