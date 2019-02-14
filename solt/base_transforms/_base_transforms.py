@@ -273,6 +273,11 @@ class DataDependentSamplingTransform(BaseTransform):
         ----------
         data : DataContainer
             Data container to be used for sampling.
+
+        Returns
+        -------
+        out : tuple
+            Coordinate frame (h, w).
         """
         prev_h = None
         prev_w = None
@@ -298,6 +303,7 @@ class DataDependentSamplingTransform(BaseTransform):
             else:
                 if prev_w != w:
                     raise ValueError
+        return prev_h, prev_w
 
     def __call__(self, data: DataContainer):
         """Applies the transform to a DataContainer

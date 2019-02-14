@@ -384,17 +384,7 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
         DataDependentSamplingTransform.sample_transform(self)
 
     def sample_transform_from_data(self, data: DataContainer):
-        DataDependentSamplingTransform.sample_transform_from_data(self, data)
-
-        for obj, t, settings in data:
-            if t == 'M' or t == 'I':
-                h = obj.shape[0]
-                w = obj.shape[1]
-                break
-            elif t == 'P':
-                h = obj.H
-                w = obj.W
-                break
+        h, w = DataDependentSamplingTransform.sample_transform_from_data(self, data)
 
         pad_w = (self._pad_to[0] - w) // 2
         pad_h = (self._pad_to[1] - h) // 2
@@ -549,16 +539,7 @@ class CropTransform(DataDependentSamplingTransform):
         raise NotImplementedError
 
     def sample_transform_from_data(self, data: DataContainer):
-        DataDependentSamplingTransform.sample_transform_from_data(self, data)
-        for obj, t, settings in data:
-            if t == 'M' or t == 'I':
-                h = obj.shape[0]
-                w = obj.shape[1]
-                break
-            elif t == 'P':
-                h = obj.H
-                w = obj.W
-                break
+        h, w = DataDependentSamplingTransform.sample_transform_from_data(self, data)
 
         if self.crop_size[0] > w:
             raise ValueError
@@ -631,7 +612,7 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
         w = None
         c = None
         obj = None
-        for obj, t, settings in data:
+        for obj, t, _ in data:
             if t == 'I':
                 h = obj.shape[0]
                 w = obj.shape[1]
@@ -705,16 +686,9 @@ class ImageSaltAndPepper(ImageTransform, DataDependentSamplingTransform):
         raise NotImplementedError
 
     def sample_transform_from_data(self, data: DataContainer):
-        DataDependentSamplingTransform.sample_transform_from_data(self, data)
+        h, w = DataDependentSamplingTransform.sample_transform_from_data(self, data)
         gain = random.uniform(self._gain_range[0], self._gain_range[1])
         salt_p = random.uniform(self._salt_p[0], self._salt_p[1])
-        h = None
-        w = None
-        for obj, t, settings in data:
-            if t == 'I':
-                h = obj.shape[0]
-                w = obj.shape[1]
-                break
 
         random_state = np.random.RandomState(random.randint(0, 2 ** 32 - 1))
         sp = random_state.rand(h, w) <= gain
