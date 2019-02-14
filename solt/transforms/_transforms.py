@@ -552,14 +552,16 @@ class CropTransform(DataDependentSamplingTransform):
             self.state_dict['x'] = w // 2 - self.crop_size[0] // 2
             self.state_dict['y'] = h // 2 - self.crop_size[1] // 2
 
+    def __crop_img_or_mask(self, img_mask):
+        return img_mask[self.state_dict['y']:self.state_dict['y'] + self.crop_size[1],
+                        self.state_dict['x']:self.state_dict['x'] + self.crop_size[0]]
+
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
-        return img[self.state_dict['y']:self.state_dict['y'] + self.crop_size[1],
-                   self.state_dict['x']:self.state_dict['x'] + self.crop_size[0]]
+        return self.__crop_img_or_mask(img)
 
     def _apply_mask(self, mask: np.ndarray, settings: dict):
-        return mask[self.state_dict['y']:self.state_dict['y'] + self.crop_size[1],
-                    self.state_dict['x']:self.state_dict['x'] + self.crop_size[0]]
+        return self.__crop_img_or_mask(mask)
 
     def _apply_labels(self, labels, settings: dict):
         return labels
