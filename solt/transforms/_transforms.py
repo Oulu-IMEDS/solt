@@ -891,7 +891,7 @@ class ImageRandomHSV(ImageTransform):
         return img
 
 
-class ImageRandomBrightness(ImageRandomHSV):
+class ImageRandomBrightness(ImageTransform):
     """Performs a random brightness augmentation
 
     Parameters
@@ -907,24 +907,18 @@ class ImageRandomBrightness(ImageRandomHSV):
 
     """
     def __init__(self, brightness_range=None, data_indices=None, p=0.5):
-        super(ImageRandomBrightness, self).__init__(p=p,
-                                                    h_range=(0, 0),
-                                                    s_range=(0, 0),
-                                                    v_range=brightness_range,
-                                                    data_indices=data_indices
-                                                    )
+        super(ImageRandomBrightness, self).__init__(p=p, data_indices=data_indices)
+        self._brightness_range = validate_numeric_range_parameter(brightness_range, (0, 0))
+
+    def sample_transform(self):
+        brightness_fact = random.uniform(self._brightness_range[0], self._brightness_range[1])
+        lut = np.array([i + brightness_fact for i in np.arange(0, 256)])
+        lut = np.clip(lut, 0, 255).astype("uint8")
+        self.state_dict = {'brightness_fact': brightness_fact, 'LUT': lut}
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
-        gs = False
-        if img.shape[-1] == 1:
-            img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-            gs = True
-
-        if gs:
-            return super(ImageRandomBrightness, self)._apply_img(img, settings)[:, :, 0]
-
-        return super(ImageRandomBrightness, self)._apply_img(img, settings)
+        return cv2.LUT(img, self.state_dict['LUT'])
 
 
 class ImageColorTransform(ImageTransform):
