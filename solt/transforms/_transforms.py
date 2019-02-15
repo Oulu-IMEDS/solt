@@ -98,13 +98,21 @@ class RandomRotate(MatrixTransform):
         Samples random rotation within specified range and saves it as an object state.
 
         """
-        rot = random.uniform(self.__range[0], self.__range[1])
-        M = np.array([np.cos(np.deg2rad(rot)), -np.sin(np.deg2rad(rot)), 0,
-                     np.sin(np.deg2rad(rot)), np.cos(np.deg2rad(rot)), 0,
-                     0, 0, 1
-                      ]).reshape((3, 3)).astype(np.float32)
+        rot = np.deg2rad(random.uniform(self.__range[0], self.__range[1]))
 
-        self.state_dict = {'rot': rot, 'transform_matrix': M}
+        self.state_dict['rot'] = rot
+
+        self.state_dict['transform_matrix'][0, 0] = np.cos(rot)
+        self.state_dict['transform_matrix'][0, 1] = -np.sin(rot)
+        self.state_dict['transform_matrix'][0, 2] = 0
+
+        self.state_dict['transform_matrix'][1, 0] = np.sin(rot)
+        self.state_dict['transform_matrix'][1, 1] = np.cos(rot)
+        self.state_dict['transform_matrix'][1, 2] = 0
+
+        self.state_dict['transform_matrix'][2, 0] = 0
+        self.state_dict['transform_matrix'][2, 1] = 0
+        self.state_dict['transform_matrix'][2, 2] = 1
 
 
 class RandomRotate90(RandomRotate):
@@ -176,11 +184,20 @@ class RandomShear(MatrixTransform):
         shear_x = random.uniform(self.shear_range_x[0], self.shear_range_x[1])
         shear_y = random.uniform(self.shear_range_y[0], self.shear_range_y[1])
 
-        M = np.array([1, shear_x, 0,
-                     shear_y, 1, 0,
-                     0, 0, 1]).reshape((3, 3)).astype(np.float32)
+        self.state_dict['shear_x'] = shear_x
+        self.state_dict['shear_y'] = shear_y
 
-        self.state_dict = {'shear_x': shear_x, 'shear_y': shear_y, 'transform_matrix': M}
+        self.state_dict['transform_matrix'][0, 0] = 1
+        self.state_dict['transform_matrix'][0, 1] = shear_x
+        self.state_dict['transform_matrix'][0, 2] = 0
+
+        self.state_dict['transform_matrix'][1, 0] = shear_y
+        self.state_dict['transform_matrix'][1, 1] = 1
+        self.state_dict['transform_matrix'][1, 2] = 0
+
+        self.state_dict['transform_matrix'][2, 0] = 0
+        self.state_dict['transform_matrix'][2, 1] = 0
+        self.state_dict['transform_matrix'][2, 2] = 1
 
 
 class RandomScale(MatrixTransform):
@@ -244,11 +261,20 @@ class RandomScale(MatrixTransform):
             else:
                 scale_y = scale_x
 
-        M = np.array([scale_x, 0, 0,
-                      0, scale_y, 0,
-                      0, 0, 1]).reshape((3, 3)).astype(np.float32)
+        self.state_dict['scale_x'] = scale_x
+        self.state_dict['scale_y'] = scale_y
 
-        self.state_dict = {'scale_x': scale_x, 'scale_y': scale_y, 'transform_matrix': M}
+        self.state_dict['transform_matrix'][0, 0] = scale_x
+        self.state_dict['transform_matrix'][0, 1] = 0
+        self.state_dict['transform_matrix'][0, 2] = 0
+
+        self.state_dict['transform_matrix'][1, 0] = 0
+        self.state_dict['transform_matrix'][1, 1] = scale_y
+        self.state_dict['transform_matrix'][1, 2] = 0
+
+        self.state_dict['transform_matrix'][2, 0] = 0
+        self.state_dict['transform_matrix'][2, 1] = 0
+        self.state_dict['transform_matrix'][2, 2] = 1
 
 
 class RandomTranslate(MatrixTransform):
@@ -291,11 +317,20 @@ class RandomTranslate(MatrixTransform):
         tx = random.uniform(self.translate_range_x[0], self.translate_range_x[1])
         ty = random.uniform(self.translate_range_y[0], self.translate_range_y[1])
 
-        M = np.array([1, 0, tx,
-                      0, 1, ty,
-                      0, 0, 1]).reshape((3, 3)).astype(np.float32)
+        self.state_dict['translate_x'] = tx
+        self.state_dict['translate_y'] = ty
 
-        self.state_dict = {'translate_x': tx, 'translate_y': ty, 'transform_matrix': M}
+        self.state_dict['transform_matrix'][0, 0] = 1
+        self.state_dict['transform_matrix'][0, 1] = 0
+        self.state_dict['transform_matrix'][0, 2] = tx
+
+        self.state_dict['transform_matrix'][1, 0] = 0
+        self.state_dict['transform_matrix'][1, 1] = 1
+        self.state_dict['transform_matrix'][1, 2] = ty
+
+        self.state_dict['transform_matrix'][2, 0] = 0
+        self.state_dict['transform_matrix'][2, 1] = 0
+        self.state_dict['transform_matrix'][2, 2] = 1
 
 
 class RandomProjection(MatrixTransform):
@@ -436,7 +471,8 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
         pts_data[:, 0] += pad_w_left
         pts_data[:, 1] += pad_h_top
 
-        return KeyPoints(pts_data, pad_h_top + pts.H + pad_h_bottom, pad_w_left + pts.W + pad_w_right)
+        return KeyPoints(pts_data, pad_h_top + pts.H + pad_h_bottom,
+                         pad_w_left + pts.W + pad_w_right)
 
 
 class ResizeTransform(BaseTransform, InterpolationPropertyHolder):
@@ -899,7 +935,7 @@ class ImageRandomBrightness(ImageTransform):
     p : float
         Probability of applying this transform,
     brightness_range: tuple or None
-        brightness_range shift range (0-255). If None, then brightness_range=(0, 0).
+        brightness_range shift range. If None, then brightness_range=(0, 0).
     data_indices : tuple or None
         Indices of the images within the data container to which this transform needs to be applied.
         Every element within the tuple must be integer numbers.
