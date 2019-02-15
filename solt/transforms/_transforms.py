@@ -545,8 +545,8 @@ class CropTransform(DataDependentSamplingTransform):
             raise ValueError
 
         if self.crop_mode == 'r':
-            self.state_dict['x'] = int(random.random()*(w - self.crop_size[0]))
-            self.state_dict['y'] = int(random.random()*(h - self.crop_size[1]))
+            self.state_dict['x'] = int(random.random() * (w - self.crop_size[0]))
+            self.state_dict['y'] = int(random.random() * (h - self.crop_size[1]))
 
         else:
             self.state_dict['x'] = w // 2 - self.crop_size[0] // 2
