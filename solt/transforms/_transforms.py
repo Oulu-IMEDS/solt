@@ -774,7 +774,7 @@ class ImageRandomContrast(ImageTransform):
 
     def sample_transform(self):
         contrast_mul = random.uniform(self._contrast_range[0], self._contrast_range[1])
-        lut = np.array([i * contrast_mul for i in np.arange(0, 256)])
+        lut = np.arange(0, 256) * contrast_mul
         lut = np.clip(lut, 0, 255).astype("uint8")
         self.state_dict = {'contrast_mul': contrast_mul, 'LUT': lut}
 
@@ -912,7 +912,7 @@ class ImageRandomBrightness(ImageTransform):
 
     def sample_transform(self):
         brightness_fact = random.uniform(self._brightness_range[0], self._brightness_range[1])
-        lut = np.array([i + brightness_fact for i in np.arange(0, 256)])
+        lut = np.arange(0, 256) + brightness_fact
         lut = np.clip(lut, 0, 255).astype("uint8")
         self.state_dict = {'brightness_fact': brightness_fact, 'LUT': lut}
 
