@@ -620,6 +620,7 @@ def test_projection_empty_sampling_low_prob_trf():
     trf.sample_transform()
     assert np.array_equal(trf.state_dict['transform_matrix'], np.eye(3))
 
+
 def test_projection_empty_sampling_from_many_low_prob_trf():
     trf = slt.RandomProjection(affine_transforms=slc.Stream([
         slt.RandomRotate(p=0),

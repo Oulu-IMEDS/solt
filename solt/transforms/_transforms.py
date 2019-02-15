@@ -38,8 +38,12 @@ class RandomFlip(BaseTransform):
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
-        img = cv2.flip(img, self.__axis)
-        return img
+        if self.__axis == 0:
+            return np.ascontiguousarray(img[::-1, ...])
+        elif self.__axis == 1:
+            return np.ascontiguousarray(img[:, ::-1, ...])
+        else:
+            return np.ascontiguousarray(img[::-1, ::-1, ...])
 
     def _apply_mask(self, mask: np.ndarray, settings: dict):
         mask_new = cv2.flip(mask, self.__axis)
@@ -94,13 +98,21 @@ class RandomRotate(MatrixTransform):
         Samples random rotation within specified range and saves it as an object state.
 
         """
-        rot = random.uniform(self.__range[0], self.__range[1])
-        M = np.array([np.cos(np.deg2rad(rot)), -np.sin(np.deg2rad(rot)), 0,
-                     np.sin(np.deg2rad(rot)), np.cos(np.deg2rad(rot)), 0,
-                     0, 0, 1
-                      ]).reshape((3, 3)).astype(np.float32)
+        rot = np.deg2rad(random.uniform(self.__range[0], self.__range[1]))
 
-        self.state_dict = {'rot': rot, 'transform_matrix': M}
+        self.state_dict['rot'] = rot
+
+        self.state_dict['transform_matrix'][0, 0] = np.cos(rot)
+        self.state_dict['transform_matrix'][0, 1] = -np.sin(rot)
+        self.state_dict['transform_matrix'][0, 2] = 0
+
+        self.state_dict['transform_matrix'][1, 0] = np.sin(rot)
+        self.state_dict['transform_matrix'][1, 1] = np.cos(rot)
+        self.state_dict['transform_matrix'][1, 2] = 0
+
+        self.state_dict['transform_matrix'][2, 0] = 0
+        self.state_dict['transform_matrix'][2, 1] = 0
+        self.state_dict['transform_matrix'][2, 2] = 1
 
 
 class RandomRotate90(RandomRotate):
@@ -172,11 +184,20 @@ class RandomShear(MatrixTransform):
         shear_x = random.uniform(self.shear_range_x[0], self.shear_range_x[1])
         shear_y = random.uniform(self.shear_range_y[0], self.shear_range_y[1])
 
-        M = np.array([1, shear_x, 0,
-                     shear_y, 1, 0,
-                     0, 0, 1]).reshape((3, 3)).astype(np.float32)
+        self.state_dict['shear_x'] = shear_x
+        self.state_dict['shear_y'] = shear_y
 
-        self.state_dict = {'shear_x': shear_x, 'shear_y': shear_y, 'transform_matrix': M}
+        self.state_dict['transform_matrix'][0, 0] = 1
+        self.state_dict['transform_matrix'][0, 1] = shear_x
+        self.state_dict['transform_matrix'][0, 2] = 0
+
+        self.state_dict['transform_matrix'][1, 0] = shear_y
+        self.state_dict['transform_matrix'][1, 1] = 1
+        self.state_dict['transform_matrix'][1, 2] = 0
+
+        self.state_dict['transform_matrix'][2, 0] = 0
+        self.state_dict['transform_matrix'][2, 1] = 0
+        self.state_dict['transform_matrix'][2, 2] = 1
 
 
 class RandomScale(MatrixTransform):
@@ -240,11 +261,20 @@ class RandomScale(MatrixTransform):
             else:
                 scale_y = scale_x
 
-        M = np.array([scale_x, 0, 0,
-                      0, scale_y, 0,
-                      0, 0, 1]).reshape((3, 3)).astype(np.float32)
+        self.state_dict['scale_x'] = scale_x
+        self.state_dict['scale_y'] = scale_y
 
-        self.state_dict = {'scale_x': scale_x, 'scale_y': scale_y, 'transform_matrix': M}
+        self.state_dict['transform_matrix'][0, 0] = scale_x
+        self.state_dict['transform_matrix'][0, 1] = 0
+        self.state_dict['transform_matrix'][0, 2] = 0
+
+        self.state_dict['transform_matrix'][1, 0] = 0
+        self.state_dict['transform_matrix'][1, 1] = scale_y
+        self.state_dict['transform_matrix'][1, 2] = 0
+
+        self.state_dict['transform_matrix'][2, 0] = 0
+        self.state_dict['transform_matrix'][2, 1] = 0
+        self.state_dict['transform_matrix'][2, 2] = 1
 
 
 class RandomTranslate(MatrixTransform):
@@ -287,11 +317,20 @@ class RandomTranslate(MatrixTransform):
         tx = random.uniform(self.translate_range_x[0], self.translate_range_x[1])
         ty = random.uniform(self.translate_range_y[0], self.translate_range_y[1])
 
-        M = np.array([1, 0, tx,
-                      0, 1, ty,
-                      0, 0, 1]).reshape((3, 3)).astype(np.float32)
+        self.state_dict['translate_x'] = tx
+        self.state_dict['translate_y'] = ty
 
-        self.state_dict = {'translate_x': tx, 'translate_y': ty, 'transform_matrix': M}
+        self.state_dict['transform_matrix'][0, 0] = 1
+        self.state_dict['transform_matrix'][0, 1] = 0
+        self.state_dict['transform_matrix'][0, 2] = tx
+
+        self.state_dict['transform_matrix'][1, 0] = 0
+        self.state_dict['transform_matrix'][1, 1] = 1
+        self.state_dict['transform_matrix'][1, 2] = ty
+
+        self.state_dict['transform_matrix'][2, 0] = 0
+        self.state_dict['transform_matrix'][2, 1] = 0
+        self.state_dict['transform_matrix'][2, 2] = 1
 
 
 class RandomProjection(MatrixTransform):
@@ -380,17 +419,7 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
         DataDependentSamplingTransform.sample_transform(self)
 
     def sample_transform_from_data(self, data: DataContainer):
-        DataDependentSamplingTransform.sample_transform_from_data(self, data)
-
-        for obj, t, settings in data:
-            if t == 'M' or t == 'I':
-                h = obj.shape[0]
-                w = obj.shape[1]
-                break
-            elif t == 'P':
-                h = obj.H
-                w = obj.W
-                break
+        h, w = DataDependentSamplingTransform.sample_transform_from_data(self, data)
 
         pad_w = (self._pad_to[0] - w) // 2
         pad_h = (self._pad_to[1] - h) // 2
@@ -442,7 +471,8 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
         pts_data[:, 0] += pad_w_left
         pts_data[:, 1] += pad_h_top
 
-        return KeyPoints(pts_data, pad_h_top + pts.H + pad_h_bottom, pad_w_left + pts.W + pad_w_right)
+        return KeyPoints(pts_data, pad_h_top + pts.H + pad_h_bottom,
+                         pad_w_left + pts.W + pad_w_right)
 
 
 class ResizeTransform(BaseTransform, InterpolationPropertyHolder):
@@ -545,41 +575,29 @@ class CropTransform(DataDependentSamplingTransform):
         raise NotImplementedError
 
     def sample_transform_from_data(self, data: DataContainer):
-        DataDependentSamplingTransform.sample_transform_from_data(self, data)
-        for obj, t, settings in data:
-            if t == 'M' or t == 'I':
-                h = obj.shape[0]
-                w = obj.shape[1]
-                break
-            elif t == 'P':
-                h = obj.H
-                w = obj.W
-                break
+        h, w = DataDependentSamplingTransform.sample_transform_from_data(self, data)
 
-        if self.crop_size[0] > w:
-            raise ValueError
-        if self.crop_size[1] > h:
+        if self.crop_size[0] > w or self.crop_size[1] > h:
             raise ValueError
 
-        if self.crop_mode == 'c':
-            x = w // 2 - self.crop_size[0] // 2
-            y = h // 2 - self.crop_size[1] // 2
-        elif self.crop_mode == 'r':
-            x = random.randint(0, w - self.crop_size[0])
-            y = random.randint(0, h - self.crop_size[1])
+        if self.crop_mode == 'r':
+            self.state_dict['x'] = int(random.random() * (w - self.crop_size[0]))
+            self.state_dict['y'] = int(random.random() * (h - self.crop_size[1]))
 
-        self.state_dict = {'x': x, 'y': y}
+        else:
+            self.state_dict['x'] = w // 2 - self.crop_size[0] // 2
+            self.state_dict['y'] = h // 2 - self.crop_size[1] // 2
 
-    def _crop_img_or_mask(self, img: np.ndarray):
-        x, y = self.state_dict['x'], self.state_dict['y']
-        return img[y:y + self.crop_size[1], x:x + self.crop_size[0]]
+    def __crop_img_or_mask(self, img_mask):
+        return img_mask[self.state_dict['y']:self.state_dict['y'] + self.crop_size[1],
+                        self.state_dict['x']:self.state_dict['x'] + self.crop_size[0]]
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
-        return self._crop_img_or_mask(img)
+        return self.__crop_img_or_mask(img)
 
     def _apply_mask(self, mask: np.ndarray, settings: dict):
-        return self._crop_img_or_mask(mask)
+        return self.__crop_img_or_mask(mask)
 
     def _apply_labels(self, labels, settings: dict):
         return labels
@@ -627,7 +645,7 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
         w = None
         c = None
         obj = None
-        for obj, t, settings in data:
+        for obj, t, _ in data:
             if t == 'I':
                 h = obj.shape[0]
                 w = obj.shape[1]
@@ -701,16 +719,9 @@ class ImageSaltAndPepper(ImageTransform, DataDependentSamplingTransform):
         raise NotImplementedError
 
     def sample_transform_from_data(self, data: DataContainer):
-        DataDependentSamplingTransform.sample_transform_from_data(self, data)
+        h, w = DataDependentSamplingTransform.sample_transform_from_data(self, data)
         gain = random.uniform(self._gain_range[0], self._gain_range[1])
         salt_p = random.uniform(self._salt_p[0], self._salt_p[1])
-        h = None
-        w = None
-        for obj, t, settings in data:
-            if t == 'I':
-                h = obj.shape[0]
-                w = obj.shape[1]
-                break
 
         random_state = np.random.RandomState(random.randint(0, 2 ** 32 - 1))
         sp = random_state.rand(h, w) <= gain
@@ -799,7 +810,7 @@ class ImageRandomContrast(ImageTransform):
 
     def sample_transform(self):
         contrast_mul = random.uniform(self._contrast_range[0], self._contrast_range[1])
-        lut = np.array([i * contrast_mul for i in np.arange(0, 256)])
+        lut = np.arange(0, 256) * contrast_mul
         lut = np.clip(lut, 0, 255).astype("uint8")
         self.state_dict = {'contrast_mul': contrast_mul, 'LUT': lut}
 
@@ -916,7 +927,7 @@ class ImageRandomHSV(ImageTransform):
         return img
 
 
-class ImageRandomBrightness(ImageRandomHSV):
+class ImageRandomBrightness(ImageTransform):
     """Performs a random brightness augmentation
 
     Parameters
@@ -924,7 +935,7 @@ class ImageRandomBrightness(ImageRandomHSV):
     p : float
         Probability of applying this transform,
     brightness_range: tuple or None
-        brightness_range shift range (0-255). If None, then brightness_range=(0, 0).
+        brightness_range shift range. If None, then brightness_range=(0, 0).
     data_indices : tuple or None
         Indices of the images within the data container to which this transform needs to be applied.
         Every element within the tuple must be integer numbers.
@@ -932,24 +943,18 @@ class ImageRandomBrightness(ImageRandomHSV):
 
     """
     def __init__(self, brightness_range=None, data_indices=None, p=0.5):
-        super(ImageRandomBrightness, self).__init__(p=p,
-                                                    h_range=(0, 0),
-                                                    s_range=(0, 0),
-                                                    v_range=brightness_range,
-                                                    data_indices=data_indices
-                                                    )
+        super(ImageRandomBrightness, self).__init__(p=p, data_indices=data_indices)
+        self._brightness_range = validate_numeric_range_parameter(brightness_range, (0, 0))
+
+    def sample_transform(self):
+        brightness_fact = random.uniform(self._brightness_range[0], self._brightness_range[1])
+        lut = np.arange(0, 256) + brightness_fact
+        lut = np.clip(lut, 0, 255).astype("uint8")
+        self.state_dict = {'brightness_fact': brightness_fact, 'LUT': lut}
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
-        gs = False
-        if img.shape[-1] == 1:
-            img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-            gs = True
-
-        if gs:
-            return super(ImageRandomBrightness, self)._apply_img(img, settings)[:, :, 0]
-
-        return super(ImageRandomBrightness, self)._apply_img(img, settings)
+        return cv2.LUT(img, self.state_dict['LUT'])
 
 
 class ImageColorTransform(ImageTransform):
