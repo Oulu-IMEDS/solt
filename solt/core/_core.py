@@ -137,6 +137,7 @@ class Stream(object):
             if not isinstance(trf, Stream) and not isinstance(trf, BaseTransform):
                 raise TypeError
             if isinstance(trf, BaseTransform) and not isinstance(trf, DataDependentSamplingTransform):
+                trf.reset_state()
                 if trf.use_transform():
                     trf.sample_transform()
                     if isinstance(trf, MatrixTransform):
