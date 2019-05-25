@@ -5,7 +5,8 @@ from solt.constants import allowed_interpolations, allowed_paddings
 import numpy as np
 import cv2
 import pytest
-from copy import deepcopy
+import copy
+import itertools
 from .fixtures import img_2x2, img_3x3, img_3x4, img_6x6_lc, \
     mask_2x2, mask_3x4, mask_3x3, img_5x5, img_6x6, img_6x6_rgb, mask_6x6, mask_5x5, img_7x7
 
@@ -171,6 +172,7 @@ def test_shear_range_none():
     assert trf.shear_range_y == (0, 0)
 
 
+@pytest.mark.parametrize('ignore_state', [True, False])
 @pytest.mark.parametrize('transform_settings', [
     None,
     {0: {'interpolation': 'nearest', 'padding': 'z'}},
@@ -180,16 +182,17 @@ def test_shear_range_none():
     {0: {'interpolation': 'bicubic', 'padding': 'z'}},
     {0: {'interpolation': 'bicubic', 'padding': 'r'}},
 ])
-def test_rotate_90_img_mask_keypoints_destructive(img_3x3, mask_3x3, transform_settings):
+def test_rotate_90_img_mask_keypoints_destructive(img_3x3, mask_3x3, transform_settings, ignore_state):
     # Setting up the data
+
     kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
     kpts = sld.KeyPoints(kpts_data, 3, 3)
     img, mask = img_3x3, mask_3x3
     H, W = mask.shape
 
-    dc = sld.DataContainer((img, mask, kpts, 1), 'IMPL', transform_settings=transform_settings)
+    dc = sld.DataContainer((img, mask, kpts, 1), 'IMPL', transform_settings=copy.deepcopy(transform_settings))
     # Defining the 90 degrees transform (clockwise)
-    stream = slt.RandomRotate(rotation_range=(90, 90), p=1)
+    stream = slt.RandomRotate(rotation_range=(90, 90), p=1, ignore_state=ignore_state)
     dc_res = stream(dc)
 
     img_res, _, _ = dc_res[0]
@@ -201,8 +204,8 @@ def test_rotate_90_img_mask_keypoints_destructive(img_3x3, mask_3x3, transform_s
     img_inter = allowed_interpolations['bicubic']
     img_pad = allowed_paddings['z']
     if transform_settings is not None:
-        img_inter = allowed_interpolations[transform_settings[0]['interpolation'][0]]
-        img_pad = allowed_paddings[transform_settings[0]['padding'][0]]
+        img_inter = allowed_interpolations[transform_settings[0]['interpolation']]
+        img_pad = allowed_paddings[transform_settings[0]['padding']]
 
     expected_img_res = cv2.warpAffine(img, M, (W, H), flags=img_inter, borderMode=img_pad).reshape((H, W, 1))
     expected_mask_res = cv2.warpAffine(mask, M, (W, H))
@@ -246,7 +249,7 @@ def test_rotate_nondestructive_does_not_accept_non_int_k(k):
 
 
 @pytest.mark.parametrize('k', list(range(-4, 5)))
-def test_rotate_90_trnsforms_have_same_bahaviour(k):
+def test_rotate_90_transforms_have_same_bahavior(k):
     trf_1 = slt.RandomRotate(rotation_range=(k*90, k*90), p=1)
     trf_1.sample_transform()
 
@@ -314,6 +317,7 @@ def test_keypoints_assert_reflective(img_3x3, mask_3x3):
     stream = slt.RandomRotate(rotation_range=(20, 20), p=1, padding='r')
     with pytest.raises(ValueError):
         stream(dc)
+
 
 def test_padding_img_2x2_4x4(img_2x2):
     img = img_2x2
@@ -871,7 +875,7 @@ def test_wrong_types_in_gain_and_salt_p_salt_and_peper():
     (None, (2,2), True, (2, 2)),
     ((2,2), None, True, (2, 2)),
     (None, None, True, (1, 1)),
-    (None, (2,2), False, (1, 2)),
+    (None, (2, 2), False, (1, 2)),
     ((2,2), None, False, (2, 1)),
     (None, None, False, (1, 1)),
 ]

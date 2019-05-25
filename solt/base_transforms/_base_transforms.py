@@ -25,7 +25,6 @@ class BaseTransform(metaclass=ABCMeta):
             p = 0.5
 
         self.p = p
-        self.state_dict = {'use': False}
         if data_indices is not None and not isinstance(data_indices, tuple):
             raise TypeError
         if isinstance(data_indices, tuple):
@@ -36,6 +35,12 @@ class BaseTransform(metaclass=ABCMeta):
                     raise ValueError
 
         self._data_indices = data_indices
+
+        self.state_dict = None
+        self.reset_state()
+
+    def reset_state(self):
+        self.state_dict = {'use': False}
 
     def serialize(self, include_state=False):
         """Method returns an ordered dict, describing the object.
@@ -152,6 +157,7 @@ class BaseTransform(metaclass=ABCMeta):
             Result
 
         """
+        self.reset_state()
         if self.use_transform():
             self.sample_transform()
             return self.apply(data)
@@ -449,14 +455,23 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         Padding Mode.
     p : float
         Probability of transform's execution.
+    ignore_state : bool
+        Whether to ignore the pre-calculated transformation or not. If False,
+        then it will lead to an incorrect behavior when the objects are of different sizes.
+        Should be used only when it is assumed that the image, mask and keypoints are of
+        the same size.
 
     """
-    def __init__(self, interpolation='bilinear', padding='z', p=0.5):
+    def __init__(self, interpolation='bilinear', padding='z', p=0.5, ignore_state=True):
         BaseTransform.__init__(self, p=p, data_indices=None)
         InterpolationPropertyHolder.__init__(self, interpolation=interpolation)
         PaddingPropertyHolder.__init__(self, padding=padding)
+        self._ignore_state = ignore_state
+        self.reset_state()
 
-        self.state_dict = {'transform_matrix': np.eye(3)}
+    def reset_state(self):
+        BaseTransform.reset_state(self)
+        self.state_dict['transform_matrix'] = np.eye(3)
 
     def fuse_with(self, trf):
         """
@@ -559,8 +574,29 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
             Warped image
 
         """
-        M = self.state_dict['transform_matrix']
-        M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, img.shape[1], img.shape[0])
+        if 'w_new' in self.state_dict and not self._ignore_state:
+            w_new = self.state_dict['w_new']
+            h_new = self.state_dict['h_new']
+
+            w = self.state_dict['w']
+            h = self.state_dict['h']
+
+            if w != img.shape[1] or h != img.shape[0]:
+                raise ValueError('Ignore state is False, but the items in DataContainer are of different sizes!!!')
+
+            transform_m_corrected = self.state_dict['transform_matrix_corrected']
+        else:
+            transform_m = self.state_dict['transform_matrix']
+            transform_m_corrected, w_new, h_new = MatrixTransform.correct_for_frame_change(transform_m,
+                                                                                           img.shape[1], img.shape[0])
+
+            self.state_dict['transform_matrix_corrected'] = transform_m_corrected
+
+            self.state_dict['w'] = img.shape[1]
+            self.state_dict['h'] = img.shape[0]
+
+            self.state_dict['w_new'] = w_new
+            self.state_dict['h_new'] = h_new
 
         interp = allowed_interpolations[self.interpolation[0]]
         if settings['interpolation'][1] == 'strict':
@@ -570,7 +606,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         if settings['padding'][1] == 'strict':
             padding = allowed_paddings[settings['padding'][0]]
 
-        return cv2.warpPerspective(img, M, (W_new, H_new), flags=interp, borderMode=padding)
+        return cv2.warpPerspective(img, transform_m_corrected, (w_new, h_new), flags=interp, borderMode=padding)
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
@@ -651,13 +687,24 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
             raise ValueError('Cannot apply transform to keypoints with reflective padding!')
 
         pts_data = pts.data.copy()
-        M = self.state_dict['transform_matrix']
-        M, W_new, H_new = MatrixTransform.correct_for_frame_change(M, pts.W, pts.H)
+        if 'w_new' in self.state_dict and not self._ignore_state:
+            w_new = self.state_dict['w_new']
+            h_new = self.state_dict['w_new']
+            transform_m_corrected = self.state_dict['transform_matrix_corrected']
+        else:
+            transform_matrix = self.state_dict['transform_matrix']
+            transform_m_corrected, w_new, h_new = MatrixTransform.correct_for_frame_change(transform_matrix,
+                                                                                           pts.W, pts.H)
+            self.state_dict['w'] = pts.W
+            self.state_dict['h'] = pts.H
+
+            self.state_dict['w_new'] = w_new
+            self.state_dict['h_new'] = h_new
 
         pts_data = np.hstack((pts_data, np.ones((pts_data.shape[0], 1))))
-        pts_data = np.dot(M, pts_data.T).T
+        pts_data = np.dot(transform_m_corrected, pts_data.T).T
 
         pts_data[:, 0] /= pts_data[:, 2]
         pts_data[:, 1] /= pts_data[:, 2]
 
-        return KeyPoints(pts_data[:, :-1], H_new, W_new)
+        return KeyPoints(pts_data[:, :-1], h_new, w_new)

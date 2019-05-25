@@ -5,6 +5,7 @@ import solt.utils as slu
 import numpy as np
 import pytest
 import cv2
+import random
 
 from .fixtures import img_2x2, img_3x4, mask_2x2, mask_3x4, img_5x5, mask_5x5
 
@@ -423,3 +424,61 @@ def test_interpolation_or_padding_settings_for_labels_or_keypoints(setting):
                           transform_settings={0: setting})
 
 
+@pytest.mark.parametrize('ignore_state', [True, False])
+@pytest.mark.parametrize('pipeline', [True, False])
+def test_matrix_transforms_state_reset(img_5x5, ignore_state, pipeline):
+    n_iter = 50
+    if pipeline:
+        ppl = slc.Stream([
+            slt.RandomRotate(rotation_range=(-180, 180), p=1, ignore_state=ignore_state),
+            slt.PadTransform(pad_to=(10, 10)),
+        ])
+    else:
+        ppl = slt.RandomRotate(rotation_range=(-180, 180), p=1, ignore_state=ignore_state)
+
+    img_test = img_5x5.copy()
+    img_test[0, 0] = 1
+    random.seed(42)
+
+    trf_not_eq = 0
+    imgs_not_eq = 0
+    for i in range(n_iter):
+        dc1 = sld.DataContainer((img_test.copy(),), 'I')
+        dc2 = sld.DataContainer((img_test.copy(),), 'I')
+
+        dc1_res = ppl(dc1).data[0].squeeze()
+        if pipeline:
+            trf_state1 = ppl.transforms[0].state_dict['transform_matrix_corrected']
+        else:
+            trf_state1 = ppl.state_dict['transform_matrix_corrected']
+
+        dc2_res = ppl(dc2).data[0].squeeze()
+        if pipeline:
+            trf_state2 = ppl.transforms[0].state_dict['transform_matrix_corrected']
+        else:
+            trf_state2 = ppl.state_dict['transform_matrix_corrected']
+
+        if not np.array_equal(trf_state1, trf_state2):
+            trf_not_eq += 1
+
+        if not np.array_equal(dc1_res, dc2_res):
+            imgs_not_eq += 1
+
+    random.seed(None)
+    assert trf_not_eq > n_iter//2
+    assert imgs_not_eq > n_iter//2
+
+
+@pytest.mark.parametrize('pipeline', [True, False])
+def test_matrix_transforms_use_cache_for_different_dc_items_raises_error(img_5x5, mask_3x4, pipeline):
+    dc = sld.DataContainer((img_5x5, mask_3x4), 'IM')
+    if pipeline:
+        ppl = slc.Stream([
+            slt.RandomRotate(rotation_range=(-180, 180), p=1, ignore_state=False),
+            slt.PadTransform(pad_to=(10, 10)),
+        ])
+    else:
+        ppl = slt.RandomRotate(rotation_range=(-180, 180), p=1, ignore_state=False)
+
+    with pytest.raises(ValueError):
+        ppl(dc)

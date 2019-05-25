@@ -81,10 +81,13 @@ class RandomRotate(MatrixTransform):
         Padding mode. Check the allowed padding modes.
     p : float
         Probability of using this transform
+    ignore_state : bool
+        Whether to ignore the state. See details in the docs for `MatrixTransform`.
 
     """
-    def __init__(self, rotation_range=None, interpolation='bilinear', padding='z', p=0.5):
-        super(RandomRotate, self).__init__(interpolation=interpolation, padding=padding, p=p)
+    def __init__(self, rotation_range=None, interpolation='bilinear', padding='z', p=0.5, ignore_state=True):
+        super(RandomRotate, self).__init__(interpolation=interpolation, padding=padding,
+                                           p=p, ignore_state=ignore_state)
         if isinstance(rotation_range, (int, float)):
             rotation_range = (-rotation_range, rotation_range)
         self.__range = validate_numeric_range_parameter(rotation_range, (0, 0))
@@ -159,10 +162,13 @@ class RandomShear(MatrixTransform):
         Padding mode. Check the allowed padding modes.
     p : float
         Probability of using this transform
+    ignore_state : bool
+        Whether to ignore the state. See details in the docs for `MatrixTransform`.
 
     """
-    def __init__(self, range_x=None, range_y=None, interpolation='bilinear', padding='z', p=0.5):
-        super(RandomShear, self).__init__(p=p, padding=padding, interpolation=interpolation)
+    def __init__(self, range_x=None, range_y=None, interpolation='bilinear',
+                 padding='z', p=0.5, ignore_state=True):
+        super(RandomShear, self).__init__(p=p, padding=padding, interpolation=interpolation, ignore_state=ignore_state)
         if isinstance(range_x, (int, float)):
             range_x = (-range_x, range_x)
 
@@ -220,11 +226,13 @@ class RandomScale(MatrixTransform):
         one indicates default behavior - bilinear mode.
     p : float
         Probability of using this transform
+    ignore_state : bool
+        Whether to ignore the state. See details in the docs for `MatrixTransform`.
 
     """
-    def __init__(self, range_x=None, range_y=None, same=True, interpolation='bilinear', p=0.5):
+    def __init__(self, range_x=None, range_y=None, same=True, interpolation='bilinear', p=0.5, ignore_state=True):
 
-        super(RandomScale, self).__init__(interpolation=interpolation, padding=None, p=p)
+        super(RandomScale, self).__init__(interpolation=interpolation, padding=None, p=p, ignore_state=ignore_state)
 
         if isinstance(range_x, (int, float)):
             range_x = (min(1, range_x), max(1, range_x))
@@ -292,10 +300,12 @@ class RandomTranslate(MatrixTransform):
         Interpolation type. See allowed_interpolations in constants.
     padding: str
         Padding mode. See allowed_paddings  in constants
-    p: probability of applying this transform.
+    p: float
+        probability of applying this transform.
     """
-    def __init__(self, range_x=None, range_y=None, interpolation='bilinear', padding='z', p=0.5):
-        super(RandomTranslate, self).__init__(interpolation=interpolation, padding=padding, p=p)
+    def __init__(self, range_x=None, range_y=None, interpolation='bilinear', padding='z', p=0.5, ignore_state=True):
+        super(RandomTranslate, self).__init__(interpolation=interpolation, padding=padding,
+                                              p=p, ignore_state=ignore_state)
         if isinstance(range_x, (int, float)):
             range_x = (min(range_x, -range_x), max(range_x, -range_x))
 
@@ -348,9 +358,11 @@ class RandomProjection(MatrixTransform):
     p : float
         Probability of using this transform.
     """
-    def __init__(self, affine_transforms=None, v_range=None, interpolation='bilinear', padding='z', p=0.5):
+    def __init__(self, affine_transforms=None, v_range=None, interpolation='bilinear', padding='z',
+                 p=0.5, ignore_state=True):
 
-        super(RandomProjection, self).__init__(interpolation=interpolation, padding=padding, p=p)
+        super(RandomProjection, self).__init__(interpolation=interpolation, padding=padding,
+                                               p=p, ignore_state=ignore_state)
 
         if affine_transforms is None:
             affine_transforms = Stream([
