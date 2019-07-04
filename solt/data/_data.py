@@ -1,3 +1,4 @@
+import numpy as np
 from ..constants import allowed_types
 from ..constants import allowed_interpolations
 from ..constants import allowed_paddings
@@ -136,6 +137,14 @@ class KeyPoints(object):
     @property
     def data(self):
         return self.__data
+
+    def __getitem__(self, idx):
+        return self.__data[idx, :]
+
+    def __setitem__(self, idx, value):
+        if not isinstance(value, np.ndarray):
+            raise TypeError
+        self.__data[idx, :] = value
 
     @property
     def H(self):

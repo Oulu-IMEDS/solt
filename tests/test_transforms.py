@@ -6,7 +6,7 @@ import numpy as np
 import cv2
 import pytest
 import copy
-import itertools
+
 from .fixtures import img_2x2, img_3x3, img_3x4, img_6x6_lc, \
     mask_2x2, mask_3x4, mask_3x3, img_5x5, img_6x6, img_6x6_rgb, mask_6x6, mask_5x5, img_7x7
 
@@ -181,6 +181,10 @@ def test_shear_range_none():
     {0: {'interpolation': 'bilinear', 'padding': 'r'}},
     {0: {'interpolation': 'bicubic', 'padding': 'z'}},
     {0: {'interpolation': 'bicubic', 'padding': 'r'}},
+    {0: {'interpolation': 'area', 'padding': 'z'}},
+    {0: {'interpolation': 'area', 'padding': 'r'}},
+    {0: {'interpolation': 'lanczos', 'padding': 'z'}},
+    {0: {'interpolation': 'lanczos', 'padding': 'r'}},
 ])
 def test_rotate_90_img_mask_keypoints_destructive(img_3x3, mask_3x3, transform_settings, ignore_state):
     # Setting up the data
@@ -794,28 +798,35 @@ def test_reflective_padding_cant_be_applied_to_kpts():
         trf(dc)
 
 
-@pytest.mark.parametrize('crop_size', [
+@pytest.mark.parametrize('cutout_crop_size', [
     (2, 3),
     (3, 2),
     ]
 )
-def test_crop_size_is_too_big(img_2x2, crop_size):
+def test_crop_or_cutout_size_are_too_big(img_2x2, cutout_crop_size):
     dc = sld.DataContainer((img_2x2,), 'I')
-    trf = slt.CropTransform(crop_size=crop_size)
+    trf = slt.CropTransform(crop_size=cutout_crop_size)
+    with pytest.raises(ValueError):
+        trf(dc)
+
+    trf = slt.ImageCutOut(p=1, cutout_size=cutout_crop_size)
     with pytest.raises(ValueError):
         trf(dc)
 
 
-@pytest.mark.parametrize('crop_size', [
+@pytest.mark.parametrize('cutout_crop_size', [
     '123',
     2.5,
     (2.5, 2),
     (2, 2.2)
 ]
 )
-def test_wrong_crop_size_types(crop_size):
+def test_wrong_crop_size_types(cutout_crop_size):
     with pytest.raises(TypeError):
-        slt.CropTransform(crop_size=crop_size)
+        slt.CropTransform(crop_size=cutout_crop_size)
+
+    with pytest.raises(TypeError):
+        slt.ImageCutOut(cutout_size=cutout_crop_size)
 
 
 @pytest.mark.parametrize('salt_p', [
@@ -1090,3 +1101,67 @@ def test_different_interpolations_per_item_per_transform(img_6x6, transform_sett
         interp = allowed_interpolations[transform_settings[0]['interpolation'][0]]
     assert np.array_equal(cv2.resize(img_6x6, (10, 15), interpolation=interp).reshape(15, 10, 1), dc_res.data[0])
 
+
+@pytest.mark.parametrize('img, expected', [
+    (img_7x7(), np.zeros((7, 7, 1), dtype=np.uint8)),
+    (img_6x6(), np.zeros((6, 6, 1), dtype=np.uint8)),
+    (img_6x6_rgb(), np.zeros((6, 6, 3), dtype=np.uint8)),
+])
+def test_cutout_blacks_out_image(img, expected):
+    dc = sld.DataContainer((img,), 'I')
+    trf = slc.Stream([
+        slt.ImageCutOut(p=1, cutout_size=6)
+    ])
+
+    dc_res = trf(dc)
+
+    assert np.array_equal(expected, dc_res.data[0])
+
+
+def test_cutout_1x1_blacks_corner_pixels_2x2_img(img_2x2):
+    dc = sld.DataContainer((img_2x2.copy(),), 'I')
+    trf = slc.Stream([
+        slt.ImageCutOut(p=1, cutout_size=1)
+    ])
+    dc_res = trf(dc)
+
+    equal = 0
+    for i in range(2):
+        for j in range(2):
+            tmp_opt = img_2x2.copy()
+            tmp_opt[i, j] = 0
+            if np.array_equal(dc_res.data[0], tmp_opt):
+                equal += 1
+
+    assert equal == 1
+
+
+@pytest.mark.parametrize('jitter_x,jitter_y,exp_x,exp_y', [
+    (-0.5, -0.5, 0, 0),
+    (-0.5, 0.5, 0, 1),
+    (0.5, 0.5, 1, 1),
+    (0, 0, 1, 1),
+])
+def test_keypoint_jitter_works_correctly(jitter_x, jitter_y, exp_x, exp_y):
+    kpts_data = np.array([[1, 1], ]).reshape((1, 2))
+    kpts = sld.KeyPoints(kpts_data.copy(), 2, 2)
+
+    dc = sld.DataContainer((kpts,), 'P')
+    trf = slc.Stream([
+        slt.KeypointsJitter(p=1, dx_range=(jitter_x, jitter_x), dy_range=(jitter_y, jitter_y))
+    ])
+    dc_res = trf(dc)
+
+    assert np.array_equal(dc_res.data[0].data, np.array([exp_x, exp_y]).reshape((1, 2)))
+
+
+def test_keypoint_jitter_does_not_change_img_mask_or_target(img_3x3, mask_3x3):
+    dc = sld.DataContainer((img_3x3.copy(), mask_3x3.copy(), 1), 'IML')
+    trf = slc.Stream([
+        slt.KeypointsJitter(p=1, dx_range=(-0.2, 0.2), dy_range=(-0.2, 0.2))
+    ])
+    dc_res = trf(dc)
+
+    assert np.array_equal(dc_res.data[0], img_3x3)
+    assert np.array_equal(dc_res.data[1], mask_3x3)
+    assert np.array_equal(dc_res.data[2], 1)

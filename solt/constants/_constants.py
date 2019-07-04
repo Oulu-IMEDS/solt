@@ -2,7 +2,11 @@ import cv2
 import numpy as np
 
 allowed_paddings = {'z': cv2.BORDER_CONSTANT, 'r': cv2.BORDER_REFLECT_101}
-allowed_interpolations = {'bilinear': cv2.INTER_LINEAR, 'bicubic': cv2.INTER_CUBIC, 'nearest': cv2.INTER_NEAREST}
+allowed_interpolations = {'bilinear': cv2.INTER_LINEAR,
+                          'bicubic': cv2.INTER_CUBIC,
+                          'nearest': cv2.INTER_NEAREST,
+                          'area': cv2.INTER_AREA,
+                          'lanczos': cv2.INTER_LANCZOS4}
 allowed_crops = {'c', 'r'}
 allowed_types = {'I', 'M', 'P', 'L'}
 allowed_blurs = {'g', 'm'}
