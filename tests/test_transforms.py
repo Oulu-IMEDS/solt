@@ -181,6 +181,10 @@ def test_shear_range_none():
     {0: {'interpolation': 'bilinear', 'padding': 'r'}},
     {0: {'interpolation': 'bicubic', 'padding': 'z'}},
     {0: {'interpolation': 'bicubic', 'padding': 'r'}},
+    {0: {'interpolation': 'area', 'padding': 'z'}},
+    {0: {'interpolation': 'area', 'padding': 'r'}},
+    {0: {'interpolation': 'lanczos', 'padding': 'z'}},
+    {0: {'interpolation': 'lanczos', 'padding': 'r'}},
 ])
 def test_rotate_90_img_mask_keypoints_destructive(img_3x3, mask_3x3, transform_settings, ignore_state):
     # Setting up the data
