@@ -482,3 +482,15 @@ def test_matrix_transforms_use_cache_for_different_dc_items_raises_error(img_5x5
 
     with pytest.raises(ValueError):
         ppl(dc)
+
+
+def test_keypoints_get_set():
+    kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
+    kpts = sld.KeyPoints(kpts_data, 3, 4)
+
+    assert np.array_equal(kpts[0], np.array([0, 0]))
+    kpts[0] = np.array([2, 2])
+    assert np.array_equal(kpts[0], np.array([2, 2]))
+
+    with pytest.raises(TypeError):
+        kpts[0] = [2, 2]
