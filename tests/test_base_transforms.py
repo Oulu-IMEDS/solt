@@ -61,7 +61,11 @@ def test_transform_returns_original_data_if_use_transform_is_false(img_2x2, trf)
     np.testing.assert_array_equal(res.data[0], img_2x2)
 
 
-@pytest.mark.parametrize('trf', filter_trfs(filter_trfs(all_trfs_solt, 'data_indices'), 'p'))
+@pytest.mark.parametrize('trf', [
+    slt.RandomFlip,
+    slt.ImageRandomHSV,
+    slt.ImageRandomBrightness,
+])
 def test_transform_returns_original_data_if_not_in_specified_indices(trf, img_3x3_rgb):
     img_3x3 = img_3x3_rgb*128
     kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
@@ -73,6 +77,9 @@ def test_transform_returns_original_data_if_not_in_specified_indices(trf, img_3x
         kwargs["gain_range"] = (0.7, 0.9)
     if class_accepts(trf, 'brightness_range'):
         kwargs["brightness_range"] = (10, 20)
+    if class_accepts(trf, 'h_range'):
+        kwargs["h_range"] = (50, 50)
+        kwargs["s_range"] = (50, 50)
     if class_accepts(trf, 'h_range'):
         kwargs["h_range"] = (50, 50)
         kwargs["s_range"] = (50, 50)
