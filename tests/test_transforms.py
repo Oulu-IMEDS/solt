@@ -810,16 +810,19 @@ def test_crop_or_cutout_size_are_too_big(img_2x2, cutout_crop_size):
         trf(dc)
 
 
-@pytest.mark.parametrize('crop_size', [
+@pytest.mark.parametrize('cutout_crop_size', [
     '123',
     2.5,
     (2.5, 2),
     (2, 2.2)
 ]
 )
-def test_wrong_crop_size_types(crop_size):
+def test_wrong_crop_size_types(cutout_crop_size):
     with pytest.raises(TypeError):
-        slt.CropTransform(crop_size=crop_size)
+        slt.CropTransform(crop_size=cutout_crop_size)
+
+    with pytest.raises(TypeError):
+        slt.ImageCutOut(cutout_size=cutout_crop_size)
 
 
 @pytest.mark.parametrize('salt_p', [

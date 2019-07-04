@@ -713,8 +713,7 @@ class ImageCutOut(ImageTransform, DataDependentSamplingTransform):
     p : float
         Probability of applying this transform,
     cutout_size : tuple or int or None
-        Gain of the noise. Final image is created as (1-gain)*img + gain*noise.
-        If float, then gain_range = (0, gain_range). If None, then gain_range=(0, 0).
+        The size of the cutout. If None, then it is equal to 2.
     data_indices : tuple or None
         Indices of the images within the data container to which this transform needs to be applied.
         Every element within the tuple must be integer numbers.
@@ -724,6 +723,13 @@ class ImageCutOut(ImageTransform, DataDependentSamplingTransform):
 
     def __init__(self, p=0.5, cutout_size=2, data_indices=None):
         super(ImageCutOut, self).__init__(p=p, data_indices=data_indices)
+        if not isinstance(cutout_size, int) and not isinstance(cutout_size, tuple):
+            raise TypeError
+
+        if isinstance(cutout_size, tuple):
+            if not isinstance(cutout_size[0], int) or not isinstance(cutout_size[1], int):
+                raise TypeError
+
         if isinstance(cutout_size, int):
             cutout_size = (cutout_size, cutout_size)
 
