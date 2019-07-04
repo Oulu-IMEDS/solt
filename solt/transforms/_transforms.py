@@ -612,7 +612,7 @@ class CropTransform(DataDependentSamplingTransform):
 
     def __crop_img_or_mask(self, img_mask):
         return img_mask[self.state_dict['y']:self.state_dict['y'] + self.crop_size[1],
-               self.state_dict['x']:self.state_dict['x'] + self.crop_size[0]]
+                        self.state_dict['x']:self.state_dict['x'] + self.crop_size[0]]
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
@@ -1092,6 +1092,19 @@ class ImageColorTransform(ImageTransform):
 
 
 class KeypointsJitter(DataDependentSamplingTransform):
+    """
+    Applies the jittering to the keypoints in X- and Y-durections
+
+    Parameters
+    ----------
+    p : float
+        Probability of applying the transform
+    dx_range: None or int or tuple of int
+        Jittering across X-axis. Valid range is (-1, 1)
+    dy_range: None or int or tuple of int
+        Jittering across Y-axis. Valid range is (-1, 1)
+
+    """
     def __init__(self, p=0.5, dx_range=None, dy_range=None):
         super(KeypointsJitter, self).__init__(data_indices=None, p=p)
 
@@ -1119,8 +1132,8 @@ class KeypointsJitter(DataDependentSamplingTransform):
         for j in range(pts.data.shape[0]):
             dx = int(random.uniform(self._dx_range[0], self._dx_range[1]) * w)
             dy = int(random.uniform(self._dy_range[0], self._dy_range[1]) * h)
-            pts_data[j, 0] = min(pts_data[j, 0] + dx, w-1)
-            pts_data[j, 1] = min(pts_data[j, 1] + dy, h-1)
+            pts_data[j, 0] = min(pts_data[j, 0] + dx, w - 1)
+            pts_data[j, 1] = min(pts_data[j, 1] + dy, h - 1)
 
         return KeyPoints(pts_data, h, w)
 
