@@ -1089,3 +1089,40 @@ class ImageColorTransform(ImageTransform):
                 return img
             elif img.shape[-1] == 3:
                 return cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+
+
+class KeypointsJitter(DataDependentSamplingTransform):
+    def __init__(self, p=0.5, dx_range=None, dy_range=None):
+        super(KeypointsJitter, self).__init__(data_indices=None, p=p)
+
+        self._dx_range = validate_numeric_range_parameter(dx_range, (0, 0), -1, 1)
+        self._dy_range = validate_numeric_range_parameter(dy_range, (0, 0), -1, 1)
+
+    def sample_transform(self):
+        raise NotImplementedError
+
+    def sample_transform_from_data(self, data: DataContainer):
+        pass
+
+    @img_shape_checker
+    def _apply_img(self, img, settings: dict):
+        return img
+
+    def _apply_mask(self, mask, settings: dict):
+        return mask
+
+    def _apply_pts(self, pts: KeyPoints, settings: dict):
+        pts_data = pts.data.copy()
+        h = pts.H
+        w = pts.W
+
+        for j in range(pts.data.shape[0]):
+            dx = int(random.uniform(self._dx_range[0], self._dx_range[1]) * w)
+            dy = int(random.uniform(self._dy_range[0], self._dy_range[1]) * h)
+            pts_data[j, 0] = min(pts_data[j, 0] + dx, w-1)
+            pts_data[j, 1] = min(pts_data[j, 1] + dy, h-1)
+
+        return KeyPoints(pts_data, h, w)
+
+    def _apply_labels(self, labels, settings: dict):
+        return labels

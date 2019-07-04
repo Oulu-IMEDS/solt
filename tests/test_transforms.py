@@ -1134,3 +1134,34 @@ def test_cutout_1x1_blacks_corner_pixels_2x2_img(img_2x2):
                 equal += 1
 
     assert equal == 1
+
+
+@pytest.mark.parametrize('jitter_x,jitter_y,exp_x,exp_y', [
+    (-0.5, -0.5, 0, 0),
+    (-0.5, 0.5, 0, 1),
+    (0.5, 0.5, 1, 1),
+    (0, 0, 1, 1),
+])
+def test_keypoint_jitter_works_correctly(jitter_x, jitter_y, exp_x, exp_y):
+    kpts_data = np.array([[1, 1], ]).reshape((1, 2))
+    kpts = sld.KeyPoints(kpts_data.copy(), 2, 2)
+
+    dc = sld.DataContainer((kpts,), 'P')
+    trf = slc.Stream([
+        slt.KeypointsJitter(p=1, dx_range=(jitter_x, jitter_x), dy_range=(jitter_y, jitter_y))
+    ])
+    dc_res = trf(dc)
+
+    assert np.array_equal(dc_res.data[0].data, np.array([exp_x, exp_y]).reshape((1, 2)))
+
+
+def test_keypoint_jitter_does_not_change_img_mask_or_target(img_3x3, mask_3x3):
+    dc = sld.DataContainer((img_3x3.copy(), mask_3x3.copy(), 1), 'IML')
+    trf = slc.Stream([
+        slt.KeypointsJitter(p=1, dx_range=(-0.2, 0.2), dy_range=(-0.2, 0.2))
+    ])
+    dc_res = trf(dc)
+
+    assert np.array_equal(dc_res.data[0], img_3x3)
+    assert np.array_equal(dc_res.data[1], mask_3x3)
+    assert np.array_equal(dc_res.data[2], 1)
