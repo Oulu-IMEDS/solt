@@ -78,6 +78,22 @@ def img_3x3():
 
 
 @pytest.fixture
+def img_3x3_rgb():
+    """
+    Generates a grayscale image 3x4
+
+    Returns
+    -------
+    out : ndarray
+        3x4x1 uint8 image
+    """
+    img = np.array([[0, 1, 1],
+                    [1, 0, 1],
+                    [1, 1, 1]]).reshape((3, 3, 1)).astype(np.uint8)
+    return np.dstack((img, img, img))
+
+
+@pytest.fixture
 def mask_3x3():
     """
     Generates a image+mask  3x4
@@ -166,7 +182,6 @@ def img_7x7():
     img[0, :] = 0
     img[-1, :] = 0
     return img.astype(np.uint8)*255
-
 
 
 @pytest.fixture

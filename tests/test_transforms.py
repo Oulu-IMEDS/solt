@@ -6,7 +6,7 @@ import numpy as np
 import cv2
 import pytest
 import copy
-import itertools
+
 from .fixtures import img_2x2, img_3x3, img_3x4, img_6x6_lc, \
     mask_2x2, mask_3x4, mask_3x3, img_5x5, img_6x6, img_6x6_rgb, mask_6x6, mask_5x5, img_7x7
 
@@ -794,14 +794,18 @@ def test_reflective_padding_cant_be_applied_to_kpts():
         trf(dc)
 
 
-@pytest.mark.parametrize('crop_size', [
+@pytest.mark.parametrize('cutout_crop_size', [
     (2, 3),
     (3, 2),
     ]
 )
-def test_crop_size_is_too_big(img_2x2, crop_size):
+def test_crop_or_cutout_size_are_too_big(img_2x2, cutout_crop_size):
     dc = sld.DataContainer((img_2x2,), 'I')
-    trf = slt.CropTransform(crop_size=crop_size)
+    trf = slt.CropTransform(crop_size=cutout_crop_size)
+    with pytest.raises(ValueError):
+        trf(dc)
+
+    trf = slt.ImageCutOut(p=1, cutout_size=cutout_crop_size)
     with pytest.raises(ValueError):
         trf(dc)
 
@@ -1090,3 +1094,36 @@ def test_different_interpolations_per_item_per_transform(img_6x6, transform_sett
         interp = allowed_interpolations[transform_settings[0]['interpolation'][0]]
     assert np.array_equal(cv2.resize(img_6x6, (10, 15), interpolation=interp).reshape(15, 10, 1), dc_res.data[0])
 
+
+@pytest.mark.parametrize('img, expected', [
+    (img_7x7(), np.zeros((7, 7, 1), dtype=np.uint8)),
+    (img_6x6(), np.zeros((6, 6, 1), dtype=np.uint8)),
+    (img_6x6_rgb(), np.zeros((6, 6, 3), dtype=np.uint8)),
+])
+def test_cutout_blacks_out_image(img, expected):
+    dc = sld.DataContainer((img,), 'I')
+    trf = slc.Stream([
+        slt.ImageCutOut(p=1, cutout_size=6)
+    ])
+
+    dc_res = trf(dc)
+
+    assert np.array_equal(expected, dc_res.data[0])
+
+
+def test_cutout_1x1_blacks_corner_pixels_2x2_img(img_2x2):
+    dc = sld.DataContainer((img_2x2.copy(),), 'I')
+    trf = slc.Stream([
+        slt.ImageCutOut(p=1, cutout_size=1)
+    ])
+    dc_res = trf(dc)
+
+    equal = 0
+    for i in range(2):
+        for j in range(2):
+            tmp_opt = img_2x2.copy()
+            tmp_opt[i, j] = 0
+            if np.array_equal(dc_res.data[0], tmp_opt):
+                equal += 1
+
+    assert equal == 1

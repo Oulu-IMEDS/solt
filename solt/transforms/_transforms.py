@@ -1,17 +1,17 @@
-import numpy as np
-import cv2
 import random
 
-from ..constants import allowed_paddings, allowed_crops, \
-    dtypes_max, allowed_blurs, allowed_color_conversions, allowed_interpolations
-from ..utils import img_shape_checker
-from ..data import KeyPoints, DataContainer
+import cv2
+import numpy as np
+
 from ..base_transforms import BaseTransform, MatrixTransform, \
     PaddingPropertyHolder, DataDependentSamplingTransform, InterpolationPropertyHolder
-
 from ..base_transforms import ImageTransform
-from ..utils import validate_parameter, validate_numeric_range_parameter
+from ..constants import allowed_paddings, allowed_crops, \
+    dtypes_max, allowed_blurs, allowed_color_conversions, allowed_interpolations
 from ..core import Stream
+from ..data import KeyPoints, DataContainer
+from ..utils import img_shape_checker
+from ..utils import validate_parameter, validate_numeric_range_parameter
 
 
 class RandomFlip(BaseTransform):
@@ -25,6 +25,7 @@ class RandomFlip(BaseTransform):
         Axis of flip. Here, 1 stands for horizontal flipping, 0 stands for the vertical one. -1 stands for
         both axes.
     """
+
     def __init__(self, p=0.5, axis=1, data_indices=None):
 
         super(RandomFlip, self).__init__(p=p, data_indices=data_indices)
@@ -85,6 +86,7 @@ class RandomRotate(MatrixTransform):
         Whether to ignore the state. See details in the docs for `MatrixTransform`.
 
     """
+
     def __init__(self, rotation_range=None, interpolation='bilinear', padding='z', p=0.5, ignore_state=True):
         super(RandomRotate, self).__init__(interpolation=interpolation, padding=padding,
                                            p=p, ignore_state=ignore_state)
@@ -130,6 +132,7 @@ class RandomRotate90(RandomRotate):
         Probability of using this transform
 
     """
+
     def __init__(self, k=0, p=0.5):
         if not isinstance(k, int):
             raise TypeError
@@ -166,6 +169,7 @@ class RandomShear(MatrixTransform):
         Whether to ignore the state. See details in the docs for `MatrixTransform`.
 
     """
+
     def __init__(self, range_x=None, range_y=None, interpolation='bilinear',
                  padding='z', p=0.5, ignore_state=True):
         super(RandomShear, self).__init__(p=p, padding=padding, interpolation=interpolation, ignore_state=ignore_state)
@@ -230,6 +234,7 @@ class RandomScale(MatrixTransform):
         Whether to ignore the state. See details in the docs for `MatrixTransform`.
 
     """
+
     def __init__(self, range_x=None, range_y=None, same=True, interpolation='bilinear', p=0.5, ignore_state=True):
 
         super(RandomScale, self).__init__(interpolation=interpolation, padding=None, p=p, ignore_state=ignore_state)
@@ -303,6 +308,7 @@ class RandomTranslate(MatrixTransform):
     p: float
         probability of applying this transform.
     """
+
     def __init__(self, range_x=None, range_y=None, interpolation='bilinear', padding='z', p=0.5, ignore_state=True):
         super(RandomTranslate, self).__init__(interpolation=interpolation, padding=padding,
                                               p=p, ignore_state=ignore_state)
@@ -358,6 +364,7 @@ class RandomProjection(MatrixTransform):
     p : float
         Probability of using this transform.
     """
+
     def __init__(self, affine_transforms=None, v_range=None, interpolation='bilinear', padding='z',
                  p=0.5, ignore_state=True):
 
@@ -417,6 +424,7 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
         Padding type.
 
     """
+
     def __init__(self, pad_to, padding=None):
         DataDependentSamplingTransform.__init__(self, p=1)
         PaddingPropertyHolder.__init__(self, padding)
@@ -498,6 +506,7 @@ class ResizeTransform(BaseTransform, InterpolationPropertyHolder):
         Interpolation type.
 
     """
+
     def __init__(self, resize_to, interpolation='bilinear'):
         BaseTransform.__init__(self, p=1)
         InterpolationPropertyHolder.__init__(self, interpolation=interpolation)
@@ -557,6 +566,7 @@ class CropTransform(DataDependentSamplingTransform):
         Crop mode. Can be either 'c' - center or 'r' - random.
 
     """
+
     def __init__(self, crop_size, crop_mode='c'):
         super(CropTransform, self).__init__(p=1, data_indices=None)
 
@@ -602,7 +612,7 @@ class CropTransform(DataDependentSamplingTransform):
 
     def __crop_img_or_mask(self, img_mask):
         return img_mask[self.state_dict['y']:self.state_dict['y'] + self.crop_size[1],
-                        self.state_dict['x']:self.state_dict['x'] + self.crop_size[0]]
+               self.state_dict['x']:self.state_dict['x'] + self.crop_size[0]]
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
@@ -630,7 +640,7 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
     Parameters
     ----------
     p : float
-        Probability of applying this transfor,
+        Probability of applying this transform,
     gain_range : tuple or float or None
         Gain of the noise. Final image is created as (1-gain)*img + gain*noise.
         If float, then gain_range = (0, gain_range). If None, then gain_range=(0, 0).
@@ -640,6 +650,7 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
         If None, then the transform will be applied to all the images withing the DataContainer.
 
     """
+
     def __init__(self, p=0.5, gain_range=0.1, data_indices=None):
         super(ImageAdditiveGaussianNoise, self).__init__(p=p, data_indices=data_indices)
         if isinstance(gain_range, float):
@@ -692,6 +703,54 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
         return pts
 
 
+class ImageCutOut(ImageTransform, DataDependentSamplingTransform):
+    """Does cutout augmentation.
+
+    https://arxiv.org/abs/1708.04552
+
+    Parameters
+    ----------
+    p : float
+        Probability of applying this transform,
+    cutout_size : tuple or int or None
+        Gain of the noise. Final image is created as (1-gain)*img + gain*noise.
+        If float, then gain_range = (0, gain_range). If None, then gain_range=(0, 0).
+    data_indices : tuple or None
+        Indices of the images within the data container to which this transform needs to be applied.
+        Every element within the tuple must be integer numbers.
+        If None, then the transform will be applied to all the images withing the DataContainer.
+
+    """
+
+    def __init__(self, p=0.5, cutout_size=2, data_indices=None):
+        super(ImageCutOut, self).__init__(p=p, data_indices=data_indices)
+        if isinstance(cutout_size, int):
+            cutout_size = (cutout_size, cutout_size)
+
+        self._cutout_size = cutout_size
+
+    def sample_transform(self):
+        raise NotImplementedError
+
+    def sample_transform_from_data(self, data: DataContainer):
+        h, w = DataDependentSamplingTransform.sample_transform_from_data(self, data)
+
+        if self._cutout_size[0] > w or self._cutout_size[1] > h:
+            raise ValueError
+
+        self.state_dict['x'] = int(random.random() * (w - self._cutout_size[0]))
+        self.state_dict['y'] = int(random.random() * (h - self._cutout_size[1]))
+
+    def __cutout_img(self, img):
+        img[self.state_dict['y']:self.state_dict['y'] + self._cutout_size[1],
+            self.state_dict['x']:self.state_dict['x'] + self._cutout_size[0]] = 0
+        return img
+
+    @img_shape_checker
+    def _apply_img(self, img: np.ndarray, settings: dict):
+        return self.__cutout_img(img)
+
+
 class ImageSaltAndPepper(ImageTransform, DataDependentSamplingTransform):
     """Adds salt and pepper noise to an image. Other types of data than the image are ignored.
 
@@ -711,6 +770,7 @@ class ImageSaltAndPepper(ImageTransform, DataDependentSamplingTransform):
         If None, then the transform will be applied to all the images withing the DataContainer.
 
     """
+
     def __init__(self, p=0.5, gain_range=0.1, salt_p=0.5, data_indices=None):
         super(ImageSaltAndPepper, self).__init__(p=p, data_indices=data_indices)
         if not isinstance(gain_range, float) and not isinstance(gain_range, tuple):
@@ -770,6 +830,7 @@ class ImageGammaCorrection(ImageTransform):
         If None, then the transform will be applied to all the images withing the DataContainer.
 
     """
+
     def __init__(self, p=0.5, gamma_range=0.1, data_indices=None):
         super(ImageGammaCorrection, self).__init__(p=p, data_indices=data_indices)
 
@@ -809,6 +870,7 @@ class ImageRandomContrast(ImageTransform):
         If None, then the transform will be applied to all the images withing the DataContainer.
 
     """
+
     def __init__(self, p=0.5, contrast_range=0.1, data_indices=None):
         super(ImageRandomContrast, self).__init__(p=p, data_indices=data_indices)
 
@@ -851,6 +913,7 @@ class ImageBlur(ImageTransform):
         If None, then the transform will be applied to all the images withing the DataContainer.
 
     """
+
     def __init__(self, p=0.5, blur_type=None, k_size=3, gaussian_sigma=None, data_indices=None):
         super(ImageBlur, self).__init__(p=p, data_indices=data_indices)
         if not isinstance(k_size, (int, tuple)):
@@ -904,6 +967,7 @@ class ImageRandomHSV(ImageTransform):
         If None, then the transform will be applied to all the images withing the DataContainer.
 
     """
+
     def __init__(self, p=0.5, h_range=None, s_range=None, v_range=None, data_indices=None):
         super(ImageRandomHSV, self).__init__(p=p, data_indices=data_indices)
         self._h_range = validate_numeric_range_parameter(h_range, (0, 0))
@@ -954,6 +1018,7 @@ class ImageRandomBrightness(ImageTransform):
         If None, then the transform will be applied to all the images withing the DataContainer.
 
     """
+
     def __init__(self, brightness_range=None, data_indices=None, p=0.5):
         super(ImageRandomBrightness, self).__init__(p=p, data_indices=data_indices)
         self._brightness_range = validate_numeric_range_parameter(brightness_range, (0, 0))
@@ -988,6 +1053,7 @@ class ImageColorTransform(ImageTransform):
         If None, then the transform will be applied to all the images withing the DataContainer.
 
     """
+
     def __init__(self, mode=None, data_indices=None):
         super(ImageColorTransform, self).__init__(p=1, data_indices=data_indices)
         self._mode = validate_parameter(mode, allowed_color_conversions, 'none', heritable=False)
@@ -1017,6 +1083,3 @@ class ImageColorTransform(ImageTransform):
                 return img
             elif img.shape[-1] == 3:
                 return cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-
-
-
