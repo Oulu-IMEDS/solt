@@ -74,3 +74,15 @@ Aleksei Tiulpin,
 Research Unit of Medical Imaging, 
 Physics and Technology, 
 University of Oulu, Finalnd.
+
+## How to cite
+```
+@misc{tiulpin2019solt,
+  author = {Tiulpin, Aleksei},
+  title = {SOLT: Streaming over Lightweight Transformations},
+  year = {2019},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/MIPT-Oulu/solt}},
+}
+```
