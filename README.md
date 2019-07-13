@@ -68,6 +68,13 @@ The last row in this image was obtained using the code snipped above:
 
 ![cat_augmentations](doc/source/_static/cat_augs.png).
 
+## Papers that use SOLT
+The aim of building SOLT was to create a tool for reproducible research. At MIPT, we use SOLT in our projects:
+
+1. https://arxiv.org/abs/1907.05089
+2. https://arxiv.org/abs/1904.06236
+
+If you use SOLT and cite it in your research, please, don't hesitate to sent an email to Aleksei Tiulpin. It will be added here.
 
 ## Author
 Aleksei Tiulpin, 
