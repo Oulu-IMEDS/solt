@@ -73,6 +73,7 @@ The aim of building SOLT was to create a tool for reproducible research. At MIPT
 
 1. https://arxiv.org/abs/1907.05089
 2. https://arxiv.org/abs/1904.06236
+3. https://arxiv.org/abs/1907.08020
 
 If you use SOLT and cite it in your research, please, don't hesitate to sent an email to Aleksei Tiulpin. It will be added here.
 
