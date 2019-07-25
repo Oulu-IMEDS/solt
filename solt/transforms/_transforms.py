@@ -2,6 +2,7 @@ import random
 
 import cv2
 import numpy as np
+from typing import Tuple
 
 from ..base_transforms import BaseTransform, MatrixTransform, \
     PaddingPropertyHolder, DataDependentSamplingTransform, InterpolationPropertyHolder
@@ -944,6 +945,21 @@ class ImageBlur(ImageTransform):
         s = random.uniform(self._gaussian_sigma[0], self._gaussian_sigma[1])
         self.state_dict = {'k_size': k, 'sigma': s}
 
+        if self._blur == 'mo':
+            if self._k_size[0] <= 2:
+                raise ValueError('Lower bound for blur kernel size cannot be less than 2 for motion blur')
+
+            kernel = np.zeros((k, k), dtype=np.uint8)
+            xs, xe = random.randint(0, k - 1), random.randint(0, k - 1)
+
+            if xs == xe:
+                ys, ye = random.sample(range(k), 2)
+            else:
+                ys, ye = random.randint(0, k - 1), random.randint(0, k - 1)
+            cv2.line(kernel, (xs, ys), (xe, ye), 1, thickness=1)
+            kernel = kernel / np.sum(kernel)
+            self.state_dict.update({'motion_kernel': kernel})
+
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
         if self._blur == 'g':
@@ -952,6 +968,9 @@ class ImageBlur(ImageTransform):
                                     sigmaX=self.state_dict['sigma'])
         if self._blur == 'm':
             return cv2.medianBlur(img, ksize=self.state_dict['k_size'])
+
+        if self._blur == 'mo':
+            return cv2.filter2D(img, -1, self.state_dict['motion_kernel'])
 
 
 class ImageRandomHSV(ImageTransform):
@@ -1099,9 +1118,9 @@ class KeypointsJitter(DataDependentSamplingTransform):
     ----------
     p : float
         Probability of applying the transform
-    dx_range: None or int or tuple of int
+    dx_range: None or float or tuple of float
         Jittering across X-axis. Valid range is (-1, 1)
-    dy_range: None or int or tuple of int
+    dy_range: None or float or tuple of float
         Jittering across Y-axis. Valid range is (-1, 1)
 
     """

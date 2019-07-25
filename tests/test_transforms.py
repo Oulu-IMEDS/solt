@@ -6,6 +6,7 @@ import numpy as np
 import cv2
 import pytest
 import copy
+import random
 
 from .fixtures import img_2x2, img_3x3, img_3x4, img_6x6_lc, \
     mask_2x2, mask_3x4, mask_3x3, img_5x5, img_6x6, img_6x6_rgb, mask_6x6, mask_5x5, img_7x7
@@ -752,7 +753,8 @@ def test_translate_range_from_number(translate, expected):
     (slt.ImageRandomContrast, {'p': 1}),
     (slt.ImageRandomBrightness, {'p': 1}),
     (slt.ImageBlur, {'p': 1, 'blur_type': 'g'}),
-    (slt.ImageBlur, {'p': 1, 'blur_type': 'm'})
+    (slt.ImageBlur, {'p': 1, 'blur_type': 'm'}),
+    (slt.ImageBlur, {'p': 1, 'blur_type': 'mo'})
     ]
 )
 def test_image_trfs_dont_change_mask_labels_kpts(trf_cls, trf_params, img_3x4, mask_3x4):
@@ -957,12 +959,13 @@ def test_lut_transforms_raise_errors(value_range, to_catch):
     (None, (1, 3, 5,), '123', TypeError),
     (None, (1, 3, 5,), (0, -4), ValueError),
     (None, (1, 3, 5,), (1, '34'), TypeError),
+    ('mo', (1, 1), 1, ValueError),
 ]
 )
 def test_blur_arguments(blur_t, k_size, sigma, to_catch):
     with pytest.raises(to_catch):
-        slt.ImageBlur(blur_type=blur_t, k_size=k_size, gaussian_sigma=sigma)
-
+        b = slt.ImageBlur(blur_type=blur_t, k_size=k_size, gaussian_sigma=sigma)
+        b.sample_transform()
 
 @pytest.mark.parametrize('blur_t, k_size, sigma', [
     (None, (1, 3), None),
@@ -1165,3 +1168,15 @@ def test_keypoint_jitter_does_not_change_img_mask_or_target(img_3x3, mask_3x3):
     assert np.array_equal(dc_res.data[0], img_3x3)
     assert np.array_equal(dc_res.data[1], mask_3x3)
     assert np.array_equal(dc_res.data[2], 1)
+
+
+@pytest.mark.parametrize('ks', [3, (3, 3), 5, (5, 5)])
+def test_motion_blur_samples_transform(ks):
+    blur = slt.ImageBlur(p=1, blur_type='mo', k_size=ks)
+    random.seed(42)
+    for i in range(100):
+        blur.sample_transform()
+        if isinstance(ks, int):
+            assert blur.state_dict['motion_kernel'].shape[0] == ks
+        else:
+            assert blur.state_dict['motion_kernel'].shape == ks
