@@ -2,7 +2,6 @@ import random
 
 import cv2
 import numpy as np
-from typing import Tuple
 
 from ..base_transforms import BaseTransform, MatrixTransform, \
     PaddingPropertyHolder, DataDependentSamplingTransform, InterpolationPropertyHolder
