@@ -1180,3 +1180,23 @@ def test_motion_blur_samples_transform(ks):
             assert blur.state_dict['motion_kernel'].shape[0] == ks
         else:
             assert blur.state_dict['motion_kernel'].shape == ks
+
+
+@pytest.mark.parametrize('quality, different', [(None, False),
+                                                (90, True),
+                                                (0.9, True),
+                                                ((50, 90), True),
+                                                ((0.5, 0.9), True),
+                                                (50, True)])
+def test_jpeg_transform(img_6x6_rgb, quality, different):
+    trf = slt.ImageJPEGCompression(quality_range=quality, p=1)
+    dc = sld.DataContainer((img_6x6_rgb.copy(), ), 'I')
+    dc_res = trf(dc)
+
+    assert (not np.array_equal(img_6x6_rgb, dc_res.data[0])) == different
+
+
+@pytest.mark.parametrize('quality', ['1', (0.4, 1), (10, 20.)])
+def test_jpeg_quality_range_raises_error_when_wrong(quality):
+    with pytest.raises(TypeError):
+        slt.ImageJPEGCompression(quality_range=quality, p=1)

@@ -1157,3 +1157,55 @@ class KeypointsJitter(DataDependentSamplingTransform):
 
     def _apply_labels(self, labels, settings: dict):
         return labels
+
+
+class ImageJPEGCompression(ImageTransform):
+    """Performs random JPEG-based worsening of images.
+
+    Parameters
+    ----------
+    quality_range : float or tuple of int or int or None
+        If float, then the lower bound to sample the quality is between [quality_range*100%, 100%].
+        If tuple of int, then it directly sets the quality range.
+        If tuple of float, then the quality is sampled from [quality_range[0]*100%, quality_range[1]*100%].
+        If int, then the quality is sampled from [quality_range, 100].
+        If None, that the quality range is [100, 100]
+    data_indices : tuple or None
+        Indices of the images within the data container to which this transform needs to be applied.
+        Every element within the tuple must be integer numbers.
+        If None, then the transform will be applied to all the images withing the DataContainer.
+
+    """
+
+    def __init__(self, p=0.5, quality_range=None, data_indices=None):
+        super(ImageJPEGCompression, self).__init__(p=p, data_indices=data_indices)
+        if quality_range is None:
+            quality_range = (100, 100)
+
+        if isinstance(quality_range, int):
+            quality_range = (quality_range, 100)
+
+        if isinstance(quality_range, float):
+            quality_range = (int(quality_range * 100), 100)
+
+        if isinstance(quality_range, tuple):
+            if isinstance(quality_range[0], float) and isinstance(quality_range[1], float):
+                quality_range = (int(quality_range[0] * 100), int(quality_range[1] * 100))
+            elif isinstance(quality_range[0], int) and isinstance(quality_range[1], int):
+                pass
+            else:
+                raise TypeError('Wrong type of quality range!')
+        else:
+            raise TypeError('Wrong type of quality range!')
+
+        self._quality_range = validate_numeric_range_parameter(quality_range, (100, 100), 0, 100)
+
+    def sample_transform(self):
+        self.state_dict['quality'] = random.randint(self._quality_range[0], self._quality_range[0])
+
+    @img_shape_checker
+    def _apply_img(self, img: np.ndarray, settings: dict):
+        if self.state_dict['quality'] == 100:
+            return img
+        _, encoded_img = cv2.imencode('.jpg', img, (cv2.IMWRITE_JPEG_QUALITY, self.state_dict['quality']))
+        return cv2.imdecode(encoded_img, cv2.IMREAD_UNCHANGED)

@@ -3,7 +3,8 @@ from ._transforms import RandomFlip, RandomRotate, \
     PadTransform, CropTransform, ImageAdditiveGaussianNoise, \
     ImageGammaCorrection, ImageSaltAndPepper, ImageBlur, \
     ImageRandomHSV, ImageColorTransform, ResizeTransform, \
-    ImageRandomContrast, ImageRandomBrightness, RandomRotate90, ImageCutOut, KeypointsJitter
+    ImageRandomContrast, ImageRandomBrightness, RandomRotate90, ImageCutOut, KeypointsJitter, \
+    ImageJPEGCompression
 
 __all__ = ['RandomFlip', 'RandomRotate', 'RandomShear',
            'RandomScale', 'RandomTranslate', 'RandomProjection',
@@ -11,4 +12,4 @@ __all__ = ['RandomFlip', 'RandomRotate', 'RandomShear',
            'ImageGammaCorrection', 'ImageSaltAndPepper', 'ImageBlur',
            'ImageRandomHSV', 'ImageColorTransform', 'ResizeTransform',
            'ImageRandomContrast', 'ImageRandomBrightness', 'RandomRotate90',
-           'ImageCutOut', 'KeypointsJitter']
+           'ImageCutOut', 'KeypointsJitter', 'ImageJPEGCompression']
