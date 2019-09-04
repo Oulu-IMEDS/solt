@@ -88,12 +88,12 @@ University of Oulu, Finalnd.
 
 ## How to cite
 ```
-@misc{tiulpin2019solt,
-  author = {Tiulpin, Aleksei},
-  title = {SOLT: Streaming over Lightweight Transformations},
-  year = {2019},
-  publisher = {GitHub},
-  journal = {GitHub repository},
-  howpublished = {\url{https://github.com/MIPT-Oulu/solt}},
+@misc{aleksei_tiulpin_2019_3351977,
+  author       = {Aleksei Tiulpin},
+  title        = {SOLT: Streaming over Lightweight Transformations},
+  month        = jul,
+  year         = 2019,
+  doi          = {10.5281/zenodo.3351977},
+  url          = {https://doi.org/10.5281/zenodo.3351977},
 }
 ```
