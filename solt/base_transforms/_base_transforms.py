@@ -308,8 +308,8 @@ class DataDependentSamplingTransform(BaseTransform):
                 h = obj.shape[0]
                 w = obj.shape[1]
             elif t == "P":
-                h = obj.H
-                w = obj.W
+                h = obj.height
+                w = obj.width
             elif t == "L":
                 continue
 
@@ -526,12 +526,12 @@ class MatrixTransform(
         """
 
     @staticmethod
-    def correct_for_frame_change(M: np.ndarray, W: int, H: int):
+    def correct_for_frame_change(transform_matrix: np.ndarray, W: int, H: int):
         """Method takes a matrix transform, and modifies its origin.
 
         Parameters
         ----------
-        M : numpy.ndarray
+        transform_matrix : numpy.ndarray
             Transform (3x3) matrix
         W : int
             Width of the coordinate frame
@@ -544,7 +544,7 @@ class MatrixTransform(
 
         """
         # First we correct the transformation so that it is performed around the origin
-        M = M.copy()
+        transform_matrix = transform_matrix.copy()
         origin = [(W - 1) // 2, (H - 1) // 2]
         T_origin = np.array([1, 0, -origin[0], 0, 1, -origin[1], 0, 0, 1]).reshape(
             (3, 3)
@@ -553,7 +553,7 @@ class MatrixTransform(
         T_origin_back = np.array([1, 0, origin[0], 0, 1, origin[1], 0, 0, 1]).reshape(
             (3, 3)
         )
-        M = T_origin_back @ M @ T_origin
+        transform_matrix = T_origin_back @ transform_matrix @ T_origin
 
         # Now, if we think of scaling, rotation and translation, the image gets increased when we
         # apply any transform.
@@ -562,7 +562,7 @@ class MatrixTransform(
         # The core idea is to transform the coordinate grid
         # left top, left bottom, right bottom, right top
         coord_frame = np.array([[0, 0, 1], [0, H, 1], [W, H, 1], [W, 0, 1]])
-        new_frame = np.dot(M, coord_frame.T).T
+        new_frame = np.dot(transform_matrix, coord_frame.T).T
         new_frame[:, 0] /= new_frame[:, -1]
         new_frame[:, 1] /= new_frame[:, -1]
         new_frame = new_frame[:, :-1]
@@ -579,10 +579,10 @@ class MatrixTransform(
         W_new = int(np.round(new_frame[:, 0].max()))
         H_new = int(np.round(new_frame[:, 1].max()))
 
-        M[0, -1] += W_new // 2 - origin[0]
-        M[1, -1] += H_new // 2 - origin[1]
+        transform_matrix[0, -1] += W_new // 2 - origin[0]
+        transform_matrix[1, -1] += H_new // 2 - origin[1]
 
-        return M, W_new, H_new
+        return transform_matrix, W_new, H_new
 
     def _apply_img_or_mask(self, img: np.ndarray, settings: dict):
         """Applies a transform to an image or mask without controlling the shapes.
@@ -734,9 +734,11 @@ class MatrixTransform(
                 transform_m_corrected,
                 w_new,
                 h_new,
-            ) = MatrixTransform.correct_for_frame_change(transform_matrix, pts.W, pts.H)
-            self.state_dict["w"] = pts.W
-            self.state_dict["h"] = pts.H
+            ) = MatrixTransform.correct_for_frame_change(
+                transform_matrix, pts.width, pts.height
+            )
+            self.state_dict["w"] = pts.width
+            self.state_dict["h"] = pts.height
 
             self.state_dict["w_new"] = w_new
             self.state_dict["h_new"] = h_new

@@ -102,27 +102,27 @@ def test_image_shape_equal_3_after_nested_flip(img_3x4):
 
 def test_create_empty_keypoints():
     kpts = sld.KeyPoints()
-    assert kpts.H is None
-    assert kpts.W is None
+    assert kpts.height is None
+    assert kpts.width is None
     assert kpts.data is None
 
 
 def test_create_4_keypoints():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
     kpts = sld.KeyPoints(kpts_data, 3, 4)
-    assert kpts.H == 3
-    assert kpts.W == 4
+    assert kpts.height == 3
+    assert kpts.width == 4
     assert np.array_equal(kpts_data, kpts.data)
 
 
 def test_create_4_keypoints_change_frame():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
     kpts = sld.KeyPoints(kpts_data, 3, 4)
-    kpts.H = 2
-    kpts.W = 2
+    kpts.height = 2
+    kpts.width = 2
 
-    assert kpts.H == 2
-    assert kpts.W == 2
+    assert kpts.height == 2
+    assert kpts.width == 2
     assert np.array_equal(kpts_data, kpts.data)
 
 
@@ -131,12 +131,12 @@ def test_create_4_keypoints_change_grid_and_frame():
     kpts = sld.KeyPoints(kpts_data, 3, 4)
 
     kpts_data_new = np.array([[0, 0], [0, 1], [1, 0], [1, 1], [0.5, 0.5]]).reshape((5, 2))
-    kpts.H = 2
-    kpts.W = 2
+    kpts.height = 2
+    kpts.width = 2
     kpts.pts = kpts_data_new
 
-    assert kpts.H == 2
-    assert kpts.W == 2
+    assert kpts.height == 2
+    assert kpts.width == 2
     assert np.array_equal(kpts_data_new, kpts.pts)
 
 
@@ -570,7 +570,7 @@ def test_data_container_from_dict_single(img_3x4, mask_3x4, order, presence):
         if isinstance(d1, np.ndarray):
             np.testing.assert_array_equal(d1, d2)
         elif isinstance(d1, sld.KeyPoints):
-            assert d1.H == d2.H and d1.W == d2.W
+            assert d1.height == d2.height and d1.width == d2.width
             np.testing.assert_array_equal(d1.data, d2.data)
         else:
             assert d1 == d2

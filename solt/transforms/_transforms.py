@@ -73,14 +73,14 @@ class RandomFlip(BaseTransform):
         # We should guarantee that we do not change the original data.
         pts_data = pts.data.copy()
         if self.__axis == 0:
-            pts_data[:, 1] = pts.H - 1 - pts_data[:, 1]
+            pts_data[:, 1] = pts.height - 1 - pts_data[:, 1]
         elif self.__axis == 1:
-            pts_data[:, 0] = pts.W - 1 - pts_data[:, 0]
+            pts_data[:, 0] = pts.width - 1 - pts_data[:, 0]
         elif self.__axis == -1:
-            pts_data[:, 1] = pts.H - 1 - pts_data[:, 1]
-            pts_data[:, 0] = pts.W - 1 - pts_data[:, 0]
+            pts_data[:, 1] = pts.height - 1 - pts_data[:, 1]
+            pts_data[:, 0] = pts.width - 1 - pts_data[:, 0]
 
-        return KeyPoints(pts=pts_data, H=pts.H, W=pts.W)
+        return KeyPoints(pts=pts_data, H=pts.height, W=pts.width)
 
 
 class RandomRotate(MatrixTransform):
@@ -567,7 +567,9 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
         pts_data[:, 1] += pad_h_top
 
         return KeyPoints(
-            pts_data, pad_h_top + pts.H + pad_h_bottom, pad_w_left + pts.W + pad_w_right
+            pts_data,
+            pad_h_top + pts.height + pad_h_bottom,
+            pad_w_left + pts.width + pad_w_right,
         )
 
 
@@ -618,8 +620,8 @@ class ResizeTransform(BaseTransform, InterpolationPropertyHolder):
 
         resize_x, resize_y = self._resize_to
 
-        scale_x = resize_x / pts.W
-        scale_y = resize_y / pts.H
+        scale_x = resize_x / pts.width
+        scale_y = resize_y / pts.height
 
         pts_data[:, 0] *= scale_x
         pts_data[:, 1] *= scale_y
@@ -1258,8 +1260,8 @@ class KeypointsJitter(DataDependentSamplingTransform):
 
     def _apply_pts(self, pts: KeyPoints, settings: dict):
         pts_data = pts.data.copy()
-        h = pts.H
-        w = pts.W
+        h = pts.height
+        w = pts.width
 
         for j in range(pts.data.shape[0]):
             dx = int(random.uniform(self._dx_range[0], self._dx_range[1]) * w)

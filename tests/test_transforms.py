@@ -401,7 +401,7 @@ def test_pad_to_20x20_img_mask_keypoints_3x3(img_3x3, mask_3x3):
 
     assert (res[0][0].shape[0] == 20) and (res[0][0].shape[1] == 20)
     assert (res[1][0].shape[0] == 20) and (res[1][0].shape[1] == 20)
-    assert (res[2][0].H == 20) and (res[2][0].W == 20)
+    assert (res[2][0].height == 20) and (res[2][0].width == 20)
 
     assert np.array_equal(
         res[2][0].data, np.array([[8, 8], [8, 10], [10, 10], [10, 8]]).reshape((4, 2))
@@ -457,7 +457,7 @@ def test_resize_img_to_arbitrary_size(img, mask, resize_to):
     assert transf._resize_to == resize_to
     assert (res[0].shape[0] == resize_to[1]) and (res[0].shape[1] == resize_to[0])
     assert (res[1].shape[0] == resize_to[1]) and (res[1].shape[1] == resize_to[0])
-    assert (res[2].H == resize_to[1]) and (res[2].W == resize_to[0])
+    assert (res[2].height == resize_to[1]) and (res[2].width == resize_to[0])
 
     kpts_data = kpts_data.astype(float)
     kpts_data[:, 0] *= scale_x
@@ -491,7 +491,7 @@ def test_pad_to_20x20_img_mask_keypoints_3x3_kpts_first(img_3x3, mask_3x3):
 
     assert (res[2][0].shape[0] == 20) and (res[2][0].shape[1] == 20)
     assert (res[1][0].shape[0] == 20) and (res[1][0].shape[1] == 20)
-    assert (res[0][0].H == 20) and (res[0][0].W == 20)
+    assert (res[0][0].height == 20) and (res[0][0].width == 20)
 
     assert np.array_equal(
         res[0][0].data, np.array([[8, 8], [8, 10], [10, 10], [10, 8]]).reshape((4, 2))
@@ -511,7 +511,7 @@ def test_3x3_pad_to_20x20_center_crop_3x3_shape_stayes_unchanged(img_3x3, mask_3
 
     assert (res[0][0].shape[0] == 3) and (res[0][0].shape[1] == 3)
     assert (res[1][0].shape[0] == 3) and (res[1][0].shape[1] == 3)
-    assert (res[2][0].H == 3) and (res[2][0].W == 3)
+    assert (res[2][0].height == 3) and (res[2][0].width == 3)
 
 
 @pytest.mark.parametrize(
@@ -532,7 +532,7 @@ def test_2x2_pad_to_20x20_center_crop_2x2(pad_size, crop_size, img_2x2, mask_2x2
 
     assert (res[0][0].shape[0] == 2) and (res[0][0].shape[1] == 2)
     assert (res[1][0].shape[0] == 2) and (res[1][0].shape[1] == 2)
-    assert (res[2][0].H == 2) and (res[2][0].W == 2)
+    assert (res[2][0].height == 2) and (res[2][0].width == 2)
 
     assert np.array_equal(res[0][0], img)
     assert np.array_equal(res[1][0], mask)
@@ -572,7 +572,7 @@ def test_6x6_pad_to_20x20_center_crop_6x6_img_kpts(img_6x6):
     res = stream(dc)
 
     assert (res[0][0].shape[0] == 6) and (res[0][0].shape[1] == 6)
-    assert (res[1][0].H == 6) and (res[1][0].W == 6)
+    assert (res[1][0].height == 6) and (res[1][0].width == 6)
 
     assert np.array_equal(res[0][0], img)
     assert np.array_equal(res[1][0].data, kpts_data)
@@ -590,7 +590,7 @@ def test_6x6_pad_to_20x20_center_crop_6x6_kpts_img(img_6x6):
     res = stream(dc)
 
     assert (res[1][0].shape[0] == 6) and (res[1][0].shape[1] == 6)
-    assert (res[0][0].H == 6) and (res[0][0].W == 6)
+    assert (res[0][0].height == 6) and (res[0][0].width == 6)
 
     assert np.array_equal(res[1][0], img)
     assert np.array_equal(res[0][0].data, kpts_data)

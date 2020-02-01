@@ -203,8 +203,8 @@ class KeyPoints(object):
 
     def __init__(self, pts=None, H=None, W=None):
         self.__data = pts
-        self.__H = H
-        self.__W = W
+        self.__height = H
+        self.__width = W
 
     @property
     def data(self):
@@ -219,17 +219,17 @@ class KeyPoints(object):
         self.__data[idx, :] = value
 
     @property
-    def H(self):
-        return self.__H
+    def height(self):
+        return self.__height
 
     @property
-    def W(self):
-        return self.__W
+    def width(self):
+        return self.__width
 
-    @H.setter
-    def H(self, value):
-        self.__H = value
+    @height.setter
+    def height(self, value):
+        self.__height = value
 
-    @W.setter
-    def W(self, value):
-        self.__W = value
+    @width.setter
+    def width(self, value):
+        self.__width = value
