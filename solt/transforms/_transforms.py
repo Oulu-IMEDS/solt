@@ -42,6 +42,8 @@ class RandomFlip(BaseTransform):
         if self.__axis == 0:
             return np.ascontiguousarray(img[::-1, ...])
         elif self.__axis == 1:
+            if img.shape[2] > 1 and img.dtype == np.uint8:
+                return cv2.flip(img, 1)
             return np.ascontiguousarray(img[:, ::-1, ...])
         else:
             return np.ascontiguousarray(img[::-1, ::-1, ...])

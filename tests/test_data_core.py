@@ -164,7 +164,7 @@ def test_fusion_rotate_360(img_5x5):
         slt.RandomRotate((45, 45), padding='z', p=1),
         slt.RandomRotate((45, 45), padding='z', p=1),
         slt.RandomRotate((45, 45), padding='z', p=1),
-    ])
+    ], optimize_stack=True)
 
     img_res = ppl(dc)[0][0]
 
@@ -194,8 +194,8 @@ def test_fusion_rotate_360_flip_rotate_360(img_5x5):
             slt.RandomRotate((45, 45), padding='z', p=1),
             slt.RandomRotate((45, 45), padding='z', p=1),
             slt.RandomRotate((45, 45), padding='z', p=1),
-        ])
-    ])
+        ], optimize_stack=True)
+    ], optimize_stack=True)
 
     img_res = ppl(dc)[0][0]
 
@@ -316,7 +316,7 @@ def test_selective_pipeline_selects_transforms_and_does_the_fusion():
     ppl = slc.SelectiveStream([
         slt.RandomRotate(rotation_range=(90, 90), p=1),
         slt.RandomRotate(rotation_range=(-90, -90), p=1),
-    ], n=2, probs=[0.5, 0.5])
+    ], n=2, probs=[0.5, 0.5], optimize_stack=True)
 
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
     kpts = sld.KeyPoints(kpts_data, 3, 4)

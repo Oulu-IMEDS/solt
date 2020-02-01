@@ -11,7 +11,7 @@ class Stream(object):
     Stream class. Executes the list of transformations
 
     """
-    def __init__(self, transforms=None, interpolation=None, padding=None):
+    def __init__(self, transforms=None, interpolation=None, padding=None, optimize_stack=False):
         """
         Class constructor.
 
@@ -27,6 +27,9 @@ class Stream(object):
             Stream-wide settings for padding. If for some particular transform your would like
             to still use its own mode, simply pass (<padding_value>, 'strict')
             in the constructor of that transform.
+        optimize_stack : bool
+            Whether to run transforms stack optimization. It can only be useful if many matrix transformations are
+            in a row.
 
         """
         if transforms is None:
@@ -35,7 +38,7 @@ class Stream(object):
         for trf in transforms:
             if not isinstance(trf, BaseTransform) and not isinstance(trf, Stream):
                 raise TypeError
-
+        self._optimize_stack = optimize_stack
         self.__interpolation = interpolation
         self.__padding = padding
         self.__transforms = transforms
@@ -113,7 +116,7 @@ class Stream(object):
             Result
 
         """
-        return Stream.exec_stream(self.__transforms, data)
+        return Stream.exec_stream(self.__transforms, data, self._optimize_stack)
 
     @staticmethod
     def optimize_stack(transforms):
@@ -156,7 +159,7 @@ class Stream(object):
         return transforms_stack
 
     @staticmethod
-    def exec_stream(transforms, data):
+    def exec_stream(transforms, data, optimize_stack):
         """
         Static method, executes the list of transformations for a given data point.
 
@@ -166,6 +169,8 @@ class Stream(object):
             List of transformations to execute
         data : DataContainer
             Data to be augmented
+        optimize_stack : bool
+            Whether to execute augmentations stack optimization.
 
         Returns
         -------
@@ -174,10 +179,14 @@ class Stream(object):
         """
 
         # Performing the transforms using the optimized stack
-        transforms = Stream.optimize_stack(transforms)
+        if optimize_stack:
+            transforms = Stream.optimize_stack(transforms)
         for trf in transforms:
             if isinstance(trf, BaseTransform) and not isinstance(trf, DataDependentSamplingTransform):
-                data = trf.apply(data)
+                if not optimize_stack:
+                    data = trf(data)
+                else:
+                    data = trf.apply(data)
             elif isinstance(trf, Stream) or isinstance(trf, DataDependentSamplingTransform):
                 data = trf(data)
         return data
@@ -188,7 +197,7 @@ class SelectiveStream(Stream):
     Stream, which uniformly selects n out of k given transforms.
 
     """
-    def __init__(self, transforms=None, n=1, probs=None):
+    def __init__(self, transforms=None, n=1, probs=None, optimize_stack=False):
         """
         Constructor.
 
@@ -198,8 +207,10 @@ class SelectiveStream(Stream):
             List of k transforms to sample from
         n : int
             How many transform to sample
+        optimize_stack : bool
+            Whether to execute stack optimization for augmentations.
         """
-        super(SelectiveStream, self).__init__(transforms)
+        super(SelectiveStream, self).__init__(transforms=transforms, optimize_stack=optimize_stack)
         if transforms is None:
             transforms = []
         if n < 0 or n > len(transforms):
@@ -227,8 +238,9 @@ class SelectiveStream(Stream):
         if len(self.transforms) > 0:
             random_state = np.random.RandomState(random.randint(0, 2 ** 32 - 1))
             trfs = random_state.choice(self.transforms, self._n, replace=False, p=self._probs)
-            trfs = [copy.deepcopy(x) for x in trfs]
-            trfs = Stream.optimize_stack(trfs)
-            data = Stream.exec_stream(trfs, data)
+            if self._optimize_stack:
+                trfs = [copy.deepcopy(x) for x in trfs]
+                trfs = Stream.optimize_stack(trfs)
+            data = Stream.exec_stream(trfs, data, self._optimize_stack)
         return data
 
