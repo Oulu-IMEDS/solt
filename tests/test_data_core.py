@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 import cv2
 import random
+import itertools
 
 from .fixtures import img_2x2, img_3x4, mask_2x2, mask_3x4, img_5x5, mask_5x5
 
@@ -280,7 +281,7 @@ def test_stream_nested_settings():
 
 def test_stream_raises_assertion_error_when_not_basetransform_or_stream_in_the_transforms():
     with pytest.raises(TypeError):
-        slc.Stream([1,2,3])
+        slc.Stream([1, 2, 3])
 
 
 def test_stream_serializes_correctly():
@@ -494,3 +495,82 @@ def test_keypoints_get_set():
 
     with pytest.raises(TypeError):
         kpts[0] = [2, 2]
+
+
+@pytest.mark.parametrize('order', list(itertools.permutations(['image', 'images', 'mask', 'masks', 'keypoints', 'keypoints_array', 'label', 'labels']))[:20])
+@pytest.mark.parametrize('presence', [[1, 2, 1, 2, 1, 2, 1, 2],
+                                      [1, 0, 1, 2, 0, 2, 1, 3],
+                                      [0, 2, 0, 2, 0, 2, 0, 2]])
+def test_data_container_from_dict_single(img_3x4, mask_3x4, order, presence):
+    img, mask = img_3x4, mask_3x4
+
+    kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
+    kpts = sld.KeyPoints(kpts_data.copy(), 3, 4)
+
+    n_obj1, n_obj2, n_obj3, n_obj4, n_obj5, n_obj6, n_obj7, n_obj8 = presence
+    order = list(order)
+    d = {}
+    dc_content = []
+    dc_format = ''
+    if n_obj1:
+        d['image'] = img
+        dc_content.append(img)
+        dc_format += 'I'
+    else:
+        del order[order.index('image')]
+    if n_obj2:
+        d['images'] = [img.copy() for _ in range(n_obj2)]
+        dc_content.extend(d['images'])
+        dc_format += 'I' * n_obj2
+    else:
+        del order[order.index('images')]
+    if n_obj3:
+        d['mask'] = mask
+        dc_content.append(mask)
+        dc_format += 'M'
+    else:
+        del order[order.index('mask')]
+    if n_obj4:
+        d['masks'] = [mask.copy() for i in range(n_obj4)]
+        dc_content.extend(d['masks'])
+        dc_format += 'M' * n_obj4
+    else:
+        del order[order.index('masks')]
+    if n_obj5:
+        d['keypoints'] = sld.KeyPoints(kpts_data.copy(), 3, 4)
+        dc_content.append(kpts)
+        dc_format += 'P'
+    else:
+        del order[order.index('keypoints')]
+    if n_obj6:
+        d['keypoints_array'] = [sld.KeyPoints(kpts_data.copy(), 3, 4) for _ in range(n_obj6)]
+        dc_content.extend(d['keypoints_array'])
+        dc_format += 'P' * n_obj6
+    else:
+        del order[order.index('keypoints_array')]
+    if n_obj7:
+        d['label'] = 1
+        dc_content.append(1)
+        dc_format += 'L'
+    else:
+        del order[order.index('label')]
+    if n_obj8:
+        d['labels'] = [1 for _ in range(n_obj8)]
+        dc_content.extend([1 for _ in range(n_obj8)])
+        dc_format += 'L' * n_obj8
+    else:
+        del order[order.index('labels')]
+    dc = sld.DataContainer(tuple(dc_content), dc_format)
+    reordered_d = {k: d[k] for k in order}
+
+    dc_new = sld.DataContainer.from_dict(reordered_d)
+
+    assert dc_new.data_format == dc.data_format
+    for d1, d2 in zip(dc_new.data, dc.data):
+        if isinstance(d1, np.ndarray):
+            np.testing.assert_array_equal(d1, d2)
+        elif isinstance(d1, sld.KeyPoints):
+            assert d1.H == d2.H and d1.W == d2.W
+            np.testing.assert_array_equal(d1.data, d2.data)
+        else:
+            assert d1 == d2

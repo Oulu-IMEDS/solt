@@ -8,6 +8,7 @@ from ..data import DataContainer, KeyPoints
 from ..constants import allowed_interpolations, allowed_paddings
 from ..utils import validate_parameter, img_shape_checker
 import random
+import solt.data as sld
 
 
 class BaseTransform(metaclass=ABCMeta):
@@ -148,8 +149,8 @@ class BaseTransform(metaclass=ABCMeta):
 
         Parameters
         ----------
-        data : DataContainer
-            Data to be augmented
+        data : DataContainer or dict
+            Data to be augmented. Check sld.DataContainer.from_dict for details.
 
         Returns
         -------
@@ -157,6 +158,10 @@ class BaseTransform(metaclass=ABCMeta):
             Result
 
         """
+
+        if isinstance(data, dict):
+            data = sld.DataContainer.from_dict(data)
+
         self.reset_state()
         if self.use_transform():
             self.sample_transform()

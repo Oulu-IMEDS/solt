@@ -110,20 +110,7 @@ class Stream(object):
         Parameters
         ----------
         data : DataContainer or dict
-            Data to be augmented.
-
-            If data is a dict, then the `DataContainer` will be created so that the images stored
-            by the key `image` will be stored first. Subsequently, multiple images stored under the key `images`
-            will be stored. The same applies to masks (first `mask` and then `masks`), labels, and the keypoints (`keypoints` and
-            `keypoints_array`). You must use `solt.data.KeyPoints` object here. Labels will always be stored last.
-
-            For example, if the input `dict` looks like this: `d = {'label': l1, 'image': i1, 'mask': m1}` or
-            `d = {'mask': m1, 'image': i1, 'label': l1}`, the `DataContainer` will convert this
-            into `sld.DataContainer((i1, m1, l1), 'IML')`.
-
-            In a more complex case: `d={'image': i1, masks: (m1, m2, m3, m4), 'labels': (l1, l2, l3, l4, l5),
-            'keypoints': sld.KeyPoints(k, h, w)` would be equivalent to
-            `sld.DataContainer((i1, m1, m2, m3, m4, sld.KeyPoints(k, h, w), l1, l2, l3, l4, l5), 'IMMMMKLLLLLL')`.
+            Data to be augmented. See `sld.DataContainer.from_dict` for details.
 
         Returns
         -------
@@ -131,33 +118,6 @@ class Stream(object):
             Result
 
         """
-
-        if isinstance(data, dict):
-            dc_content = []
-            dc_format = []
-            if 'image' in data:
-                dc_content.append(data['image'])
-                dc_format.append('I')
-            if 'images' in data:
-                dc_content.extend(data['images'])
-                dc_format.extend('I' * len(data['images']))
-            if 'mask' in data:
-                dc_content.append(data['mask'])
-                dc_format.append('M')
-            if 'masks' in data:
-                dc_content.extend(data['masks'])
-                dc_format.extend('M' * len(data['masks']))
-            if 'keypoints' in data:
-                dc_content.append(data['keypoints'])
-                dc_format.append('K')
-            if 'label' in data:
-                dc_content.append(data['label'])
-                dc_format.append('L')
-            if 'labels' in data:
-                dc_content.extend(data['labels'])
-                dc_format.extend('L' * len(data['labels']))
-
-            data = sld.DataContainer(tuple(dc_content), ''.join(dc_format))
 
         return Stream.exec_stream(self.__transforms, data, self._optimize_stack)
 
@@ -210,8 +170,8 @@ class Stream(object):
         ----------
         transforms : list
             List of transformations to execute
-        data : DataContainer
-            Data to be augmented
+        data : DataContainer or dict
+            Data to be augmented. See `sld.DataContainer.from_dict` for details
         optimize_stack : bool
             Whether to execute augmentations stack optimization.
 
@@ -220,6 +180,9 @@ class Stream(object):
         out : DataContainer
             Result
         """
+
+        if isinstance(data, dict):
+            data = sld.DataContainer.from_dict(data)
 
         # Performing the transforms using the optimized stack
         if optimize_stack:

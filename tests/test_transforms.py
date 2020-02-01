@@ -1159,11 +1159,10 @@ def test_keypoint_jitter_works_correctly(jitter_x, jitter_y, exp_x, exp_y):
 
 
 def test_keypoint_jitter_does_not_change_img_mask_or_target(img_3x3, mask_3x3):
-    dc = sld.DataContainer((img_3x3.copy(), mask_3x3.copy(), 1), 'IML')
     trf = slc.Stream([
         slt.KeypointsJitter(p=1, dx_range=(-0.2, 0.2), dy_range=(-0.2, 0.2))
     ])
-    dc_res = trf(dc)
+    dc_res = trf({'image': img_3x3.copy(), 'mask': mask_3x3.copy(), 'label': 1})
 
     assert np.array_equal(dc_res.data[0], img_3x3)
     assert np.array_equal(dc_res.data[1], mask_3x3)
@@ -1190,8 +1189,7 @@ def test_motion_blur_samples_transform(ks):
                                                 (50, True)])
 def test_jpeg_transform(img_6x6_rgb, quality, different):
     trf = slt.ImageJPEGCompression(quality_range=quality, p=1)
-    dc = sld.DataContainer((img_6x6_rgb.copy(), ), 'I')
-    dc_res = trf(dc)
+    dc_res = trf({'image': img_6x6_rgb.copy()})
 
     assert (not np.array_equal(img_6x6_rgb, dc_res.data[0])) == different
 
