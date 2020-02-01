@@ -29,3 +29,4 @@ solt/constants/__pycache__/*
 solt/core/__pycache__/*
 solt/data/__pycache__/*
 solt/transforms/__pycache__/*
+.coverage
