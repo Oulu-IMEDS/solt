@@ -14,6 +14,12 @@ matrix:
       sudo: true
       python: 3.7
 
+    - name: "Linux / Python 3.8"
+      os: linux
+      dist: xenial
+      sudo: true
+      python: 3.8
+
     - name: "OSX/ Python 3.6"
       os: osx
       language: generic
@@ -23,6 +29,12 @@ matrix:
       os: osx
       language: generic
       env: TRAVIS_PYTHON_VERSION=3.7
+
+    - name: "OSX / Python 3.8"
+      os: osx
+      language: generic
+      env: TRAVIS_PYTHON_VERSION=3.7
+
 
 install:
   - sh ci/conda_setup.sh

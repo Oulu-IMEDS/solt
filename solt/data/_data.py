@@ -1,7 +1,6 @@
 import numpy as np
-from ..constants import allowed_types
-from ..constants import allowed_interpolations
-from ..constants import allowed_paddings
+
+from ..constants import allowed_interpolations, allowed_paddings, allowed_types
 from ..utils import validate_parameter
 
 
@@ -24,6 +23,7 @@ class DataContainer(object):
         Example: transform_settings={0:{'interpolation':'bilinear'}, 1: {'interpolation':'bicubic'}}
 
     """
+
     def __init__(self, data, fmt, transform_settings=None):
         if len(fmt) == 1 and not isinstance(data, tuple):
             if not isinstance(data, list):
@@ -49,27 +49,38 @@ class DataContainer(object):
             if idx not in transform_settings:
                 transform_settings[idx] = {}
 
-            if fmt[idx] == 'I' or fmt[idx] == 'M':
-                val = ('nearest', 'strict') if fmt[idx] == 'M' else None
-                if 'interpolation' not in transform_settings[idx]:
-                    transform_settings[idx]['interpolation'] = validate_parameter(val, allowed_interpolations,
-                                                                                  'bilinear', str, True)
+            if fmt[idx] == "I" or fmt[idx] == "M":
+                val = ("nearest", "strict") if fmt[idx] == "M" else None
+                if "interpolation" not in transform_settings[idx]:
+                    transform_settings[idx]["interpolation"] = validate_parameter(
+                        val, allowed_interpolations, "bilinear", str, True
+                    )
                 else:
-                    transform_settings[idx]['interpolation'] = validate_parameter((
-                        transform_settings[idx]['interpolation'], 'strict'),
+                    transform_settings[idx]["interpolation"] = validate_parameter(
+                        (transform_settings[idx]["interpolation"], "strict"),
                         allowed_interpolations,
-                        'bilinear', str, True)
+                        "bilinear",
+                        str,
+                        True,
+                    )
 
-                if 'padding' not in transform_settings[idx]:
-                    transform_settings[idx]['padding'] = validate_parameter(None, allowed_paddings,
-                                                                            'z', str, True)
+                if "padding" not in transform_settings[idx]:
+                    transform_settings[idx]["padding"] = validate_parameter(
+                        None, allowed_paddings, "z", str, True
+                    )
                 else:
-                    transform_settings[idx]['padding'] = validate_parameter((
-                        transform_settings[idx]['padding'], 'strict'),
+                    transform_settings[idx]["padding"] = validate_parameter(
+                        (transform_settings[idx]["padding"], "strict"),
                         allowed_paddings,
-                        'z', str, True)
+                        "z",
+                        str,
+                        True,
+                    )
             else:
-                if 'interpolation' in transform_settings[idx] or 'padding' in transform_settings[idx]:
+                if (
+                    "interpolation" in transform_settings[idx]
+                    or "padding" in transform_settings[idx]
+                ):
                     raise TypeError
 
         if len(data) != len(transform_settings):
@@ -101,8 +112,9 @@ class DataContainer(object):
 
         If data is a dict, then the `DataContainer` will be created so that the images stored
         by the key `image` will be stored first. Subsequently, multiple images stored under the key `images`
-        will be stored. The same applies to masks (first `mask` and then `masks`), labels, and the keypoints (`keypoints` and
-        `keypoints_array`). You must use `solt.data.KeyPoints` object here. Labels will always be stored last.
+        will be stored. The same applies to masks (first `mask` and then `masks`), labels,
+        and the keypoints (`keypoints` and`keypoints_array`). You must use `solt.data.KeyPoints` object here.
+        Labels will always be stored last.
 
         For example, if the input `dict` looks like this: `d = {'label': l1, 'image': i1, 'mask': m1}` or
         `d = {'mask': m1, 'image': i1, 'label': l1}`, the `DataContainer` will convert this
@@ -127,32 +139,32 @@ class DataContainer(object):
         """
         dc_content = []
         dc_format = []
-        if 'image' in data:
-            dc_content.append(data['image'])
-            dc_format.append('I')
-        if 'images' in data:
-            dc_content.extend(data['images'])
-            dc_format.extend('I' * len(data['images']))
-        if 'mask' in data:
-            dc_content.append(data['mask'])
-            dc_format.append('M')
-        if 'masks' in data:
-            dc_content.extend(data['masks'])
-            dc_format.extend('M' * len(data['masks']))
-        if 'keypoints' in data:
-            dc_content.append(data['keypoints'])
-            dc_format.append('P')
-        if 'keypoints_array' in data:
-            dc_content.extend(data['keypoints_array'])
-            dc_format.extend('P'*len(data['keypoints_array']))
-        if 'label' in data:
-            dc_content.append(data['label'])
-            dc_format.append('L')
-        if 'labels' in data:
-            dc_content.extend(data['labels'])
-            dc_format.extend('L' * len(data['labels']))
+        if "image" in data:
+            dc_content.append(data["image"])
+            dc_format.append("I")
+        if "images" in data:
+            dc_content.extend(data["images"])
+            dc_format.extend("I" * len(data["images"]))
+        if "mask" in data:
+            dc_content.append(data["mask"])
+            dc_format.append("M")
+        if "masks" in data:
+            dc_content.extend(data["masks"])
+            dc_format.extend("M" * len(data["masks"]))
+        if "keypoints" in data:
+            dc_content.append(data["keypoints"])
+            dc_format.append("P")
+        if "keypoints_array" in data:
+            dc_content.extend(data["keypoints_array"])
+            dc_format.extend("P" * len(data["keypoints_array"]))
+        if "label" in data:
+            dc_content.append(data["label"])
+            dc_format.append("L")
+        if "labels" in data:
+            dc_content.extend(data["labels"])
+            dc_format.extend("L" * len(data["labels"]))
 
-        return DataContainer(tuple(dc_content), ''.join(dc_format))
+        return DataContainer(tuple(dc_content), "".join(dc_format))
 
     def __getitem__(self, idx):
         """
@@ -188,6 +200,7 @@ class KeyPoints(object):
     W : int
         Width of the coordinate frame.
     """
+
     def __init__(self, pts=None, H=None, W=None):
         self.__data = pts
         self.__H = H
