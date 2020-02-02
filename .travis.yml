@@ -41,7 +41,7 @@ install:
   - bash $HOME/miniconda.sh -b -p $HOME/miniconda
   - export OPATH="$PATH" && export PATH="$HOME/miniconda/bin:$PATH"
   - conda env create -f ci/conda_env.yml
-  - conda install -y solt_test_env python=$TRAVIS_PYTHON_VERSION -n solt
+  - conda install -y python=$TRAVIS_PYTHON_VERSION -n solt
   - source activate solt
   - pip install .
 script:
