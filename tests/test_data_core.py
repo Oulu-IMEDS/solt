@@ -12,6 +12,18 @@ import torch
 from .fixtures import img_2x2, img_3x4, mask_2x2, mask_3x4, img_5x5, mask_5x5, img_3x3_rgb, mask_3x3
 
 
+def assert_data_containers_equal(dc, dc_new):
+    assert dc_new.data_format == dc.data_format
+    for d1, d2 in zip(dc_new.data, dc.data):
+        if isinstance(d1, np.ndarray):
+            np.testing.assert_array_equal(d1, d2)
+        elif isinstance(d1, sld.KeyPoints):
+            assert d1.height == d2.height and d1.width == d2.width
+            np.testing.assert_array_equal(d1.data, d2.data)
+        else:
+            assert d1 == d2
+
+
 def test_img_shape_checker_decorator_shape_check():
     img = np.random.rand(3, 4, 5, 6)
     func = slu.img_shape_checker(lambda x: x)
@@ -499,13 +511,15 @@ def test_keypoints_get_set():
 
 
 @pytest.mark.parametrize('order', list(itertools.permutations(['image', 'images', 'mask', 'masks', 'keypoints', 'keypoints_array', 'label', 'labels']))[:20])
-@pytest.mark.parametrize('presence', [[1, 2, 1, 2, 1, 2, 1, 2],
+@pytest.mark.parametrize('presence', [[1, 2, 1, 2, 1, 0, 1, 2],
                                       [1, 0, 1, 2, 0, 2, 0, 3],
-                                      [0, 2, 0, 2, 2, 2, 0, 0]])
-def test_data_container_from_dict_single(img_3x4, mask_3x4, order, presence):
+                                      [0, 2, 0, 0, 2, 0, 0, 0],
+                                      [0, 2, 0, 2, 0, 2, 0, 2],
+                                      [0, 0, 1, 0, 1, 0, 1, 0]])
+def test_data_container_from_and_to_dict(img_3x4, mask_3x4, order, presence):
     img, mask = img_3x4, mask_3x4
 
-    kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
+    kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2)).astype(float)
     kpts = sld.KeyPoints(kpts_data.copy(), 3, 4)
 
     n_obj1, n_obj2, n_obj3, n_obj4, n_obj5, n_obj6, n_obj7, n_obj8 = presence
@@ -564,17 +578,37 @@ def test_data_container_from_dict_single(img_3x4, mask_3x4, order, presence):
     dc = sld.DataContainer(tuple(dc_content), dc_format)
     reordered_d = {k: d[k] for k in order}
 
+    # This tests whether the creation from dict works as expected
     dc_new = sld.DataContainer.from_dict(reordered_d)
+    assert_data_containers_equal(dc, dc_new)
 
-    assert dc_new.data_format == dc.data_format
-    for d1, d2 in zip(dc_new.data, dc.data):
-        if isinstance(d1, np.ndarray):
-            np.testing.assert_array_equal(d1, d2)
-        elif isinstance(d1, sld.KeyPoints):
-            assert d1.height == d2.height and d1.width == d2.width
-            np.testing.assert_array_equal(d1.data, d2.data)
+    # Now we will also test whether conversion to dict and back works well.
+    tensor_dict = dc_new.to_torch(as_dict=True, normalize=False, scale_keypoints=False)
+    for k in tensor_dict:
+        if isinstance(tensor_dict[k], (list, tuple)):
+            tmp = []
+            for el in tensor_dict[k]:
+                tmp.append(el.numpy() if isinstance(el, torch.Tensor) else el)
+                if 'imag' in k:
+                    tmp[-1] = (tmp[-1].transpose((1, 2, 0)) * 255).astype(np.uint8)
+                if 'mask' in k:
+                    tmp[-1] = tmp[-1].astype(np.uint8).squeeze()
+                if 'keypoints' in k:
+                    tmp[-1] = sld.KeyPoints(tmp[-1], 3, 4)
+
+            tensor_dict[k] = tmp
         else:
-            assert d1 == d2
+            el = tensor_dict[k]
+            tensor_dict[k] = (el.numpy()).astype(np.uint8) if isinstance(el, torch.Tensor) else el
+            if 'imag' in k:
+                tensor_dict[k] = (tensor_dict[k].transpose((1, 2, 0)) * 255).astype(np.uint8)
+            if 'mask' in k:
+                tensor_dict[k] = tensor_dict[k].astype(np.uint8).squeeze()
+            if 'keypoints' in k:
+                tensor_dict[k] = sld.KeyPoints(tensor_dict[k], 3, 4)
+
+    dc_from_tensor = sld.DataContainer.from_dict(tensor_dict)
+    assert_data_containers_equal(dc, dc_from_tensor)
 
 
 def test_image_mask_pipeline_to_torch(img_3x4, mask_3x4):
@@ -585,8 +619,8 @@ def test_image_mask_pipeline_to_torch(img_3x4, mask_3x4):
             ],
         )
     img, mask = ppl({'image': img_3x4, 'mask': mask_3x4}).to_torch()
-    assert img.max() == 1
-    assert mask.max() == 1
+    assert img.max().item() == 1
+    assert mask.max().item() == 1
     assert isinstance(img, torch.FloatTensor)
     assert isinstance(mask, torch.FloatTensor)
 
@@ -659,9 +693,8 @@ def test_data_container_keypoints_rescale_to_torch():
     kpts = sld.KeyPoints(kpts_data, 768, 1024)
     ppl = slc.Stream()
     dc_res = ppl({'keypoints': kpts, 'label': 1})
-    k, l = dc_res.to_torch(normalize=True, scale_keypoints=True)
+    k, label = dc_res.to_torch(normalize=True, scale_keypoints=True)
     assert isinstance(k, torch.FloatTensor)
     np.testing.assert_almost_equal(k.max().item() * 1023, 1023)
     np.testing.assert_almost_equal(k.min().item() * 1023, 20)
-    assert l == 1
-
+    assert label == 1

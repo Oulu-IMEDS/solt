@@ -57,7 +57,7 @@ def mask_3x4():
 
     mask = np.array([[0, 1, 1, 1],
                     [0, 1, 1, 0],
-                    [0, 1, 1, 0]]).reshape((3, 4)).astype(np.uint8) * 255
+                    [0, 1, 1, 0]]).reshape((3, 4)).astype(np.uint8)
     return mask
 
 
@@ -107,7 +107,7 @@ def mask_3x3():
     mask = np.array([[1, 1, 1],
                     [1, 1, 1],
                     [0, 1, 1]]).reshape((3, 3)).astype(np.uint8)
-    return mask * 255
+    return mask
 
 
 @pytest.fixture

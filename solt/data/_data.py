@@ -169,11 +169,18 @@ class DataContainer(object):
 
         return DataContainer(tuple(dc_content), "".join(dc_format))
 
-    def to_torch(self, scale_keypoints=True, normalize=False, mean=None, std=None):
-        """This method converts the DataContainer Content into a list PyTorch objects
+    def to_torch(
+        self, as_dict=False, scale_keypoints=True, normalize=False, mean=None, std=None
+    ):
+        """This method converts the DataContainer Content into a dict or a list PyTorch objects
 
         Parameters
         ----------
+        as_dict : bool
+            Whether to return the result as a dictionary. If a single item is present, then the singular naming
+            will be used. If plural, then the plural will be used. The items will be stored and
+            sorted a similar manner to the method `from_dict`: images, masks, keypoints_array, and labels.
+            The same applies to a singular case/
         scale_keypoints : bool
             Whether to scale keypoints to 0-1 range
         normalize : bool
@@ -183,7 +190,12 @@ class DataContainer(object):
         std : torch.Tensor
             Std to subtract. If None, then the ImageNet std will be subtracted.
         """
-        res = []
+        res_dict = {
+            "images": list(),
+            "masks": list(),
+            "keypoints_array": list(),
+            "labels": list(),
+        }
         for el, f in zip(self.__data, self.__fmt):
             if f == "I":
                 scale = 255.0
@@ -233,19 +245,49 @@ class DataContainer(object):
 
                     img.sub_(mean)
                     img.div_(std)
-                res.append(img)
+                res_dict["images"].append(img)
             elif f == "M":
-                scale = float(el.max())
-                mask = torch.from_numpy(el).squeeze().unsqueeze(0).float().div(scale)
-                res.append(mask)
+                mask = torch.from_numpy(el).squeeze().unsqueeze(0).float()
+                res_dict["masks"].append(mask)
             elif f == "P":
                 landmarks = torch.from_numpy(el.data).float()
                 if scale_keypoints:
                     landmarks[:, 0] /= el.width - 1
                     landmarks[:, 1] /= el.height - 1
-                res.append(landmarks)
+                res_dict["keypoints_array"].append(landmarks)
             elif f == "L":
-                res.append(el)
+                res_dict["labels"].append(el)
+
+        if not as_dict:
+            res = []
+            for k in ["images", "masks", "keypoints_array", "labels"]:
+                res.extend(res_dict[k])
+            return res
+
+        return self.remap_results_dict(res_dict)
+
+    @staticmethod
+    def remap_results_dict(res_dict):
+        res = {}
+        if len(res_dict["images"]) == 1:
+            res["image"] = res_dict["images"][0]
+        else:
+            res["images"] = res_dict["images"]
+
+        if len(res_dict["masks"]) == 1:
+            res["mask"] = res_dict["masks"][0]
+        else:
+            res["masks"] = res_dict["masks"]
+
+        if len(res_dict["keypoints_array"]) == 1:
+            res["keypoints"] = res_dict["keypoints_array"][0]
+        else:
+            res["keypoints_array"] = res_dict["keypoints_array"]
+
+        if len(res_dict["labels"]) == 1:
+            res["label"] = res_dict["labels"][0]
+        else:
+            res["labels"] = res_dict["labels"]
         return res
 
     def __getitem__(self, idx):
