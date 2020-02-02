@@ -40,10 +40,9 @@ install:
   - sh ci/conda_setup.sh
   - bash $HOME/miniconda.sh -b -p $HOME/miniconda
   - export OPATH="$PATH" && export PATH="$HOME/miniconda/bin:$PATH"
-  - conda create -q -y -n solt_test_env python=$TRAVIS_PYTHON_VERSION
-  - conda install -y -n solt_test_env pandoc
-  - source activate solt_test_env
-  - pip install -r ci/requirements.txt
+  - conda env create -f ci/conda_env.yml
+  - conda install -y solt_test_env python=$TRAVIS_PYTHON_VERSION -n solt
+  - source activate solt
   - pip install .
 script:
   - py.test tests --cov solt --cov-report term-missing -v

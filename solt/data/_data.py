@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 from ..constants import allowed_interpolations, allowed_paddings, allowed_types
 from ..utils import validate_parameter
@@ -93,6 +94,8 @@ class DataContainer(object):
         self.__data = data
         self.__fmt = fmt
         self.__transform_settings = transform_settings
+        self.__imagenet_mean = (0.485, 0.456, 0.406)
+        self.__imagenet_std = (0.229, 0.224, 0.225)
 
     @property
     def data_format(self):
@@ -166,6 +169,85 @@ class DataContainer(object):
 
         return DataContainer(tuple(dc_content), "".join(dc_format))
 
+    def to_torch(self, scale_keypoints=True, normalize=False, mean=None, std=None):
+        """This method converts the DataContainer Content into a list PyTorch objects
+
+        Parameters
+        ----------
+        scale_keypoints : bool
+            Whether to scale keypoints to 0-1 range
+        normalize : bool
+            Whether to subtract mean
+        mean : torch.Tensor
+            Mean to subtract. If None, then the ImageNet mean will be subtracted.
+        std : torch.Tensor
+            Std to subtract. If None, then the ImageNet std will be subtracted.
+        """
+        res = []
+        for el, f in zip(self.__data, self.__fmt):
+            if f == "I":
+                scale = 255.0
+                if el.dtype == np.uint16:
+                    scale = 65535.0
+                img = torch.from_numpy(el.transpose((2, 0, 1)).astype(np.float32)).div(
+                    scale
+                )
+                if normalize:
+                    if mean is None or std is None:
+                        mean = torch.tensor(self.__imagenet_mean).view(3, 1, 1)
+                        std = torch.tensor(self.__imagenet_std).view(3, 1, 1)
+
+                    if not isinstance(
+                        mean, (tuple, list, np.ndarray, torch.FloatTensor)
+                    ):
+                        raise TypeError(
+                            f"Unknown type ({type(mean)}) of mean vector! "
+                            f"Expected tuple, list, np.ndarray or torch.FloatTensor"
+                        )
+
+                    if not isinstance(
+                        std, (tuple, list, np.ndarray, torch.FloatTensor)
+                    ):
+                        raise TypeError(
+                            f"Unknown type ({type(mean)}) of mean vector! "
+                            f"Expected tuple, list, np.ndarray or torch.FloatTensor"
+                        )
+                    if not (len(mean) == img.size(0)):
+                        raise ValueError(
+                            "Size of the mean vector does not match the number of channels"
+                        )
+                    if not (len(std) == img.size(0)):
+                        raise ValueError(
+                            "Size of the std vector does not match the number of channels"
+                        )
+
+                    if isinstance(mean, (list, tuple)):
+                        mean = torch.tensor(mean).view(img.size(0), 1, 1)
+                    if isinstance(std, (list, tuple)):
+                        std = torch.tensor(std).view(img.size(0), 1, 1)
+
+                    if isinstance(mean, np.ndarray):
+                        mean = torch.from_numpy(mean).view(img.size(0), 1, 1).float()
+                    if isinstance(std, np.ndarray):
+                        std = torch.from_numpy(std).view(img.size(0), 1, 1).float()
+
+                    img.sub_(mean)
+                    img.div_(std)
+                res.append(img)
+            elif f == "M":
+                scale = float(el.max())
+                mask = torch.from_numpy(el).squeeze().unsqueeze(0).float().div(scale)
+                res.append(mask)
+            elif f == "P":
+                landmarks = torch.from_numpy(el.data).float()
+                if scale_keypoints:
+                    landmarks[:, 0] /= el.width - 1
+                    landmarks[:, 1] /= el.height - 1
+                res.append(landmarks)
+            elif f == "L":
+                res.append(el)
+        return res
+
     def __getitem__(self, idx):
         """
         Returns a data item and its type using index.
@@ -195,16 +277,16 @@ class KeyPoints(object):
     ----------
     pts : numpy.ndarray
         Key points as an numpy.ndarray in (x, y) format.
-    H : int
+    height : int
         Height of the coordinate frame.
-    W : int
+    width : int
         Width of the coordinate frame.
     """
 
-    def __init__(self, pts=None, H=None, W=None):
+    def __init__(self, pts=None, height=None, width=None):
         self.__data = pts
-        self.__height = H
-        self.__width = W
+        self.__height = height
+        self.__width = width
 
     @property
     def data(self):

@@ -80,7 +80,7 @@ class RandomFlip(BaseTransform):
             pts_data[:, 1] = pts.height - 1 - pts_data[:, 1]
             pts_data[:, 0] = pts.width - 1 - pts_data[:, 0]
 
-        return KeyPoints(pts=pts_data, H=pts.height, W=pts.width)
+        return KeyPoints(pts=pts_data, height=pts.height, width=pts.width)
 
 
 class RandomRotate(MatrixTransform):

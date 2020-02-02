@@ -7,8 +7,9 @@ import pytest
 import cv2
 import random
 import itertools
+import torch
 
-from .fixtures import img_2x2, img_3x4, mask_2x2, mask_3x4, img_5x5, mask_5x5
+from .fixtures import img_2x2, img_3x4, mask_2x2, mask_3x4, img_5x5, mask_5x5, img_3x3_rgb, mask_3x3
 
 
 def test_img_shape_checker_decorator_shape_check():
@@ -418,7 +419,7 @@ def test_transform_settings_wrong_type_for_item(img_5x5):
     {'padding': 'z'}
 ])
 def test_interpolation_or_padding_settings_for_labels_or_keypoints(setting):
-    kpts = sld.KeyPoints(pts=np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2)), H=3, W=3)
+    kpts = sld.KeyPoints(pts=np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2)), height=3, width=3)
     with pytest.raises(TypeError):
         sld.DataContainer(data=(kpts,),
                           fmt='P',
@@ -499,8 +500,8 @@ def test_keypoints_get_set():
 
 @pytest.mark.parametrize('order', list(itertools.permutations(['image', 'images', 'mask', 'masks', 'keypoints', 'keypoints_array', 'label', 'labels']))[:20])
 @pytest.mark.parametrize('presence', [[1, 2, 1, 2, 1, 2, 1, 2],
-                                      [1, 0, 1, 2, 0, 2, 1, 3],
-                                      [0, 2, 0, 2, 0, 2, 0, 2]])
+                                      [1, 0, 1, 2, 0, 2, 0, 3],
+                                      [0, 2, 0, 2, 2, 2, 0, 0]])
 def test_data_container_from_dict_single(img_3x4, mask_3x4, order, presence):
     img, mask = img_3x4, mask_3x4
 
@@ -574,3 +575,93 @@ def test_data_container_from_dict_single(img_3x4, mask_3x4, order, presence):
             np.testing.assert_array_equal(d1.data, d2.data)
         else:
             assert d1 == d2
+
+
+def test_image_mask_pipeline_to_torch(img_3x4, mask_3x4):
+    ppl = slc.Stream(
+            [
+                slt.RandomRotate(rotation_range=(90, 90), p=1),
+                slt.RandomRotate(rotation_range=(90, 90), p=1),
+            ],
+        )
+    img, mask = ppl({'image': img_3x4, 'mask': mask_3x4}).to_torch()
+    assert img.max() == 1
+    assert mask.max() == 1
+    assert isinstance(img, torch.FloatTensor)
+    assert isinstance(mask, torch.FloatTensor)
+
+
+def test_image_mask_pipeline_to_torch_uint16(img_3x4, mask_3x4):
+    ppl = slc.Stream(
+            [
+                slt.RandomRotate(rotation_range=(90, 90), p=1),
+                slt.RandomRotate(rotation_range=(90, 90), p=1),
+            ],
+        )
+    img, mask = ppl({'image': (img_3x4 // 255).astype(np.uint16)*65535, 'mask': mask_3x4}).to_torch()
+    assert img.max() == 1
+    assert mask.max() == 1
+    assert isinstance(img, torch.FloatTensor)
+    assert isinstance(mask, torch.FloatTensor)
+
+
+@pytest.mark.parametrize('mean,std', [[None, None], [(0.5, 0.5, 0.5), (0.5, 0.5, 0.5)],
+                                      [np.array((0.5, 0.5, 0.5)), (0.5, 0.5, 0.5)],
+                                      [(0.5, 0.5, 0.5), np.array((0.5, 0.5, 0.5))],
+                                      [np.array((0.5, 0.5, 0.5)), np.array((0.5, 0.5, 0.5))]])
+def test_image_mask_pipeline_to_torch_normalization(img_3x3_rgb, mask_3x3, mean, std):
+    ppl = slc.Stream(
+        [
+            slt.RandomRotate(rotation_range=(90, 90), p=1),
+            slt.RandomRotate(rotation_range=(90, 90), p=1),
+        ],
+    )
+    dc_res = ppl({'image': img_3x3_rgb, 'mask': mask_3x3})
+    img, mask = dc_res.to_torch(normalize=True, mean=mean, std=std)
+
+    if mean is None:
+        np.testing.assert_almost_equal(img[0, :, :].max().item(), 0.515/0.229)
+    else:
+        assert img.max() == 1
+    assert mask.max() == 1
+    assert isinstance(img, torch.FloatTensor)
+    assert isinstance(mask, torch.FloatTensor)
+
+
+@pytest.mark.parametrize('mean,std, expected', [[(0.5, 0.5), (0.5, 0.5, 0.5), ValueError],
+                                                [(0.5, 0.5, 0.5), (0.5, 0.5), ValueError],
+                                                [(0.5, 0.5, 0.5), '123', TypeError],
+                                                ['123', (0.5, 0.5, 0.5), TypeError],
+                                                [torch.tensor((0.5, 0.5, 0.5)).byte(), (0.5, 0.5, 0.5), TypeError],
+                                                [torch.tensor((0.5, 0.5, 0.5)).byte(),
+                                                 torch.tensor((0.5, 0.5, 0.5)).double(), TypeError],
+                                                [torch.tensor((0.5, 0.5, 0.5)),
+                                                 torch.tensor((0.5, 0.5, 0.5)).double(), TypeError],
+                                                [torch.tensor((0.5, 0.5)),
+                                                 torch.tensor((0.5, 0.5, 0.5)), ValueError],
+                                                [torch.tensor((0.5, 0.5, 0.5)),
+                                                 torch.tensor((0.5, 0.5)), ValueError]
+                                                ])
+def test_image_mask_pipeline_to_torch_checks_mean_type_and_shape_rgb(img_3x3_rgb, mask_3x3, mean, std, expected):
+    ppl = slc.Stream(
+        [
+            slt.RandomRotate(rotation_range=(90, 90), p=1),
+            slt.RandomRotate(rotation_range=(90, 90), p=1),
+        ],
+    )
+    dc_res = ppl({'image': img_3x3_rgb, 'mask': mask_3x3})
+    with pytest.raises(expected):
+        dc_res.to_torch(normalize=True, mean=mean, std=std)
+
+
+def test_data_container_keypoints_rescale_to_torch():
+    kpts_data = np.array([[100, 20], [1023, 80], [20, 20], [100, 700]]).reshape((4, 2))
+    kpts = sld.KeyPoints(kpts_data, 768, 1024)
+    ppl = slc.Stream()
+    dc_res = ppl({'keypoints': kpts, 'label': 1})
+    k, l = dc_res.to_torch(normalize=True, scale_keypoints=True)
+    assert isinstance(k, torch.FloatTensor)
+    np.testing.assert_almost_equal(k.max().item() * 1023, 1023)
+    np.testing.assert_almost_equal(k.min().item() * 1023, 20)
+    assert l == 1
+

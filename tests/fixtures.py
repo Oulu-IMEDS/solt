@@ -40,7 +40,7 @@ def img_3x4():
     """
     img = np.array([[1, 1, 1, 0],
                     [1, 0, 1, 1],
-                    [1, 1, 1, 1]]).reshape((3, 4, 1)).astype(np.uint8)
+                    [1, 1, 1, 1]]).reshape((3, 4, 1)).astype(np.uint8) * 255
     return img
 
 
@@ -57,7 +57,7 @@ def mask_3x4():
 
     mask = np.array([[0, 1, 1, 1],
                     [0, 1, 1, 0],
-                    [0, 1, 1, 0]]).reshape((3, 4)).astype(np.uint8)
+                    [0, 1, 1, 0]]).reshape((3, 4)).astype(np.uint8) * 255
     return mask
 
 
@@ -90,7 +90,7 @@ def img_3x3_rgb():
     img = np.array([[0, 1, 1],
                     [1, 0, 1],
                     [1, 1, 1]]).reshape((3, 3, 1)).astype(np.uint8)
-    return np.dstack((img, img, img))
+    return np.dstack((img, img, img)) * 255
 
 
 @pytest.fixture
@@ -107,7 +107,7 @@ def mask_3x3():
     mask = np.array([[1, 1, 1],
                     [1, 1, 1],
                     [0, 1, 1]]).reshape((3, 3)).astype(np.uint8)
-    return mask
+    return mask * 255
 
 
 @pytest.fixture
