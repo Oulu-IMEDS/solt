@@ -21,7 +21,7 @@ def test_img_mask_vertical_flip(img_3x4, mask_3x4):
 
     stream = slc.Stream([slt.RandomFlip(p=1, axis=0)])
 
-    dc = stream(dc)
+    dc = stream(dc, return_torch=False)
     img_res, _, _ = dc[0]
     mask_res, _, _ = dc[1]
 
@@ -41,7 +41,7 @@ def test_img_mask_mask_vertical_flip(img_3x4, mask_3x4):
 
     stream = slc.Stream([slt.RandomFlip(p=1, axis=0)])
 
-    dc = stream(dc)
+    dc = stream(dc, return_torch=False)
     img_res, _, _ = dc[0]
     mask_res, _, _ = dc[1]
 
@@ -56,7 +56,7 @@ def test_img_mask_horizontal_flip(img_3x4, mask_3x4):
 
     stream = slc.Stream([slt.RandomFlip(p=1, axis=1)])
 
-    dc = stream(dc)
+    dc = stream(dc, return_torch=False)
     img_res, _, _ = dc[0]
     mask_res, _, _ = dc[1]
 
@@ -71,7 +71,7 @@ def test_img_mask_vertical_horizontal_flip(img_3x4, mask_3x4):
 
     stream = slc.Stream([slt.RandomFlip(p=1, axis=0), slt.RandomFlip(p=1, axis=1)])
 
-    dc = stream(dc)
+    dc = stream(dc, return_torch=False)
     img_res, _, _ = dc[0]
     mask_res, _, _ = dc[1]
 
@@ -138,7 +138,7 @@ def test_keypoints_horizontal_flip_within_stream():
     stream = slc.Stream([slt.RandomFlip(p=1, axis=1)])
     dc = sld.DataContainer((kpts,), "P")
 
-    dc_res = stream(dc)
+    dc_res = stream(dc, return_torch=False)
 
     assert np.array_equal(
         dc_res[0][0].data, np.array([[1, 0], [1, 1], [0, 0], [0, 1]]).reshape((4, 2))
@@ -151,7 +151,7 @@ def test_keypoints_vertical_flip_within_stream():
     stream = slc.Stream([slt.RandomFlip(p=1, axis=0)])
     dc = sld.DataContainer((kpts,), "P")
 
-    dc_res = stream(dc)
+    dc_res = stream(dc, return_torch=False)
 
     assert np.array_equal(
         dc_res[0][0].data, np.array([[0, 1], [0, 0], [1, 1], [1, 0]]).reshape((4, 2))
@@ -507,7 +507,7 @@ def test_3x3_pad_to_20x20_center_crop_3x3_shape_stayes_unchanged(img_3x3, mask_3
     dc = sld.DataContainer((img, mask, kpts,), "IMP")
 
     stream = slc.Stream([slt.PadTransform((20, 20)), slt.CropTransform((3, 3))])
-    res = stream(dc)
+    res = stream(dc, return_torch=False)
 
     assert (res[0][0].shape[0] == 3) and (res[0][0].shape[1] == 3)
     assert (res[1][0].shape[0] == 3) and (res[1][0].shape[1] == 3)
@@ -528,7 +528,7 @@ def test_2x2_pad_to_20x20_center_crop_2x2(pad_size, crop_size, img_2x2, mask_2x2
     stream = slc.Stream(
         [slt.PadTransform(pad_to=pad_size), slt.CropTransform(crop_size=crop_size)]
     )
-    res = stream(dc)
+    res = stream(dc, return_torch=False)
 
     assert (res[0][0].shape[0] == 2) and (res[0][0].shape[1] == 2)
     assert (res[1][0].shape[0] == 2) and (res[1][0].shape[1] == 2)
@@ -553,7 +553,7 @@ def test_different_crop_modes(crop_mode, img_2x2, mask_2x2):
         )
         img, mask = img_2x2, mask_2x2
         dc = sld.DataContainer((img, mask,), "IM")
-        dc_res = stream(dc)
+        dc_res = stream(dc, return_torch=False)
 
         for el in dc_res.data:
             assert el.shape[0] == 2
@@ -569,7 +569,7 @@ def test_6x6_pad_to_20x20_center_crop_6x6_img_kpts(img_6x6):
     dc = sld.DataContainer((img, kpts, 1), "IPL")
 
     stream = slc.Stream([slt.PadTransform((20, 20)), slt.CropTransform((6, 6))])
-    res = stream(dc)
+    res = stream(dc, return_torch=False)
 
     assert (res[0][0].shape[0] == 6) and (res[0][0].shape[1] == 6)
     assert (res[1][0].height == 6) and (res[1][0].width == 6)
@@ -587,7 +587,7 @@ def test_6x6_pad_to_20x20_center_crop_6x6_kpts_img(img_6x6):
     dc = sld.DataContainer((kpts, img), "PI")
 
     stream = slc.Stream([slt.PadTransform((20, 20)), slt.CropTransform((6, 6))])
-    res = stream(dc)
+    res = stream(dc, return_torch=False)
 
     assert (res[1][0].shape[0] == 6) and (res[1][0].shape[1] == 6)
     assert (res[0][0].height == 6) and (res[0][0].width == 6)
@@ -1114,7 +1114,7 @@ def test_cutout_blacks_out_image(img, expected):
     dc = sld.DataContainer((img,), "I")
     trf = slc.Stream([slt.ImageCutOut(p=1, cutout_size=6)])
 
-    dc_res = trf(dc)
+    dc_res = trf(dc, return_torch=False)
 
     assert np.array_equal(expected, dc_res.data[0])
 
@@ -1122,7 +1122,7 @@ def test_cutout_blacks_out_image(img, expected):
 def test_cutout_1x1_blacks_corner_pixels_2x2_img(img_2x2):
     dc = sld.DataContainer((img_2x2.copy(),), "I")
     trf = slc.Stream([slt.ImageCutOut(p=1, cutout_size=1)])
-    dc_res = trf(dc)
+    dc_res = trf(dc, return_torch=False)
 
     equal = 0
     for i in range(2):
@@ -1151,7 +1151,7 @@ def test_keypoint_jitter_works_correctly(jitter_x, jitter_y, exp_x, exp_y):
             )
         ]
     )
-    dc_res = trf(dc)
+    dc_res = trf(dc, return_torch=False)
 
     assert np.array_equal(dc_res.data[0].data, np.array([exp_x, exp_y]).reshape((1, 2)))
 
@@ -1160,7 +1160,8 @@ def test_keypoint_jitter_does_not_change_img_mask_or_target(img_3x3, mask_3x3):
     trf = slc.Stream(
         [slt.KeypointsJitter(p=1, dx_range=(-0.2, 0.2), dy_range=(-0.2, 0.2))]
     )
-    dc_res = trf({"image": img_3x3.copy(), "mask": mask_3x3.copy(), "label": 1})
+    dc_res = trf({"image": img_3x3.copy(),
+                  "mask": mask_3x3.copy(), "label": 1}, return_torch=False)
 
     assert np.array_equal(dc_res.data[0], img_3x3)
     assert np.array_equal(dc_res.data[1], mask_3x3)

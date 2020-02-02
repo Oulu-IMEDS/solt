@@ -271,22 +271,22 @@ class DataContainer(object):
         res = {}
         if len(res_dict["images"]) == 1:
             res["image"] = res_dict["images"][0]
-        else:
+        elif len(res_dict["images"]) > 1:
             res["images"] = res_dict["images"]
 
         if len(res_dict["masks"]) == 1:
             res["mask"] = res_dict["masks"][0]
-        else:
+        elif len(res_dict["masks"]) > 1:
             res["masks"] = res_dict["masks"]
 
         if len(res_dict["keypoints_array"]) == 1:
             res["keypoints"] = res_dict["keypoints_array"][0]
-        else:
+        elif len(res_dict["keypoints_array"]) > 1:
             res["keypoints_array"] = res_dict["keypoints_array"]
 
         if len(res_dict["labels"]) == 1:
             res["label"] = res_dict["labels"][0]
-        else:
+        elif len(res_dict["labels"]) > 1:
             res["labels"] = res_dict["labels"]
         return res
 

@@ -64,7 +64,7 @@ def test_stream_empty(img_2x2):
     img = img_2x2
     dc = sld.DataContainer((img,), 'I')
     stream = slc.Stream()
-    res, _, _ = stream(dc)[0]
+    res, _, _ = stream(dc, return_torch=False)[0]
     assert np.all(res == img)
 
 
@@ -86,7 +86,7 @@ def test_nested_stream(img_3x4, mask_3x4):
         ])
     ])
 
-    dc = stream(dc)
+    dc = stream(dc, return_torch=False)
     img_res, t0, _ = dc[0]
     mask_res, t1, _ = dc[1]
 
@@ -107,7 +107,7 @@ def test_image_shape_equal_3_after_nested_flip(img_3x4):
         ])
     ])
 
-    dc = stream(dc)
+    dc = stream(dc, return_torch=False)
     img_res, _, _ = dc[0]
 
     assert np.array_equal(len(img.shape), 3)
@@ -180,7 +180,7 @@ def test_fusion_rotate_360(img_5x5):
         slt.RandomRotate((45, 45), padding='z', p=1),
     ], optimize_stack=True)
 
-    img_res = ppl(dc)[0][0]
+    img_res = ppl(dc, return_torch=False)[0][0]
 
     np.testing.assert_array_almost_equal(img, img_res)
 
@@ -211,7 +211,7 @@ def test_fusion_rotate_360_flip_rotate_360(img_5x5):
         ], optimize_stack=True)
     ], optimize_stack=True)
 
-    img_res = ppl(dc)[0][0]
+    img_res = ppl(dc, return_torch=False)[0][0]
 
     np.testing.assert_array_almost_equal(cv2.flip(img, 1).reshape(5, 5, 1), img_res)
 
@@ -335,7 +335,7 @@ def test_selective_pipeline_selects_transforms_and_does_the_fusion():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
     kpts = sld.KeyPoints(kpts_data, 3, 4)
     dc = sld.DataContainer(kpts, 'P')
-    dc_res = ppl(dc)
+    dc_res = ppl(dc, return_torch=False)
 
     assert np.array_equal(np.eye(3), ppl.transforms[0].state_dict['transform_matrix'])
 
@@ -387,9 +387,9 @@ def test_selective_stream_low_prob_transform_should_not_change_the_data(img_5x5)
         slt.RandomRotate(rotation_range=(-90, -90), p=0)
     ])
 
-    dc_res = ppl(dc)
+    dc_res = ppl(dc, return_torch=False)
 
-    np.array_equal(dc.data, dc_res.data)
+    assert np.array_equal(dc.data, dc_res.data)
 
 
 def test_manually_specified_padding_and_interpolation(img_5x5, mask_5x5):
@@ -459,14 +459,18 @@ def test_matrix_transforms_state_reset(img_5x5, ignore_state, pipeline):
     for i in range(n_iter):
         dc1 = sld.DataContainer((img_test.copy(),), 'I')
         dc2 = sld.DataContainer((img_test.copy(),), 'I')
-
-        dc1_res = ppl(dc1).data[0].squeeze()
+        if pipeline:
+            dc1_res = ppl(dc1, return_torch=False).data[0].squeeze()
+        else:
+            dc1_res = ppl(dc1).data[0].squeeze()
         if pipeline:
             trf_state1 = ppl.transforms[0].state_dict['transform_matrix_corrected']
         else:
             trf_state1 = ppl.state_dict['transform_matrix_corrected']
-
-        dc2_res = ppl(dc2).data[0].squeeze()
+        if pipeline:
+            dc2_res = ppl(dc2, return_torch=False).data[0].squeeze()
+        else:
+            dc2_res = ppl(dc2).data[0].squeeze()
         if pipeline:
             trf_state2 = ppl.transforms[0].state_dict['transform_matrix_corrected']
         else:
@@ -495,7 +499,10 @@ def test_matrix_transforms_use_cache_for_different_dc_items_raises_error(img_5x5
         ppl = slt.RandomRotate(rotation_range=(-180, 180), p=1, ignore_state=False)
 
     with pytest.raises(ValueError):
-        ppl(dc)
+        if pipeline:
+            ppl(dc, return_torch=False)
+        else:
+            ppl(dc)
 
 
 def test_keypoints_get_set():
@@ -618,7 +625,7 @@ def test_image_mask_pipeline_to_torch(img_3x4, mask_3x4):
                 slt.RandomRotate(rotation_range=(90, 90), p=1),
             ],
         )
-    img, mask = ppl({'image': img_3x4, 'mask': mask_3x4}).to_torch()
+    img, mask = ppl({'image': img_3x4, 'mask': mask_3x4}, normalize=False, as_dict=False)
     assert img.max().item() == 1
     assert mask.max().item() == 1
     assert isinstance(img, torch.FloatTensor)
@@ -632,7 +639,8 @@ def test_image_mask_pipeline_to_torch_uint16(img_3x4, mask_3x4):
                 slt.RandomRotate(rotation_range=(90, 90), p=1),
             ],
         )
-    img, mask = ppl({'image': (img_3x4 // 255).astype(np.uint16)*65535, 'mask': mask_3x4}).to_torch()
+    img, mask = ppl({'image': (img_3x4 // 255).astype(np.uint16)*65535,
+                     'mask': mask_3x4}, as_dict=False, normalize=False)
     assert img.max() == 1
     assert mask.max() == 1
     assert isinstance(img, torch.FloatTensor)
@@ -650,8 +658,8 @@ def test_image_mask_pipeline_to_torch_normalization(img_3x3_rgb, mask_3x3, mean,
             slt.RandomRotate(rotation_range=(90, 90), p=1),
         ],
     )
-    dc_res = ppl({'image': img_3x3_rgb, 'mask': mask_3x3})
-    img, mask = dc_res.to_torch(normalize=True, mean=mean, std=std)
+    img, mask = ppl({'image': img_3x3_rgb, 'mask': mask_3x3}, as_dict=False,
+                    mean=mean, std=std)
 
     if mean is None:
         np.testing.assert_almost_equal(img[0, :, :].max().item(), 0.515/0.229)
@@ -683,7 +691,7 @@ def test_image_mask_pipeline_to_torch_checks_mean_type_and_shape_rgb(img_3x3_rgb
             slt.RandomRotate(rotation_range=(90, 90), p=1),
         ],
     )
-    dc_res = ppl({'image': img_3x3_rgb, 'mask': mask_3x3})
+    dc_res = ppl({'image': img_3x3_rgb, 'mask': mask_3x3}, return_torch=False)
     with pytest.raises(expected):
         dc_res.to_torch(normalize=True, mean=mean, std=std)
 
@@ -692,9 +700,27 @@ def test_data_container_keypoints_rescale_to_torch():
     kpts_data = np.array([[100, 20], [1023, 80], [20, 20], [100, 700]]).reshape((4, 2))
     kpts = sld.KeyPoints(kpts_data, 768, 1024)
     ppl = slc.Stream()
-    dc_res = ppl({'keypoints': kpts, 'label': 1})
-    k, label = dc_res.to_torch(normalize=True, scale_keypoints=True)
+    k, label = ppl({'keypoints': kpts, 'label': 1}, as_dict=False)
     assert isinstance(k, torch.FloatTensor)
     np.testing.assert_almost_equal(k.max().item() * 1023, 1023)
     np.testing.assert_almost_equal(k.min().item() * 1023, 20)
     assert label == 1
+
+
+def test_selective_stream_returns_torch_when_asked(img_5x5):
+    img = img_5x5 * 255
+    dc = sld.DataContainer((img,), 'I')
+
+    ppl = slc.SelectiveStream([
+        slt.RandomRotate(rotation_range=(90, 90), p=0),
+        slt.RandomRotate(rotation_range=(-90, -90), p=0)
+    ])
+
+    res = ppl(dc, normalize=False)
+    res_img = (res['image'] * 255).numpy().astype(np.uint8)
+    assert isinstance(res, dict)
+    assert tuple(res) == ('image', )
+    # We can do squeeze here because it is a grayscale image!
+    assert np.array_equal(img.squeeze(), res_img.squeeze())
+
+

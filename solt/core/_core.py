@@ -1,7 +1,11 @@
 import numpy as np
 
 from collections import OrderedDict
-from ..base_transforms import BaseTransform, MatrixTransform, DataDependentSamplingTransform
+from ..base_transforms import (
+    BaseTransform,
+    MatrixTransform,
+    DataDependentSamplingTransform,
+)
 import copy
 import random
 import solt.data as sld
@@ -13,7 +17,9 @@ class Stream(object):
 
     """
 
-    def __init__(self, transforms=None, interpolation=None, padding=None, optimize_stack=False):
+    def __init__(
+        self, transforms=None, interpolation=None, padding=None, optimize_stack=False
+    ):
         """
         Class constructor.
 
@@ -70,16 +76,16 @@ class Stream(object):
 
         """
         for trf in self.__transforms:
-            if self.__interpolation is not None and hasattr(trf, 'interpolation'):
+            if self.__interpolation is not None and hasattr(trf, "interpolation"):
                 if isinstance(trf, BaseTransform):
-                    if trf.interpolation[1] != 'strict':
+                    if trf.interpolation[1] != "strict":
                         trf.interpolation = (self.__interpolation, trf.interpolation[1])
                 elif isinstance(trf, Stream):
                     trf.interpolation = self.interpolation
 
-            if self.__padding is not None and hasattr(trf, 'padding'):
+            if self.__padding is not None and hasattr(trf, "padding"):
                 if isinstance(trf, BaseTransform):
-                    if trf.padding[1] != 'strict':
+                    if trf.padding[1] != "strict":
                         trf.padding = (self.__padding, trf.padding[1])
                 elif isinstance(trf, Stream):
                     trf.padding = self.__padding
@@ -103,7 +109,16 @@ class Stream(object):
     def transforms(self):
         return self.__transforms
 
-    def __call__(self, data):
+    def __call__(
+        self,
+        data,
+        return_torch=True,
+        as_dict=True,
+        scale_keypoints=True,
+        normalize=True,
+        mean=None,
+        std=None,
+    ):
         """
         Executes the list of the pre-defined transformations for a given data container.
 
@@ -111,15 +126,40 @@ class Stream(object):
         ----------
         data : DataContainer or dict
             Data to be augmented. See `sld.DataContainer.from_dict` for details.
+        return_torch : bool
+            Whether to convert the result into a torch tensors
+        as_dict : bool
+            Whether to pool the results into a dict. See `sld.DataContainer.to_dict` for details
+        scale_keypoints : bool
+            Whether to scale the keypoints into 0-1 range
+        normalize : bool
+            Whether to normalize the resulting tensor. If mean or std args are None,
+            ImageNet statistics will be used
+        mean : None or tuple of float or np.ndarray or torch.FloatTensor
+            Mean to subtract for the converted tensor
+        std : None or tuple of float or np.ndarray or torch.FloatTensor
+            Mean to subtract for the converted tensor
 
         Returns
         -------
-        out : DataContainer
+        out : DataContainer or dict or list
             Result
 
         """
 
-        return Stream.exec_stream(self.__transforms, data, self._optimize_stack)
+        res: sld.DataContainer = Stream.exec_stream(
+            self.__transforms, data, self._optimize_stack
+        )
+
+        if return_torch:
+            return res.to_torch(
+                as_dict=as_dict,
+                scale_keypoints=scale_keypoints,
+                normalize=normalize,
+                mean=mean,
+                std=std,
+            )
+        return res
 
     @staticmethod
     def optimize_stack(transforms):
@@ -142,7 +182,9 @@ class Stream(object):
         for trf in transforms:
             if not isinstance(trf, Stream) and not isinstance(trf, BaseTransform):
                 raise TypeError
-            if isinstance(trf, BaseTransform) and not isinstance(trf, DataDependentSamplingTransform):
+            if isinstance(trf, BaseTransform) and not isinstance(
+                trf, DataDependentSamplingTransform
+            ):
                 trf.reset_state()
                 if trf.use_transform():
                     trf.sample_transform()
@@ -157,7 +199,9 @@ class Stream(object):
                     else:
                         transforms_stack.append(trf)
             else:
-                transforms_stack.append(trf)  # It means that the transform is actually a nested Stream
+                transforms_stack.append(
+                    trf
+                )  # It means that the transform is actually a nested Stream
 
         return transforms_stack
 
@@ -188,13 +232,18 @@ class Stream(object):
         if optimize_stack:
             transforms = Stream.optimize_stack(transforms)
         for trf in transforms:
-            if isinstance(trf, BaseTransform) and not isinstance(trf, DataDependentSamplingTransform):
+            if isinstance(trf, BaseTransform) and not isinstance(
+                trf, DataDependentSamplingTransform
+            ):
                 if not optimize_stack:
                     data = trf(data)
                 else:
                     data = trf.apply(data)
-            elif isinstance(trf, Stream) or isinstance(trf, DataDependentSamplingTransform):
+            elif isinstance(trf, Stream):
+                data = trf(data, return_torch=False)
+            elif isinstance(trf, DataDependentSamplingTransform):
                 data = trf(data)
+
         return data
 
 
@@ -217,7 +266,9 @@ class SelectiveStream(Stream):
         optimize_stack : bool
             Whether to execute stack optimization for augmentations.
         """
-        super(SelectiveStream, self).__init__(transforms=transforms, optimize_stack=optimize_stack)
+        super(SelectiveStream, self).__init__(
+            transforms=transforms, optimize_stack=optimize_stack
+        )
         if transforms is None:
             transforms = []
         if n < 0 or n > len(transforms):
@@ -228,7 +279,16 @@ class SelectiveStream(Stream):
         self._n = n
         self._probs = probs
 
-    def __call__(self, data):
+    def __call__(
+        self,
+        data,
+        return_torch=True,
+        as_dict=True,
+        scale_keypoints=True,
+        normalize=True,
+        mean=None,
+        std=None,
+    ):
         """
         Applies randomly selected n transforms to the given data item
 
@@ -236,6 +296,19 @@ class SelectiveStream(Stream):
         ----------
         data : DataContainer
             Data to be augmented
+        return_torch : bool
+            Whether to convert the result into a torch tensors
+        as_dict : bool
+            Whether to pool the results into a dict. See `sld.DataContainer.to_dict` for details
+        scale_keypoints : bool
+            Whether to scale the keypoints into 0-1 range
+        normalize : bool
+            Whether to normalize the resulting tensor. If mean or std args are None,
+            ImageNet statistics will be used
+        mean : None or tuple of float or np.ndarray or torch.FloatTensor
+            Mean to subtract for the converted tensor
+        std : None or tuple of float or np.ndarray or torch.FloatTensor
+            Mean to subtract for the converted tensor
 
         Returns
         -------
@@ -244,9 +317,21 @@ class SelectiveStream(Stream):
         """
         if len(self.transforms) > 0:
             random_state = np.random.RandomState(random.randint(0, 2 ** 32 - 1))
-            trfs = random_state.choice(self.transforms, self._n, replace=False, p=self._probs)
+            trfs = random_state.choice(
+                self.transforms, self._n, replace=False, p=self._probs
+            )
             if self._optimize_stack:
                 trfs = [copy.deepcopy(x) for x in trfs]
                 trfs = Stream.optimize_stack(trfs)
             data = Stream.exec_stream(trfs, data, self._optimize_stack)
+
+        if return_torch:
+            return data.to_torch(
+                as_dict=as_dict,
+                scale_keypoints=scale_keypoints,
+                normalize=normalize,
+                mean=mean,
+                std=std,
+            )
+
         return data
