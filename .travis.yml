@@ -20,7 +20,7 @@ matrix:
       sudo: true
       python: 3.8
 
-    - name: "OSX/ Python 3.6"
+    - name: "OSX / Python 3.6"
       os: osx
       language: generic
       env: TRAVIS_PYTHON_VERSION=3.6
@@ -33,16 +33,17 @@ matrix:
     - name: "OSX / Python 3.8"
       os: osx
       language: generic
-      env: TRAVIS_PYTHON_VERSION=3.7
-
+      env: TRAVIS_PYTHON_VERSION=3.8
 
 install:
   - sh ci/conda_setup.sh
   - bash $HOME/miniconda.sh -b -p $HOME/miniconda
   - export OPATH="$PATH" && export PATH="$HOME/miniconda/bin:$PATH"
-  - conda env create -f ci/conda_env.yml
-  - conda install -y python=$TRAVIS_PYTHON_VERSION -n solt
-  - source activate solt
+  - conda create -q -y -n solt python=$TRAVIS_PYTHON_VERSION
+  - conda install -y pandoc -n solt
+  - conda install pytorch torchvision cpuonly -c pytorch -n solt
+  - conda activate solt
+  - pip install -r ci/requirements.txt
   - pip install .
 script:
   - py.test tests --cov solt --cov-report term-missing -v
