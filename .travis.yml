@@ -40,6 +40,7 @@ install:
   - bash $HOME/miniconda.sh -b -p $HOME/miniconda
   - export OPATH="$PATH" && export PATH="$HOME/miniconda/bin:$PATH"
   - conda create -q -y -n solt_test_env python=$TRAVIS_PYTHON_VERSION
+  - conda init
   - conda activate solt
   - conda install -y pandoc
   - conda install -y pytorch torchvision cpuonly -c pytorch
