@@ -24,6 +24,88 @@ def assert_data_containers_equal(dc, dc_new):
             assert d1 == d2
 
 
+def generate_data_container_based_on_presence(img, mask, kpts_data, order, presence):
+    kpts = sld.KeyPoints(kpts_data.copy(), 3, 4)
+
+    n_obj1, n_obj2, n_obj3, n_obj4, n_obj5, n_obj6, n_obj7, n_obj8 = presence
+    dc_content = []
+    dc_format = ''
+    order = list(order)
+    d = {}
+
+    if n_obj1:
+        d['image'] = img
+        dc_content.append(img)
+        dc_format += 'I'
+    else:
+        del order[order.index('image')]
+    if n_obj2:
+        d['images'] = [img.copy() for _ in range(n_obj2)]
+        dc_content.extend(d['images'])
+        dc_format += 'I' * n_obj2
+    else:
+        del order[order.index('images')]
+    if n_obj3:
+        d['mask'] = mask
+        dc_content.append(mask)
+        dc_format += 'M'
+    else:
+        del order[order.index('mask')]
+    if n_obj4:
+        d['masks'] = [mask.copy() for i in range(n_obj4)]
+        dc_content.extend(d['masks'])
+        dc_format += 'M' * n_obj4
+    else:
+        del order[order.index('masks')]
+    if n_obj5:
+        d['keypoints'] = sld.KeyPoints(kpts_data.copy(), 3, 4)
+        dc_content.append(kpts)
+        dc_format += 'P'
+    else:
+        del order[order.index('keypoints')]
+    if n_obj6:
+        d['keypoints_array'] = [sld.KeyPoints(kpts_data.copy(), 3, 4) for _ in range(n_obj6)]
+        dc_content.extend(d['keypoints_array'])
+        dc_format += 'P' * n_obj6
+    else:
+        del order[order.index('keypoints_array')]
+    if n_obj7:
+        d['label'] = 1
+        dc_content.append(1)
+        dc_format += 'L'
+    else:
+        del order[order.index('label')]
+    if n_obj8:
+        d['labels'] = [1 for _ in range(n_obj8)]
+        dc_content.extend([1 for _ in range(n_obj8)])
+        dc_format += 'L' * n_obj8
+    else:
+        del order[order.index('labels')]
+    dc = sld.DataContainer(tuple(dc_content), dc_format)
+
+    reordered_d = {k: d[k] for k in order}
+
+    # This tests whether the creation from dict works as expected
+    dc_reordered = sld.DataContainer.from_dict(reordered_d)
+
+    return dc, dc_reordered
+
+
+@pytest.mark.parametrize('order', list(itertools.permutations(
+    ['image', 'images', 'mask', 'masks', 'keypoints', 'keypoints_array', 'label', 'labels']))[30:50])
+@pytest.mark.parametrize('presence', [[1, 2, 1, 2, 1, 0, 1, 2],
+                                      [1, 0, 1, 2, 0, 2, 0, 3],
+                                      [0, 2, 0, 0, 2, 0, 0, 0],
+                                      [0, 2, 0, 2, 0, 2, 0, 2],
+                                      [0, 0, 1, 0, 1, 0, 1, 0]])
+def test_assert_data_containers_equal(img_3x4, mask_3x4, order, presence):
+    img, mask = img_3x4, mask_3x4
+    kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2)).astype(float)
+    dc, dc_reordered = generate_data_container_based_on_presence(img, mask, kpts_data, order, presence)
+    assert_data_containers_equal(dc, dc_reordered)
+    assert dc == dc_reordered
+
+
 def test_img_shape_checker_decorator_shape_check():
     img = np.random.rand(3, 4, 5, 6)
     func = slu.img_shape_checker(lambda x: x)
@@ -222,7 +304,7 @@ def test_stream_settings():
         slt.RandomRotate((45, 45), padding='r', p=1),
         slt.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
         slt.RandomShear(0.1, 0.1, interpolation='bilinear', padding='z'),
-        ],
+    ],
         interpolation='nearest',
         padding='z'
     )
@@ -257,7 +339,7 @@ def test_stream_settings_strict():
         slt.RandomRotate((45, 45), padding='r', p=1),
         slt.RandomRotate((45, 45), interpolation=('bicubic', 'strict'), padding=('r', 'strict'), p=1),
         slt.RandomShear(0.1, 0.1, interpolation='bilinear', padding='z'),
-        ],
+    ],
         interpolation='nearest',
         padding='z'
     )
@@ -280,7 +362,7 @@ def test_stream_nested_settings():
             slt.RandomRotate((45, 45), padding='r', p=1),
         ], interpolation='bicubic', padding='r'
         )
-        ],
+    ],
         interpolation='nearest',
         padding='z'
     )
@@ -299,7 +381,7 @@ def test_stream_raises_assertion_error_when_not_basetransform_or_stream_in_the_t
 
 def test_stream_serializes_correctly():
     ppl = slc.Stream([
-        slt.RandomRotate(rotation_range=(-90,90)),
+        slt.RandomRotate(rotation_range=(-90, 90)),
         slt.RandomRotate(rotation_range=(-90, 90)),
         slt.RandomRotate(rotation_range=(-90, 90)),
         slt.RandomProjection(
@@ -344,7 +426,7 @@ def test_value_error_when_optimizeing_wrong_elements_transforms_list():
     trfs = [
         slt.RandomRotate(rotation_range=(90, 90), p=1),
         slt.RandomRotate(rotation_range=(-90, -90), p=1),
-        lambda x: x**2
+        lambda x: x ** 2
     ]
 
     with pytest.raises(TypeError):
@@ -483,8 +565,8 @@ def test_matrix_transforms_state_reset(img_5x5, ignore_state, pipeline):
             imgs_not_eq += 1
 
     random.seed(None)
-    assert trf_not_eq > n_iter//2
-    assert imgs_not_eq > n_iter//2
+    assert trf_not_eq > n_iter // 2
+    assert imgs_not_eq > n_iter // 2
 
 
 @pytest.mark.parametrize('pipeline', [True, False])
@@ -517,7 +599,9 @@ def test_keypoints_get_set():
         kpts[0] = [2, 2]
 
 
-@pytest.mark.parametrize('order', list(itertools.permutations(['image', 'images', 'mask', 'masks', 'keypoints', 'keypoints_array', 'label', 'labels']))[:20])
+@pytest.mark.parametrize('order', list(
+    itertools.permutations(['image', 'images', 'mask', 'masks', 'keypoints', 'keypoints_array', 'label', 'labels']))[
+                                  :20])
 @pytest.mark.parametrize('presence', [[1, 2, 1, 2, 1, 0, 1, 2],
                                       [1, 0, 1, 2, 0, 2, 0, 3],
                                       [0, 2, 0, 0, 2, 0, 0, 0],
@@ -525,72 +609,12 @@ def test_keypoints_get_set():
                                       [0, 0, 1, 0, 1, 0, 1, 0]])
 def test_data_container_from_and_to_dict(img_3x4, mask_3x4, order, presence):
     img, mask = img_3x4, mask_3x4
-
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2)).astype(float)
-    kpts = sld.KeyPoints(kpts_data.copy(), 3, 4)
-
-    n_obj1, n_obj2, n_obj3, n_obj4, n_obj5, n_obj6, n_obj7, n_obj8 = presence
-    order = list(order)
-    d = {}
-    dc_content = []
-    dc_format = ''
-    if n_obj1:
-        d['image'] = img
-        dc_content.append(img)
-        dc_format += 'I'
-    else:
-        del order[order.index('image')]
-    if n_obj2:
-        d['images'] = [img.copy() for _ in range(n_obj2)]
-        dc_content.extend(d['images'])
-        dc_format += 'I' * n_obj2
-    else:
-        del order[order.index('images')]
-    if n_obj3:
-        d['mask'] = mask
-        dc_content.append(mask)
-        dc_format += 'M'
-    else:
-        del order[order.index('mask')]
-    if n_obj4:
-        d['masks'] = [mask.copy() for i in range(n_obj4)]
-        dc_content.extend(d['masks'])
-        dc_format += 'M' * n_obj4
-    else:
-        del order[order.index('masks')]
-    if n_obj5:
-        d['keypoints'] = sld.KeyPoints(kpts_data.copy(), 3, 4)
-        dc_content.append(kpts)
-        dc_format += 'P'
-    else:
-        del order[order.index('keypoints')]
-    if n_obj6:
-        d['keypoints_array'] = [sld.KeyPoints(kpts_data.copy(), 3, 4) for _ in range(n_obj6)]
-        dc_content.extend(d['keypoints_array'])
-        dc_format += 'P' * n_obj6
-    else:
-        del order[order.index('keypoints_array')]
-    if n_obj7:
-        d['label'] = 1
-        dc_content.append(1)
-        dc_format += 'L'
-    else:
-        del order[order.index('label')]
-    if n_obj8:
-        d['labels'] = [1 for _ in range(n_obj8)]
-        dc_content.extend([1 for _ in range(n_obj8)])
-        dc_format += 'L' * n_obj8
-    else:
-        del order[order.index('labels')]
-    dc = sld.DataContainer(tuple(dc_content), dc_format)
-    reordered_d = {k: d[k] for k in order}
-
-    # This tests whether the creation from dict works as expected
-    dc_new = sld.DataContainer.from_dict(reordered_d)
-    assert_data_containers_equal(dc, dc_new)
+    dc, dc_reordered = generate_data_container_based_on_presence(img, mask, kpts_data, order, presence)
+    assert dc == dc_reordered
 
     # Now we will also test whether conversion to dict and back works well.
-    tensor_dict = dc_new.to_torch(as_dict=True, normalize=False, scale_keypoints=False)
+    tensor_dict = dc_reordered.to_torch(as_dict=True, normalize=False, scale_keypoints=False)
     for k in tensor_dict:
         if isinstance(tensor_dict[k], (list, tuple)):
             tmp = []
@@ -614,17 +638,16 @@ def test_data_container_from_and_to_dict(img_3x4, mask_3x4, order, presence):
             if 'keypoints' in k:
                 tensor_dict[k] = sld.KeyPoints(tensor_dict[k], 3, 4)
 
-    dc_from_tensor = sld.DataContainer.from_dict(tensor_dict)
-    assert_data_containers_equal(dc, dc_from_tensor)
+    assert dc == sld.DataContainer.from_dict(tensor_dict)
 
 
 def test_image_mask_pipeline_to_torch(img_3x4, mask_3x4):
     ppl = slc.Stream(
-            [
-                slt.RandomRotate(rotation_range=(90, 90), p=1),
-                slt.RandomRotate(rotation_range=(90, 90), p=1),
-            ],
-        )
+        [
+            slt.RandomRotate(rotation_range=(90, 90), p=1),
+            slt.RandomRotate(rotation_range=(90, 90), p=1),
+        ],
+    )
     img, mask = ppl({'image': img_3x4, 'mask': mask_3x4}, normalize=False, as_dict=False)
     assert img.max().item() == 1
     assert mask.max().item() == 1
@@ -634,12 +657,12 @@ def test_image_mask_pipeline_to_torch(img_3x4, mask_3x4):
 
 def test_image_mask_pipeline_to_torch_uint16(img_3x4, mask_3x4):
     ppl = slc.Stream(
-            [
-                slt.RandomRotate(rotation_range=(90, 90), p=1),
-                slt.RandomRotate(rotation_range=(90, 90), p=1),
-            ],
-        )
-    img, mask = ppl({'image': (img_3x4 // 255).astype(np.uint16)*65535,
+        [
+            slt.RandomRotate(rotation_range=(90, 90), p=1),
+            slt.RandomRotate(rotation_range=(90, 90), p=1),
+        ],
+    )
+    img, mask = ppl({'image': (img_3x4 // 255).astype(np.uint16) * 65535,
                      'mask': mask_3x4}, as_dict=False, normalize=False)
     assert img.max() == 1
     assert mask.max() == 1
@@ -662,7 +685,7 @@ def test_image_mask_pipeline_to_torch_normalization(img_3x3_rgb, mask_3x3, mean,
                     mean=mean, std=std)
 
     if mean is None:
-        np.testing.assert_almost_equal(img[0, :, :].max().item(), 0.515/0.229)
+        np.testing.assert_almost_equal(img[0, :, :].max().item(), 0.515 / 0.229)
     else:
         assert img.max() == 1
     assert mask.max() == 1
@@ -719,8 +742,6 @@ def test_selective_stream_returns_torch_when_asked(img_5x5):
     res = ppl(dc, normalize=False)
     res_img = (res['image'] * 255).numpy().astype(np.uint8)
     assert isinstance(res, dict)
-    assert tuple(res) == ('image', )
+    assert tuple(res) == ('image',)
     # We can do squeeze here because it is a grayscale image!
     assert np.array_equal(img.squeeze(), res_img.squeeze())
-
-

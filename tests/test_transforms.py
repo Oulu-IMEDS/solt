@@ -408,6 +408,18 @@ def test_pad_to_20x20_img_mask_keypoints_3x3(img_3x3, mask_3x3):
     )
 
 
+@pytest.mark.parametrize('trf', [slt.PadTransform, slt.CropTransform, slt.ResizeTransform])
+def test_pad_crop_resize_dont_change_data_when_parameters_are_not_set(img_3x3, mask_3x3, trf):
+    # Setting up the data
+    kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
+    kpts = sld.KeyPoints(kpts_data, 3, 3)
+    img, mask = img_3x3, mask_3x3
+
+    dc = sld.DataContainer((img, mask, kpts,), "IMP")
+    res = trf()(dc, return_torch=False)
+    assert dc == res
+
+
 @pytest.mark.parametrize(
     "img, mask, resize_to",
     [
@@ -466,7 +478,7 @@ def test_resize_img_to_arbitrary_size(img, mask, resize_to):
     assert np.array_equal(res[2].data, kpts_data)
 
 
-@pytest.mark.parametrize("resize_to", ["1123", [123, 123], None, 123.0])
+@pytest.mark.parametrize("resize_to", ["1123", [123, 123], 123.0])
 def test_wrong_resize_types(resize_to):
     with pytest.raises(TypeError):
         slt.ResizeTransform(resize_to=resize_to)

@@ -127,7 +127,8 @@ class Stream(object):
         data : DataContainer or dict
             Data to be augmented. See `sld.DataContainer.from_dict` for details.
         return_torch : bool
-            Whether to convert the result into a torch tensors
+            Whether to convert the result into a torch tensors. By default, it is false for transforms and
+            true for the streams.
         as_dict : bool
             Whether to pool the results into a dict. See `sld.DataContainer.to_dict` for details
         scale_keypoints : bool

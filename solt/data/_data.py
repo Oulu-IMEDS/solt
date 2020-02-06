@@ -224,11 +224,11 @@ class DataContainer(object):
                             f"Unknown type ({type(mean)}) of mean vector! "
                             f"Expected tuple, list, np.ndarray or torch.FloatTensor"
                         )
-                    if not (len(mean) == img.size(0)):
+                    if len(mean) != img.size(0):
                         raise ValueError(
                             "Size of the mean vector does not match the number of channels"
                         )
-                    if not (len(std) == img.size(0)):
+                    if len(std) != img.size(0):
                         raise ValueError(
                             "Size of the std vector does not match the number of channels"
                         )
@@ -262,6 +262,8 @@ class DataContainer(object):
             res = []
             for k in ["images", "masks", "keypoints_array", "labels"]:
                 res.extend(res_dict[k])
+            if len(res) == 1:
+                res = res[0]
             return res
 
         return self.remap_results_dict(res_dict)
@@ -311,6 +313,19 @@ class DataContainer(object):
     def __len__(self):
         return len(self.__data)
 
+    def __eq__(self, other):
+        fmt_equal = self.data_format == other.data_format
+        data_equal = True
+        for d1, d2 in zip(self.data, other.data):
+            if isinstance(d1, np.ndarray):
+                data_equal = data_equal and np.array_equal(d1, d2)
+            elif isinstance(d1, KeyPoints):
+                data_equal = data_equal and (d1 == d2)
+            else:
+                assert d1 == d2
+
+        return fmt_equal and data_equal
+
 
 class KeyPoints(object):
     """Keypoints class
@@ -357,3 +372,9 @@ class KeyPoints(object):
     @width.setter
     def width(self, value):
         self.__width = value
+
+    def __eq__(self, other):
+        dim_equal = (self.height == other.height) and (self.width == other.width)
+        data_equal = np.array_equal(self.data, other.data)
+
+        return dim_equal and data_equal

@@ -4,6 +4,7 @@ import solt.base_transforms as slb
 import numpy as np
 import pytest
 import sys, inspect
+import torch
 from .fixtures import img_2x2, img_3x3, img_3x4, img_6x6, img_5x5, img_3x3_rgb
 
 
@@ -132,3 +133,15 @@ def test_transforms_are_serialized_with_state_when_needed():
 
     assert 'dict' in serialized
     np.testing.assert_array_equal(serialized['dict']['transform_matrix'], np.eye(3))
+
+
+@pytest.mark.parametrize('return_torch', [False, True])
+@pytest.mark.parametrize('trf', filter(lambda t: not issubclass(t, slt.ImageRandomHSV), all_trfs_solt))
+def test_transforms_return_torch(img_3x3, trf, return_torch):
+    if 'p' in inspect.getfullargspec(trf.__init__):
+        trf: slb.BaseTransform = trf(p=1)
+    else:
+        trf: slb.BaseTransform = trf()
+    res = trf({'image': img_3x3}, return_torch=return_torch, as_dict=False, mean=(0.5, ), std=(0.5, ))
+
+    assert isinstance(res, torch.FloatTensor) == return_torch

@@ -151,17 +151,40 @@ class BaseTransform(metaclass=ABCMeta):
 
         return DataContainer(data=tuple(result), fmt="".join(types))
 
-    def __call__(self, data):
+    def __call__(
+        self,
+        data,
+        return_torch=False,
+        as_dict=True,
+        scale_keypoints=True,
+        normalize=True,
+        mean=None,
+        std=None,
+    ):
         """Applies the transform to a DataContainer
 
         Parameters
         ----------
         data : DataContainer or dict
-            Data to be augmented. Check sld.DataContainer.from_dict for details.
+            Data to be augmented. See `sld.DataContainer.from_dict` for details.
+        return_torch : bool
+            Whether to convert the result into a torch tensors. By default, it is false for transforms and
+            true for the streams.
+        as_dict : bool
+            Whether to pool the results into a dict. See `sld.DataContainer.to_dict` for details
+        scale_keypoints : bool
+            Whether to scale the keypoints into 0-1 range
+        normalize : bool
+            Whether to normalize the resulting tensor. If mean or std args are None,
+            ImageNet statistics will be used
+        mean : None or tuple of float or np.ndarray or torch.FloatTensor
+            Mean to subtract for the converted tensor
+        std : None or tuple of float or np.ndarray or torch.FloatTensor
+            Mean to subtract for the converted tensor
 
         Returns
         -------
-        out : DataContainer
+        out : DataContainer or dict or list
             Result
 
         """
@@ -172,9 +195,19 @@ class BaseTransform(metaclass=ABCMeta):
         self.reset_state()
         if self.use_transform():
             self.sample_transform()
-            return self.apply(data)
+            res = self.apply(data)
         else:
-            return data
+            res = data
+
+        if return_torch:
+            return res.to_torch(
+                as_dict=as_dict,
+                scale_keypoints=scale_keypoints,
+                normalize=normalize,
+                mean=mean,
+                std=std,
+            )
+        return res
 
     @abstractmethod
     def _apply_img(self, img: np.ndarray, settings: dict):
@@ -326,25 +359,63 @@ class DataDependentSamplingTransform(BaseTransform):
                     raise ValueError
         return prev_h, prev_w
 
-    def __call__(self, data: DataContainer):
+    def __call__(
+        self,
+        data,
+        return_torch=False,
+        as_dict=True,
+        scale_keypoints=True,
+        normalize=True,
+        mean=None,
+        std=None,
+    ):
         """Applies the transform to a DataContainer
 
         Parameters
         ----------
-        data : DataContainer
-            Data to be augmented
+        data : DataContainer or dict
+            Data to be augmented. See `sld.DataContainer.from_dict` for details.
+        return_torch : bool
+            Whether to convert the result into a torch tensors. By default, it is false for transforms and
+            true for the streams.
+        as_dict : bool
+            Whether to pool the results into a dict. See `sld.DataContainer.to_dict` for details
+        scale_keypoints : bool
+            Whether to scale the keypoints into 0-1 range
+        normalize : bool
+            Whether to normalize the resulting tensor. If mean or std args are None,
+            ImageNet statistics will be used
+        mean : None or tuple of float or np.ndarray or torch.FloatTensor
+            Mean to subtract for the converted tensor
+        std : None or tuple of float or np.ndarray or torch.FloatTensor
+            Mean to subtract for the converted tensor
 
         Returns
         -------
-        out : DataContainer
+        out : DataContainer or dict or list
             Result
 
         """
+
+        if isinstance(data, dict):
+            data = sld.DataContainer.from_dict(data)
+
+        self.reset_state()
         if self.use_transform():
             self.sample_transform_from_data(data)
-            return self.apply(data)
+            res = self.apply(data)
         else:
-            return data
+            res = data
+
+        if return_torch:
+            return res.to_torch(
+                as_dict=as_dict,
+                scale_keypoints=scale_keypoints,
+                normalize=normalize,
+                mean=mean,
+                std=std,
+            )
+        return res
 
     @abstractmethod
     def _apply_img(self, img: np.ndarray, settings: dict):

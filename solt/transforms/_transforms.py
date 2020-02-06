@@ -483,8 +483,8 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
 
     Parameters
     ----------
-    pad_to : tuple or int
-        Target size (W_new, Y_new). The padding is computed using teh following equations:
+    pad_to : tuple or int or None
+        Target size (width_new, height_new). The padding is computed using teh following equations:
 
         left_pad = (pad_to[0] - w) // 2
         right_pad = (pad_to[0] - w) // 2 + (pad_to[0] - w) % 2
@@ -495,11 +495,12 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
 
     """
 
-    def __init__(self, pad_to, padding=None):
+    def __init__(self, pad_to=None, padding=None):
         DataDependentSamplingTransform.__init__(self, p=1)
         PaddingPropertyHolder.__init__(self, padding)
-        if not isinstance(pad_to, tuple) and not isinstance(pad_to, int):
-            raise TypeError
+
+        if not isinstance(pad_to, (tuple, list, int)) and (pad_to is not None):
+            raise TypeError("The argument pad_to has to be tuple, list or None!")
         if isinstance(pad_to, int):
             pad_to = (pad_to, pad_to)
 
@@ -509,31 +510,34 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
         DataDependentSamplingTransform.sample_transform(self)
 
     def sample_transform_from_data(self, data: DataContainer):
-        h, w = DataDependentSamplingTransform.sample_transform_from_data(self, data)
+        if self._pad_to is not None:
+            h, w = DataDependentSamplingTransform.sample_transform_from_data(self, data)
 
-        pad_w = (self._pad_to[0] - w) // 2
-        pad_h = (self._pad_to[1] - h) // 2
+            pad_w = (self._pad_to[0] - w) // 2
+            pad_h = (self._pad_to[1] - h) // 2
 
-        pad_h_top = pad_h
-        pad_h_bottom = pad_h + (self._pad_to[1] - h) % 2
+            pad_h_top = pad_h
+            pad_h_bottom = pad_h + (self._pad_to[1] - h) % 2
 
-        pad_w_left = pad_w
-        pad_w_right = pad_w + (self._pad_to[0] - w) % 2
+            pad_w_left = pad_w
+            pad_w_right = pad_w + (self._pad_to[0] - w) % 2
 
-        if pad_h < 0:
-            pad_h_top = 0
-            pad_h_bottom = 0
+            if pad_h < 0:
+                pad_h_top = 0
+                pad_h_bottom = 0
 
-        if pad_w < 0:
-            pad_w_left = 0
-            pad_w_right = 0
+            if pad_w < 0:
+                pad_w_left = 0
+                pad_w_right = 0
 
-        self.state_dict = {
-            "pad_h": (pad_h_top, pad_h_bottom),
-            "pad_w": (pad_w_left, pad_w_right),
-        }
+            self.state_dict = {
+                "pad_h": (pad_h_top, pad_h_bottom),
+                "pad_w": (pad_w_left, pad_w_right),
+            }
 
     def _apply_img_or_mask(self, img: np.ndarray, settings: dict):
+        if self._pad_to is None:
+            return img
         pad_h_top, pad_h_bottom = self.state_dict["pad_h"]
         pad_w_left, pad_w_right = self.state_dict["pad_w"]
         padding = allowed_paddings[self.padding[0]]
@@ -556,6 +560,8 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
         return labels
 
     def _apply_pts(self, pts: KeyPoints, settings: dict):
+        if self._pad_to is None:
+            return pts
         if self.padding[0] != "z":
             raise ValueError
         pts_data = pts.data.copy()
@@ -578,20 +584,21 @@ class ResizeTransform(BaseTransform, InterpolationPropertyHolder):
 
     Parameters
     ----------
-    resize_to : tuple or int
+    resize_to : tuple or int or None
         Target size (W_new, Y_new).
     interpolation :
         Interpolation type.
 
     """
 
-    def __init__(self, resize_to, interpolation="bilinear"):
+    def __init__(self, resize_to=None, interpolation="bilinear"):
         BaseTransform.__init__(self, p=1)
         InterpolationPropertyHolder.__init__(self, interpolation=interpolation)
-        if not isinstance(resize_to, tuple) and not isinstance(resize_to, int):
-            raise TypeError
-        if isinstance(resize_to, int):
-            resize_to = (resize_to, resize_to)
+        if resize_to is not None:
+            if not isinstance(resize_to, tuple) and not isinstance(resize_to, int):
+                raise TypeError("The argument resize_to has an incorrect type!")
+            if isinstance(resize_to, int):
+                resize_to = (resize_to, resize_to)
 
         self._resize_to = resize_to
 
@@ -599,6 +606,8 @@ class ResizeTransform(BaseTransform, InterpolationPropertyHolder):
         pass
 
     def _apply_img_or_mask(self, img: np.ndarray, settings: dict):
+        if self._resize_to is None:
+            return img
         interp = allowed_interpolations[self.interpolation[0]]
         if settings["interpolation"][1] == "strict":
             interp = allowed_interpolations[settings["interpolation"][0]]
@@ -616,6 +625,8 @@ class ResizeTransform(BaseTransform, InterpolationPropertyHolder):
         return labels
 
     def _apply_pts(self, pts: KeyPoints, settings: dict):
+        if self._resize_to is None:
+            return pts
         pts_data = pts.data.copy().astype(float)
 
         resize_x, resize_y = self._resize_to
@@ -638,27 +649,30 @@ class CropTransform(DataDependentSamplingTransform):
 
     Parameters
     ----------
-    crop_size : tuple or int
+    crop_size : tuple or int or None
         Size of the crop (W_new, H_new). If int, then a square crop will be made.
     crop_mode : str
         Crop mode. Can be either 'c' - center or 'r' - random.
 
     """
 
-    def __init__(self, crop_size, crop_mode="c"):
+    def __init__(self, crop_size=None, crop_mode="c"):
         super(CropTransform, self).__init__(p=1, data_indices=None)
 
-        if not isinstance(crop_size, int) and not isinstance(crop_size, tuple):
-            raise TypeError
-        if crop_mode not in allowed_crops:
-            raise ValueError
+        if crop_size is not None:
+            if not isinstance(crop_size, int) and not isinstance(crop_size, tuple):
+                raise TypeError("Argument crop_size has an incorrect type!")
+            if crop_mode not in allowed_crops:
+                raise ValueError("Argument crop_mode has an incorrect type!")
 
-        if isinstance(crop_size, tuple):
-            if not isinstance(crop_size[0], int) or not isinstance(crop_size[1], int):
-                raise TypeError
+            if isinstance(crop_size, tuple):
+                if not isinstance(crop_size[0], int) or not isinstance(
+                    crop_size[1], int
+                ):
+                    raise TypeError("Incorrect type of the crop_size!")
 
-        if isinstance(crop_size, int):
-            crop_size = (crop_size, crop_size)
+            if isinstance(crop_size, int):
+                crop_size = (crop_size, crop_size)
 
         self._crop_size = crop_size
         self._crop_mode = crop_mode
@@ -676,23 +690,25 @@ class CropTransform(DataDependentSamplingTransform):
 
     def sample_transform_from_data(self, data: DataContainer):
         h, w = DataDependentSamplingTransform.sample_transform_from_data(self, data)
+        if self.crop_size is not None:
+            if self.crop_size[0] > w or self.crop_size[1] > h:
+                raise ValueError
 
-        if self.crop_size[0] > w or self.crop_size[1] > h:
-            raise ValueError
+            if self.crop_mode == "r":
+                self.state_dict["x"] = int(random.random() * (w - self.crop_size[0]))
+                self.state_dict["y"] = int(random.random() * (h - self.crop_size[1]))
 
-        if self.crop_mode == "r":
-            self.state_dict["x"] = int(random.random() * (w - self.crop_size[0]))
-            self.state_dict["y"] = int(random.random() * (h - self.crop_size[1]))
-
-        else:
-            self.state_dict["x"] = w // 2 - self.crop_size[0] // 2
-            self.state_dict["y"] = h // 2 - self.crop_size[1] // 2
+            else:
+                self.state_dict["x"] = w // 2 - self.crop_size[0] // 2
+                self.state_dict["y"] = h // 2 - self.crop_size[1] // 2
 
     def __crop_img_or_mask(self, img_mask):
-        return img_mask[
-            self.state_dict["y"] : self.state_dict["y"] + self.crop_size[1],
-            self.state_dict["x"] : self.state_dict["x"] + self.crop_size[0],
-        ]
+        if self.crop_size is not None:
+            return img_mask[
+                self.state_dict["y"] : self.state_dict["y"] + self.crop_size[1],
+                self.state_dict["x"] : self.state_dict["x"] + self.crop_size[0],
+            ]
+        return img_mask
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
@@ -705,6 +721,8 @@ class CropTransform(DataDependentSamplingTransform):
         return labels
 
     def _apply_pts(self, pts: KeyPoints, settings: dict):
+        if self.crop_size is None:
+            return pts
         pts_data = pts.data.copy()
         x, y = self.state_dict["x"], self.state_dict["y"]
 
@@ -1118,10 +1136,10 @@ class ImageRandomHSV(ImageTransform):
         img = img.copy()
         dtype = img.dtype
         if img.shape[-1] != 3:
-            raise ValueError
+            raise ValueError("Image has to have 3 channels!")
 
         if dtype != np.uint8:
-            raise TypeError
+            raise TypeError("Image type has to be uint8 in this version of SOLT!")
 
         img_hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
         h, s, v = cv2.split(img_hsv.astype(np.int32))
