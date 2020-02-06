@@ -322,7 +322,7 @@ class DataContainer(object):
             elif isinstance(d1, KeyPoints):
                 data_equal = data_equal and (d1 == d2)
             else:
-                assert d1 == d2
+                data_equal = data_equal and d1 == d2
 
         return fmt_equal and data_equal
 
