@@ -237,13 +237,13 @@ class Stream(object):
                 trf, DataDependentSamplingTransform
             ):
                 if not optimize_stack:
-                    data = trf(data)
+                    data = trf(data, return_torch=False)
                 else:
                     data = trf.apply(data)
             elif isinstance(trf, Stream):
                 data = trf(data, return_torch=False)
             elif isinstance(trf, DataDependentSamplingTransform):
-                data = trf(data)
+                data = trf(data, return_torch=False)
 
         return data
 
