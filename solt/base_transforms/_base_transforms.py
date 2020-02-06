@@ -474,7 +474,7 @@ class MatrixTransform(
     ----------
     interpolation : str
         Interpolation mode.
-    padding : str
+    padding : str or None
         Padding Mode.
     p : float
         Probability of transform's execution.
@@ -526,16 +526,16 @@ class MatrixTransform(
         """
 
     @staticmethod
-    def correct_for_frame_change(transform_matrix: np.ndarray, W: int, H: int):
+    def correct_for_frame_change(transform_matrix: np.ndarray, width: int, height: int):
         """Method takes a matrix transform, and modifies its origin.
 
         Parameters
         ----------
         transform_matrix : numpy.ndarray
             Transform (3x3) matrix
-        W : int
+        width : int
             Width of the coordinate frame
-        H : int
+        height : int
             Height of the coordinate frame
         Returns
         -------
@@ -545,15 +545,15 @@ class MatrixTransform(
         """
         # First we correct the transformation so that it is performed around the origin
         transform_matrix = transform_matrix.copy()
-        origin = [(W - 1) // 2, (H - 1) // 2]
-        T_origin = np.array([1, 0, -origin[0], 0, 1, -origin[1], 0, 0, 1]).reshape(
+        origin = [(width - 1) // 2, (height - 1) // 2]
+        t_origin = np.array([1, 0, -origin[0], 0, 1, -origin[1], 0, 0, 1]).reshape(
             (3, 3)
         )
 
-        T_origin_back = np.array([1, 0, origin[0], 0, 1, origin[1], 0, 0, 1]).reshape(
+        t_origin_back = np.array([1, 0, origin[0], 0, 1, origin[1], 0, 0, 1]).reshape(
             (3, 3)
         )
-        transform_matrix = T_origin_back @ transform_matrix @ T_origin
+        transform_matrix = t_origin_back @ transform_matrix @ t_origin
 
         # Now, if we think of scaling, rotation and translation, the image gets increased when we
         # apply any transform.
@@ -561,7 +561,9 @@ class MatrixTransform(
         # This is needed to recalculate the size of the image after the transformation.
         # The core idea is to transform the coordinate grid
         # left top, left bottom, right bottom, right top
-        coord_frame = np.array([[0, 0, 1], [0, H, 1], [W, H, 1], [W, 0, 1]])
+        coord_frame = np.array(
+            [[0, 0, 1], [0, height, 1], [width, height, 1], [width, 0, 1]]
+        )
         new_frame = np.dot(transform_matrix, coord_frame.T).T
         new_frame[:, 0] /= new_frame[:, -1]
         new_frame[:, 1] /= new_frame[:, -1]
@@ -576,13 +578,13 @@ class MatrixTransform(
         # In case of scaling the coordinate_frame, we need to move back to the origin
         new_frame[:, 0] -= new_frame[:, 0].min()
         new_frame[:, 1] -= new_frame[:, 1].min()
-        W_new = int(np.round(new_frame[:, 0].max()))
-        H_new = int(np.round(new_frame[:, 1].max()))
+        w_new = int(np.round(new_frame[:, 0].max()))
+        h_new = int(np.round(new_frame[:, 1].max()))
 
-        transform_matrix[0, -1] += W_new // 2 - origin[0]
-        transform_matrix[1, -1] += H_new // 2 - origin[1]
+        transform_matrix[0, -1] += w_new // 2 - origin[0]
+        transform_matrix[1, -1] += h_new // 2 - origin[1]
 
-        return transform_matrix, W_new, H_new
+        return transform_matrix, w_new, h_new
 
     def _apply_img_or_mask(self, img: np.ndarray, settings: dict):
         """Applies a transform to an image or mask without controlling the shapes.
