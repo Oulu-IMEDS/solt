@@ -45,33 +45,18 @@ class BaseTransform(metaclass=ABCMeta):
     def reset_state(self):
         self.state_dict = {"use": False}
 
-    def serialize(self, include_state=False):
+    def serialize(self):
         """Method returns an ordered dict, describing the object.
 
-        Parameters
-        ----------
-        include_state : bool
-            Whether to include a self.state_dict into the result. Mainly useful for debug.
         Returns
         -------
         out : OrderedDict
             OrderedDict, ready for json serialization.
 
         """
-        if not include_state:
-            d = dict(
-                map(
-                    lambda item: (item[0].split("_")[-1], item[1]),
-                    filter(lambda item: item[0] != "state_dict", self.__dict__.items()),
-                )
-            )
-        else:
-            d = dict(
-                map(
-                    lambda item: (item[0].split("_")[-1], item[1]),
-                    self.__dict__.items(),
-                )
-            )
+        d = {}
+        for item in self.__dict__.items():
+            d[item[0].split("_")[-1]] = item[1]
 
         res = {}
         for item in d.items():

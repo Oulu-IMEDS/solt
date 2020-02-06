@@ -126,15 +126,6 @@ def test_transform_returns_original_data_when_not_used_and_applied(img_2x2):
     assert dc_res == dc
 
 
-def test_transforms_are_serialized_with_state_when_needed():
-    trf = slt.RandomRotate(rotation_range=(-90, 90))
-
-    serialized = trf.serialize(include_state=True)
-
-    assert 'dict' in serialized
-    np.testing.assert_array_equal(serialized['dict']['transform_matrix'], np.eye(3))
-
-
 @pytest.mark.parametrize('return_torch', [False, True])
 @pytest.mark.parametrize('trf', filter(lambda t: not issubclass(t, slt.ImageRandomHSV), all_trfs_solt))
 def test_transforms_return_torch(img_3x3, trf, return_torch):
