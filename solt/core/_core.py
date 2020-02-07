@@ -1,7 +1,6 @@
 import numpy as np
 
-from collections import OrderedDict
-from ..base_transforms import (
+from solt.base_transforms import (
     BaseTransform,
     MatrixTransform,
     DataDependentSamplingTransform,
@@ -10,8 +9,10 @@ import copy
 import random
 import solt.data as sld
 
+from solt.utils import Serializable
 
-class Stream(object):
+
+class Stream(Serializable):
     """
     Stream class. Executes the list of transformations
 
@@ -46,68 +47,37 @@ class Stream(object):
         for trf in transforms:
             if not isinstance(trf, BaseTransform) and not isinstance(trf, Stream):
                 raise TypeError
-        self._optimize_stack = optimize_stack
-        self.__interpolation = interpolation
-        self.__padding = padding
-        self.__transforms = transforms
-        self._reset_stream_settings()
+        self.optimize_stack = optimize_stack
+        self.interpolation = interpolation
+        self.padding = padding
+        self.transforms = transforms
 
-    @property
-    def interpolation(self):
-        return self.__interpolation
+        self.reset_padding(padding)
+        self.reset_interpolation(interpolation)
 
-    @interpolation.setter
-    def interpolation(self, value):
-        self.__interpolation = value
-        self._reset_stream_settings()
-
-    @property
-    def padding(self):
-        return self.__padding
-
-    @padding.setter
-    def padding(self, value):
-        self.__padding = value
-        self._reset_stream_settings()
-
-    def _reset_stream_settings(self):
-        """
-        Protected method, resets stream's settings
-
-        """
-        for trf in self.__transforms:
-            if self.__interpolation is not None and hasattr(trf, "interpolation"):
+    def reset_interpolation(self, value):
+        if value is None:
+            return
+        self.interpolation = value
+        for trf in self.transforms:
+            if self.interpolation is not None and hasattr(trf, "interpolation"):
                 if isinstance(trf, BaseTransform):
                     if trf.interpolation[1] != "strict":
-                        trf.interpolation = (self.__interpolation, trf.interpolation[1])
+                        trf.interpolation = (self.interpolation, trf.interpolation[1])
                 elif isinstance(trf, Stream):
-                    trf.interpolation = self.interpolation
+                    trf.reset_interpolation(self.interpolation)
 
-            if self.__padding is not None and hasattr(trf, "padding"):
+    def reset_padding(self, value):
+        if value is None:
+            return
+        self.padding = value
+        for trf in self.transforms:
+            if self.padding is not None and hasattr(trf, "padding"):
                 if isinstance(trf, BaseTransform):
                     if trf.padding[1] != "strict":
-                        trf.padding = (self.__padding, trf.padding[1])
+                        trf.padding = (self.padding, trf.padding[1])
                 elif isinstance(trf, Stream):
-                    trf.padding = self.__padding
-
-    def serialize(self):
-        """
-        Serializes a Stream into an OrderedDict
-
-        Returns
-        -------
-        out : OrderedDict
-
-        """
-        res = OrderedDict()
-        for t in self.__transforms:
-            res[t.__class__.__name__] = t.serialize()
-
-        return res
-
-    @property
-    def transforms(self):
-        return self.__transforms
+                    trf.reset_padding(self.padding)
 
     def __call__(
         self,
@@ -149,7 +119,7 @@ class Stream(object):
         """
 
         res: sld.DataContainer = Stream.exec_stream(
-            self.__transforms, data, self._optimize_stack
+            self.transforms, data, self.optimize_stack
         )
 
         if return_torch:
@@ -163,7 +133,7 @@ class Stream(object):
         return res
 
     @staticmethod
-    def optimize_stack(transforms):
+    def optimize_transforms_stack(transforms):
         """
         Static method which fuses the transformations
 
@@ -231,7 +201,7 @@ class Stream(object):
 
         # Performing the transforms using the optimized stack
         if optimize_stack:
-            transforms = Stream.optimize_stack(transforms)
+            transforms = Stream.optimize_transforms_stack(transforms)
         for trf in transforms:
             if isinstance(trf, BaseTransform) and not isinstance(
                 trf, DataDependentSamplingTransform
@@ -321,10 +291,10 @@ class SelectiveStream(Stream):
             trfs = random_state.choice(
                 self.transforms, self._n, replace=False, p=self._probs
             )
-            if self._optimize_stack:
+            if self.optimize_stack:
                 trfs = [copy.deepcopy(x) for x in trfs]
-                trfs = Stream.optimize_stack(trfs)
-            data = Stream.exec_stream(trfs, data, self._optimize_stack)
+                trfs = Stream.optimize_transforms_stack(trfs)
+            data = Stream.exec_stream(trfs, data, self.optimize_stack)
 
         if return_torch:
             return data.to_torch(

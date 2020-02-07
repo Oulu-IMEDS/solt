@@ -444,7 +444,7 @@ class RandomProjection(MatrixTransform):
 
     def sample_transform(self):
         if len(self.affine_transforms.transforms) > 1:
-            trf = Stream.optimize_stack(self.affine_transforms.transforms)
+            trf = Stream.optimize_transforms_stack(self.affine_transforms.transforms)
             if len(trf) == 0:
                 trf = None
             else:

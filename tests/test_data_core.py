@@ -243,7 +243,7 @@ def test_fusion_happens():
         slt.RandomFlip(p=1, axis=1),
     ])
 
-    st = ppl.optimize_stack(ppl.transforms)
+    st = ppl.optimize_transforms_stack(ppl.transforms)
     assert len(st) == 2
 
 
@@ -325,8 +325,8 @@ def test_stream_settings_replacement():
         padding='z'
     )
 
-    ppl.interpolation = 'bilinear'
-    ppl.padding = 'r'
+    ppl.reset_interpolation('bilinear')
+    ppl.reset_padding('r')
 
     for trf in ppl.transforms:
         assert trf.interpolation[0] == 'bilinear'
@@ -392,20 +392,27 @@ def test_stream_serializes_all_args_are_set():
     ])
 
     serialized = ppl.serialize()
+    assert 'interpolation' in serialized
+    assert 'padding' in serialized
+    assert 'optimize_stack' in serialized
+    assert 'transforms' in serialized
+    assert len(serialized) == 4
 
-    for i, el in enumerate(serialized):
+    trfs = serialized['transforms']
+    for i, el in enumerate(trfs):
+        t = list(el.keys())[0]
         if i < len(serialized) - 1:
-            assert el == 'RandomRotate'
-            assert serialized[el]['p'] == 0.7
-            assert serialized[el]['interpolation'] == ('nearest', 'inherit')
-            assert 'padding' not in serialized[el]
-            assert serialized[el]['angle_range'] == (-106, 90)
+            assert list(el.keys())[0] == 'RandomRotate'
+            assert trfs[i][t]['p'] == 0.7
+            assert trfs[i][t]['interpolation'] == ('nearest', 'inherit')
+            assert trfs[i][t]['padding'] == ('z', 'inherit')
+            assert trfs[i][t]['angle_range'] == (-106, 90)
         else:
-            assert el == 'RandomProjection'
-            assert serialized[el]['affine_transforms']['RandomRotate']['p'] == 0.2
-            assert serialized[el]['affine_transforms']['RandomRotate']['interpolation'] == ('nearest', 'inherit')
-            assert serialized[el]['affine_transforms']['RandomRotate']['padding'] == ('r', 'inherit')
-            assert serialized[el]['affine_transforms']['RandomRotate']['angle_range'] == (-6, 90)
+            assert list(el.keys())[0] == 'RandomProjection'
+            assert trfs[i][t]['affine_transforms']['transforms'][0]['RandomRotate']['p'] == 0.2
+            assert trfs[i][t]['affine_transforms']['transforms'][0]['RandomRotate']['interpolation'] == ('nearest', 'inherit')
+            assert trfs[i][t]['affine_transforms']['transforms'][0]['RandomRotate']['padding'] == ('r', 'inherit')
+            assert trfs[i][t]['affine_transforms']['transforms'][0]['RandomRotate']['angle_range'] == (-6, 90)
 
 
 def test_selective_pipeline_selects_transforms_and_does_the_fusion():
@@ -430,7 +437,7 @@ def test_value_error_when_optimizeing_wrong_elements_transforms_list():
     ]
 
     with pytest.raises(TypeError):
-        slc.Stream.optimize_stack(trfs)
+        slc.Stream.optimize_transforms_stack(trfs)
 
 
 def test_nested_streams_are_not_fused_with_matrix_trf():
@@ -443,7 +450,7 @@ def test_nested_streams_are_not_fused_with_matrix_trf():
         slt.RandomRotate(angle_range=(-90, -90), p=1),
     ]
 
-    trfs_optimized = slc.Stream.optimize_stack(trfs)
+    trfs_optimized = slc.Stream.optimize_transforms_stack(trfs)
     assert trfs_optimized[-2] == trfs[-2]
 
 

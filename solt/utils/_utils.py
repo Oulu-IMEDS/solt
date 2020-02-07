@@ -1,6 +1,44 @@
 from functools import wraps
 
 
+class Serializable(object):
+    registry = {}
+
+    def serialize(self, fmt="dict"):
+        """Method returns an ordered dict, describing the object.
+
+        Parameters
+        ----------
+        fmt : str
+            Serialization type. Can be dict, json or yaml.
+        Returns
+        -------
+        out : OrderedDict
+            OrderedDict, ready for json serialization.
+
+        """
+        if fmt not in ["dict", "json", "yaml"]:
+            raise ValueError("Format of serialization can only be dict, json or yaml!")
+        d = {}
+        for item in self.__dict__.items():
+            # state_dict is not serialized
+            if item[0] == "state_dict":
+                continue
+
+            if hasattr(item[1], "serialize"):
+                d[item[0]] = item[1].serialize()
+            elif item[0] != "transforms":
+                d[item[0]] = item[1]
+            elif isinstance(item[1], (tuple, list)) and item[0] == "transforms":
+                d[item[0]] = [{x.__class__.__name__: x.serialize()} for x in item[1]]
+
+        return d
+
+    def __init_subclass__(cls, **kwargs):
+        super(Serializable, cls).__init_subclass__(**kwargs)
+        cls.registry[f"{cls.__module__}.{cls.__name__}"] = cls
+
+
 def img_shape_checker(method):
     """Decorator to ensure that the image has always 3 dimensions: WxHC
 
@@ -14,6 +52,7 @@ def img_shape_checker(method):
         Result
 
     """
+
     @wraps(method)
     def wrapper(self, *args, **kwargs):
         res = method(self, *args, **kwargs)
@@ -24,10 +63,13 @@ def img_shape_checker(method):
             raise ValueError
 
         return res
+
     return wrapper
 
 
-def validate_parameter(parameter, allowed_modes, default_value, basic_type=str, heritable=True):
+def validate_parameter(
+    parameter, allowed_modes, default_value, basic_type=str, heritable=True
+):
     """
     Validates the parameter and wraps it into a tuple with the
     inheritance option (if parameter is not a tuple already).
@@ -60,7 +102,7 @@ def validate_parameter(parameter, allowed_modes, default_value, basic_type=str, 
         parameter = default_value
 
     if isinstance(parameter, basic_type) and heritable:
-        parameter = (parameter, 'inherit')
+        parameter = (parameter, "inherit")
 
     if isinstance(parameter, tuple) and heritable:
         if len(parameter) != 2:
@@ -69,7 +111,7 @@ def validate_parameter(parameter, allowed_modes, default_value, basic_type=str, 
             raise TypeError
         if parameter[0] not in allowed_modes:
             raise ValueError
-        if parameter[1] not in {'inherit', 'strict'}:
+        if parameter[1] not in {"inherit", "strict"}:
             raise ValueError
     elif heritable:
         raise NotImplementedError
@@ -77,7 +119,9 @@ def validate_parameter(parameter, allowed_modes, default_value, basic_type=str, 
     return parameter
 
 
-def validate_numeric_range_parameter(parameter, default_val, min_val=None, max_val=None):
+def validate_numeric_range_parameter(
+    parameter, default_val, min_val=None, max_val=None
+):
     """Validates the range-type parameter, e.g. angle in Random Rotation.
 
     Parameters
@@ -112,7 +156,10 @@ def validate_numeric_range_parameter(parameter, default_val, min_val=None, max_v
     if parameter[0] > parameter[1]:
         raise ValueError
 
-    if not (isinstance(parameter[0], (int, float)) and isinstance(parameter[1], (int, float))):
+    if not (
+        isinstance(parameter[0], (int, float))
+        and isinstance(parameter[1], (int, float))
+    ):
         raise TypeError
 
     if min_val is not None:

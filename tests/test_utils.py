@@ -1,4 +1,6 @@
 from solt.utils import validate_parameter, validate_numeric_range_parameter
+import solt.transforms as slt
+from solt.core import Stream
 import pytest
 
 
@@ -31,3 +33,11 @@ def test_parameter_validation_raises_error_when_default_value_is_wrong_type():
 def test_validate_parameter_raises_value_errors(parameter):
     with pytest.raises(ValueError):
         validate_parameter(parameter, {1, 2}, 1, basic_type=int)
+
+
+@pytest.mark.parametrize('obj', [slt.RandomRotate, Stream, ])
+@pytest.mark.parametrize('fmt', ['j', 'jsonn', 'ffmt', 'ftm', 0, 5.2])
+def test_incorrect_serialization_format(obj, fmt):
+    obj = obj()
+    with pytest.raises(ValueError):
+        obj.serialize(fmt)

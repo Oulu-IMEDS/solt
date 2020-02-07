@@ -163,6 +163,12 @@ def test_rotate_range_none():
     assert trf.angle_range == (0, 0)
 
 
+@pytest.mark.parametrize('angle', [1, 2.5])
+def test_rotate_range_conversion_from_number(angle):
+    trf = slt.RandomRotate(angle_range=angle)
+    assert trf.angle_range == (-angle, angle)
+
+
 def test_shear_range_none():
     trf = slt.RandomShear(None, None)
     assert trf.range_x == (0, 0)
@@ -615,7 +621,7 @@ def test_translate_forward_backward_sampling():
             slt.RandomTranslate(range_x=(-1, -1), range_y=(-1, -1), p=1),
         ]
     )
-    trf = stream.optimize_stack(stream.transforms)[0]
+    trf = stream.optimize_transforms_stack(stream.transforms)[0]
     assert (
         1 == trf.state_dict["translate_x"]
     )  # The settings will be overrided by the first transform
