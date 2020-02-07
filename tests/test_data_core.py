@@ -379,14 +379,14 @@ def test_stream_raises_assertion_error_when_not_basetransform_or_stream_in_the_t
         slc.Stream([1, 2, 3])
 
 
-def test_stream_serializes_correctly():
+def test_stream_serializes_all_args_are_set():
     ppl = slc.Stream([
-        slt.RandomRotate(rotation_range=(-90, 90)),
-        slt.RandomRotate(rotation_range=(-90, 90)),
-        slt.RandomRotate(rotation_range=(-90, 90)),
+        slt.RandomRotate(angle_range=(-106, 90), p=0.7, interpolation='nearest'),
+        slt.RandomRotate(angle_range=(-106, 90), p=0.7, interpolation='nearest'),
+        slt.RandomRotate(angle_range=(-106, 90), p=0.7, interpolation='nearest'),
         slt.RandomProjection(
             slc.Stream([
-                slt.RandomRotate(rotation_range=(-90, 90)),
+                slt.RandomRotate(angle_range=(-6, 90), p=0.2, padding='r', interpolation='nearest'),
             ])
         )
     ])
@@ -396,22 +396,22 @@ def test_stream_serializes_correctly():
     for i, el in enumerate(serialized):
         if i < len(serialized) - 1:
             assert el == 'RandomRotate'
-            assert serialized[el]['p'] == 0.5
-            assert serialized[el]['interpolation'] == ('bilinear', 'inherit')
-            assert serialized[el]['padding'] == ('z', 'inherit')
-            assert serialized[el]['range'] == (-90, 90)
+            assert serialized[el]['p'] == 0.7
+            assert serialized[el]['interpolation'] == ('nearest', 'inherit')
+            assert 'padding' not in serialized[el]
+            assert serialized[el]['angle_range'] == (-106, 90)
         else:
             assert el == 'RandomProjection'
-            assert serialized[el]['transforms']['RandomRotate']['p'] == 0.5
-            assert serialized[el]['transforms']['RandomRotate']['interpolation'] == ('bilinear', 'inherit')
-            assert serialized[el]['transforms']['RandomRotate']['padding'] == ('z', 'inherit')
-            assert serialized[el]['transforms']['RandomRotate']['range'] == (-90, 90)
+            assert serialized[el]['affine_transforms']['RandomRotate']['p'] == 0.2
+            assert serialized[el]['affine_transforms']['RandomRotate']['interpolation'] == ('nearest', 'inherit')
+            assert serialized[el]['affine_transforms']['RandomRotate']['padding'] == ('r', 'inherit')
+            assert serialized[el]['affine_transforms']['RandomRotate']['angle_range'] == (-6, 90)
 
 
 def test_selective_pipeline_selects_transforms_and_does_the_fusion():
     ppl = slc.SelectiveStream([
-        slt.RandomRotate(rotation_range=(90, 90), p=1),
-        slt.RandomRotate(rotation_range=(-90, -90), p=1),
+        slt.RandomRotate(angle_range=(90, 90), p=1),
+        slt.RandomRotate(angle_range=(-90, -90), p=1),
     ], n=2, probs=[0.5, 0.5], optimize_stack=True)
 
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
@@ -424,8 +424,8 @@ def test_selective_pipeline_selects_transforms_and_does_the_fusion():
 
 def test_value_error_when_optimizeing_wrong_elements_transforms_list():
     trfs = [
-        slt.RandomRotate(rotation_range=(90, 90), p=1),
-        slt.RandomRotate(rotation_range=(-90, -90), p=1),
+        slt.RandomRotate(angle_range=(90, 90), p=1),
+        slt.RandomRotate(angle_range=(-90, -90), p=1),
         lambda x: x ** 2
     ]
 
@@ -435,12 +435,12 @@ def test_value_error_when_optimizeing_wrong_elements_transforms_list():
 
 def test_nested_streams_are_not_fused_with_matrix_trf():
     trfs = [
-        slt.RandomRotate(rotation_range=(90, 90), p=1),
-        slt.RandomRotate(rotation_range=(-90, -90), p=1),
+        slt.RandomRotate(angle_range=(90, 90), p=1),
+        slt.RandomRotate(angle_range=(-90, -90), p=1),
         slc.Stream([
-            slt.RandomRotate(rotation_range=(90, 90), p=1),
+            slt.RandomRotate(angle_range=(90, 90), p=1),
         ]),
-        slt.RandomRotate(rotation_range=(-90, -90), p=1),
+        slt.RandomRotate(angle_range=(-90, -90), p=1),
     ]
 
     trfs_optimized = slc.Stream.optimize_stack(trfs)
@@ -455,8 +455,8 @@ def test_putting_wrong_format_in_data_container(img_2x2):
 def test_selective_stream_too_many_probs():
     with pytest.raises(ValueError):
         slc.SelectiveStream([
-            slt.RandomRotate(rotation_range=(90, 90), p=1),
-            slt.RandomRotate(rotation_range=(-90, -90), p=1),
+            slt.RandomRotate(angle_range=(90, 90), p=1),
+            slt.RandomRotate(angle_range=(-90, -90), p=1),
         ], n=2, probs=[0.4, 0.3, 0.3])
 
 
@@ -465,8 +465,8 @@ def test_selective_stream_low_prob_transform_should_not_change_the_data(img_5x5)
     dc = sld.DataContainer((img,), 'I')
 
     ppl = slc.SelectiveStream([
-        slt.RandomRotate(rotation_range=(90, 90), p=0),
-        slt.RandomRotate(rotation_range=(-90, -90), p=0)
+        slt.RandomRotate(angle_range=(90, 90), p=0),
+        slt.RandomRotate(angle_range=(-90, -90), p=0)
     ])
 
     dc_res = ppl(dc, return_torch=False)
@@ -526,11 +526,11 @@ def test_matrix_transforms_state_reset(img_5x5, ignore_state, pipeline):
     n_iter = 50
     if pipeline:
         ppl = slc.Stream([
-            slt.RandomRotate(rotation_range=(-180, 180), p=1, ignore_state=ignore_state),
+            slt.RandomRotate(angle_range=(-180, 180), p=1, ignore_state=ignore_state),
             slt.PadTransform(pad_to=(10, 10)),
         ])
     else:
-        ppl = slt.RandomRotate(rotation_range=(-180, 180), p=1, ignore_state=ignore_state)
+        ppl = slt.RandomRotate(angle_range=(-180, 180), p=1, ignore_state=ignore_state)
 
     img_test = img_5x5.copy()
     img_test[0, 0] = 1
@@ -574,11 +574,11 @@ def test_matrix_transforms_use_cache_for_different_dc_items_raises_error(img_5x5
     dc = sld.DataContainer((img_5x5, mask_3x4), 'IM')
     if pipeline:
         ppl = slc.Stream([
-            slt.RandomRotate(rotation_range=(-180, 180), p=1, ignore_state=False),
+            slt.RandomRotate(angle_range=(-180, 180), p=1, ignore_state=False),
             slt.PadTransform(pad_to=(10, 10)),
         ])
     else:
-        ppl = slt.RandomRotate(rotation_range=(-180, 180), p=1, ignore_state=False)
+        ppl = slt.RandomRotate(angle_range=(-180, 180), p=1, ignore_state=False)
 
     with pytest.raises(ValueError):
         if pipeline:
@@ -644,8 +644,8 @@ def test_data_container_from_and_to_dict(img_3x4, mask_3x4, order, presence):
 def test_image_mask_pipeline_to_torch(img_3x4, mask_3x4):
     ppl = slc.Stream(
         [
-            slt.RandomRotate(rotation_range=(90, 90), p=1),
-            slt.RandomRotate(rotation_range=(90, 90), p=1),
+            slt.RandomRotate(angle_range=(90, 90), p=1),
+            slt.RandomRotate(angle_range=(90, 90), p=1),
         ],
     )
     img, mask = ppl({'image': img_3x4, 'mask': mask_3x4}, normalize=False, as_dict=False)
@@ -658,8 +658,8 @@ def test_image_mask_pipeline_to_torch(img_3x4, mask_3x4):
 def test_image_mask_pipeline_to_torch_uint16(img_3x4, mask_3x4):
     ppl = slc.Stream(
         [
-            slt.RandomRotate(rotation_range=(90, 90), p=1),
-            slt.RandomRotate(rotation_range=(90, 90), p=1),
+            slt.RandomRotate(angle_range=(90, 90), p=1),
+            slt.RandomRotate(angle_range=(90, 90), p=1),
         ],
     )
     img, mask = ppl({'image': (img_3x4 // 255).astype(np.uint16) * 65535,
@@ -677,8 +677,8 @@ def test_image_mask_pipeline_to_torch_uint16(img_3x4, mask_3x4):
 def test_image_mask_pipeline_to_torch_normalization(img_3x3_rgb, mask_3x3, mean, std):
     ppl = slc.Stream(
         [
-            slt.RandomRotate(rotation_range=(90, 90), p=1),
-            slt.RandomRotate(rotation_range=(90, 90), p=1),
+            slt.RandomRotate(angle_range=(90, 90), p=1),
+            slt.RandomRotate(angle_range=(90, 90), p=1),
         ],
     )
     img, mask = ppl({'image': img_3x3_rgb, 'mask': mask_3x3}, as_dict=False,
@@ -710,8 +710,8 @@ def test_image_mask_pipeline_to_torch_normalization(img_3x3_rgb, mask_3x3, mean,
 def test_image_mask_pipeline_to_torch_checks_mean_type_and_shape_rgb(img_3x3_rgb, mask_3x3, mean, std, expected):
     ppl = slc.Stream(
         [
-            slt.RandomRotate(rotation_range=(90, 90), p=1),
-            slt.RandomRotate(rotation_range=(90, 90), p=1),
+            slt.RandomRotate(angle_range=(90, 90), p=1),
+            slt.RandomRotate(angle_range=(90, 90), p=1),
         ],
     )
     dc_res = ppl({'image': img_3x3_rgb, 'mask': mask_3x3}, return_torch=False)
@@ -735,8 +735,8 @@ def test_selective_stream_returns_torch_when_asked(img_5x5):
     dc = sld.DataContainer((img,), 'I')
 
     ppl = slc.SelectiveStream([
-        slt.RandomRotate(rotation_range=(90, 90), p=0),
-        slt.RandomRotate(rotation_range=(-90, -90), p=0)
+        slt.RandomRotate(angle_range=(90, 90), p=0),
+        slt.RandomRotate(angle_range=(-90, -90), p=0)
     ])
 
     res = ppl(dc, normalize=False)

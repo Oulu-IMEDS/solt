@@ -40,7 +40,7 @@ augs_stream = slc.Stream([
     slt.RandomProjection(
             slc.Stream([
                 slt.RandomScale(range_x=(0.5, 1.3), p=1),
-                slt.RandomRotate(rotation_range=(-90, 90), p=1),
+                slt.RandomRotate(angle_range=(-90, 90), p=1),
                 slt.RandomShear(range_x=(-0.5, 0.5), range_y=None, p=1),
         ]),
         v_range=(1e-6, 3e-4)),

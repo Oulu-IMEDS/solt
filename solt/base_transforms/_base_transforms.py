@@ -1,15 +1,18 @@
 import copy
 import random
 from abc import ABCMeta, abstractmethod
-from collections import OrderedDict
-
+import inspect
 import cv2
 import numpy as np
 
 import solt.data as sld
 from solt.constants import allowed_interpolations, allowed_paddings
 from solt.data import DataContainer, KeyPoints
-from solt.utils import img_shape_checker, validate_parameter
+from solt.utils import (
+    img_shape_checker,
+    validate_parameter,
+    validate_numeric_range_parameter,
+)
 
 
 class BaseTransform(metaclass=ABCMeta):
@@ -22,6 +25,8 @@ class BaseTransform(metaclass=ABCMeta):
     data_indices : tuple or None
         Indices where the transforms need to be applied
     """
+
+    registry = {}
 
     def __init__(self, p=None, data_indices=None):
         if p is None:
@@ -37,35 +42,72 @@ class BaseTransform(metaclass=ABCMeta):
                 if el < 0:
                     raise ValueError
 
-        self._data_indices = data_indices
+        self.data_indices = data_indices
 
         self.state_dict = None
         self.reset_state()
 
+    def __init_subclass__(cls, **kwargs):
+        super(BaseTransform, cls).__init_subclass__(**kwargs)
+        cls.registry[f"{cls.__module__}.{cls.__name__}"] = cls
+
     def reset_state(self):
         self.state_dict = {"use": False}
 
-    def serialize(self):
+    def serialize(self, fmt="dict"):
         """Method returns an ordered dict, describing the object.
 
+        Parameters
+        ----------
+        fmt : str
+            Format of serialization. Can be dict, yaml or json. Dict is used by default.
         Returns
         -------
         out : OrderedDict
             OrderedDict, ready for json serialization.
 
         """
+        argspec = inspect.getfullargspec(self.__init__)
+        args = argspec.args[1:]
+        default_args_values = argspec.defaults
+        default_args = dict(zip(args, default_args_values))
+
+        if fmt not in ["dict", "yaml", "json"]:
+            raise ValueError("Unsupported serialization format!")
         d = {}
         for item in self.__dict__.items():
-            d[item[0].split("_")[-1]] = item[1]
-
-        res = {}
-        for item in d.items():
+            # state_dict is not serialized
+            if item[0] == "state_dict" or item[0] not in default_args:
+                continue
+            # if the dict element is a transform or a stream, we serialize it
             if hasattr(item[1], "serialize"):
-                res[item[0]] = item[1].serialize()
+                d[item[0]] = item[1].serialize()
             else:
-                res[item[0]] = item[1]
-        # the method must return the result always in the same order
-        return OrderedDict(sorted(res.items()))
+                # If not, we get the default arg for this element
+                default_val = default_args[item[0]]
+                # and check whether the transform has a default range parameter.
+                # If it is the casem then, we need to make sure that the we initialize the inheritance parameters
+                if (
+                    hasattr(self, "_default_range")
+                    and isinstance(item[1], tuple)
+                    and item[0] not in ["interpolation", "padding"]
+                ):
+                    default_val = validate_numeric_range_parameter(
+                        default_args[item[0]], self._default_range
+                    )
+                elif item[0] in ["interpolation", "padding"]:
+                    default_val = (default_args[item[0]], "inherit")
+                # Now we assess whether the default value (or a tuple that has an inheritance parameter)
+                # match with the dict item
+                if default_val != item[1]:
+                    d[item[0]] = item[1]
+
+        if fmt == "dict":
+            return d
+        elif fmt == "yaml":
+            raise NotImplementedError
+        elif fmt == "json":
+            raise NotImplementedError
 
     def use_transform(self):
         """Method to randomly determine whether to use this transform.
@@ -109,11 +151,11 @@ class BaseTransform(metaclass=ABCMeta):
         result = []
         types = []
         settings = {}
-        if self._data_indices is None:
-            self._data_indices = np.arange(0, len(data)).astype(int)
+        if self.data_indices is None:
+            self.data_indices = tuple(range(len(data)))
         tmp_item = None
         for i, (item, t, item_settings) in enumerate(data):
-            if i in self._data_indices:
+            if i in self.data_indices:
                 if t == "I":  # Image
                     tmp_item = self._apply_img(item, item_settings)
                 elif t == "M":  # Mask
@@ -473,22 +515,14 @@ class PaddingPropertyHolder(object):
 
     Parameters
     ----------
-    padding : None or str
-        Padding mode.
+    padding : None or str or tuple
+        Padding mode. Inheritance can be specified as the second argument of the `padding` tuple.
 
     """
 
     def __init__(self, padding=None):
         super(PaddingPropertyHolder, self).__init__()
-        self._padding = validate_parameter(padding, allowed_paddings, "z")
-
-    @property
-    def padding(self):
-        return self._padding
-
-    @padding.setter
-    def padding(self, value):
-        self._padding = validate_parameter(value, allowed_paddings, "z")
+        self.padding = validate_parameter(padding, allowed_paddings, "z")
 
 
 class InterpolationPropertyHolder(object):
@@ -498,25 +532,15 @@ class InterpolationPropertyHolder(object):
 
     Parameters
     ----------
-    interpolation : None or str
-        Padding mode.
+    interpolation : None or str or tuple
+        Interpolation mode. Inheritance can be specified as the second argument of the `interpolation` tuple.
 
     """
 
     def __init__(self, interpolation=None):
         super(InterpolationPropertyHolder, self).__init__()
-        self._interpolation = validate_parameter(
+        self.interpolation = validate_parameter(
             interpolation, allowed_interpolations, "bilinear"
-        )
-
-    @property
-    def interpolation(self):
-        return self._interpolation
-
-    @interpolation.setter
-    def interpolation(self, value):
-        self._interpolation = validate_parameter(
-            value, allowed_interpolations, "bilinear"
         )
 
 
@@ -546,7 +570,7 @@ class MatrixTransform(
         BaseTransform.__init__(self, p=p, data_indices=None)
         InterpolationPropertyHolder.__init__(self, interpolation=interpolation)
         PaddingPropertyHolder.__init__(self, padding=padding)
-        self._ignore_state = ignore_state
+        self.ignore_state = ignore_state
         self.reset_state()
 
     def reset_state(self):
@@ -658,7 +682,7 @@ class MatrixTransform(
             Warped image
 
         """
-        if "w_new" in self.state_dict and not self._ignore_state:
+        if "w_new" in self.state_dict and not self.ignore_state:
             w_new = self.state_dict["w_new"]
             h_new = self.state_dict["h_new"]
 
@@ -782,7 +806,7 @@ class MatrixTransform(
             )
 
         pts_data = pts.data.copy()
-        if "w_new" in self.state_dict and not self._ignore_state:
+        if "w_new" in self.state_dict and not self.ignore_state:
             w_new = self.state_dict["w_new"]
             h_new = self.state_dict["w_new"]
             transform_m_corrected = self.state_dict["transform_matrix_corrected"]

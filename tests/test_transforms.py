@@ -160,13 +160,13 @@ def test_keypoints_vertical_flip_within_stream():
 
 def test_rotate_range_none():
     trf = slt.RandomRotate(None)
-    assert trf.rotation_range == (0, 0)
+    assert trf.angle_range == (0, 0)
 
 
 def test_shear_range_none():
     trf = slt.RandomShear(None, None)
-    assert trf.shear_range_x == (0, 0)
-    assert trf.shear_range_y == (0, 0)
+    assert trf.range_x == (0, 0)
+    assert trf.range_y == (0, 0)
 
 
 @pytest.mark.parametrize("ignore_state", [True, False])
@@ -202,7 +202,7 @@ def test_rotate_90_img_mask_keypoints_destructive(
         transform_settings=copy.deepcopy(transform_settings),
     )
     # Defining the 90 degrees transform (clockwise)
-    stream = slt.RandomRotate(rotation_range=(90, 90), p=1, ignore_state=ignore_state)
+    stream = slt.RandomRotate(angle_range=(90, 90), p=1, ignore_state=ignore_state)
     dc_res = stream(dc)
 
     img_res, _, _ = dc_res[0]
@@ -258,7 +258,7 @@ def test_rotate_nondestructive_does_not_accept_non_int_k(k):
 
 @pytest.mark.parametrize("k", list(range(-4, 5)))
 def test_rotate_90_transforms_have_same_bahavior(k):
-    trf_1 = slt.RandomRotate(rotation_range=(k * 90, k * 90), p=1)
+    trf_1 = slt.RandomRotate(angle_range=(k * 90, k * 90), p=1)
     trf_1.sample_transform()
 
     trf_2 = slt.RandomRotate90(k=k, p=1)
@@ -324,7 +324,7 @@ def test_keypoints_assert_reflective(img_3x3, mask_3x3):
 
     dc = sld.DataContainer((img, mask, kpts,), "IMP")
     # Defining the 90 degrees transform (clockwise)
-    stream = slt.RandomRotate(rotation_range=(20, 20), p=1, padding="r")
+    stream = slt.RandomRotate(angle_range=(20, 20), p=1, padding="r")
     with pytest.raises(ValueError):
         stream(dc)
 
@@ -466,7 +466,7 @@ def test_resize_img_to_arbitrary_size(img, mask, resize_to):
     scale_x = resize_to[0] / img.shape[1]
     scale_y = resize_to[1] / img.shape[0]
 
-    assert transf._resize_to == resize_to
+    assert transf.resize_to == resize_to
     assert (res[0].shape[0] == resize_to[1]) and (res[0].shape[1] == resize_to[0])
     assert (res[1].shape[0] == resize_to[1]) and (res[1].shape[1] == resize_to[0])
     assert (res[2].height == resize_to[1]) and (res[2].width == resize_to[0])
@@ -678,9 +678,9 @@ def test_gaussian_noise_no_image_throws_value_error():
 
 def test_gaussian_noise_float_gain():
     trf = slt.ImageAdditiveGaussianNoise(gain_range=0.2, p=1)
-    assert isinstance(trf._gain_range, tuple)
-    assert len(trf._gain_range) == 2
-    assert trf._gain_range[0] == 0 and trf._gain_range[1] == 0.2
+    assert isinstance(trf.gain_range, tuple)
+    assert len(trf.gain_range) == 2
+    assert trf.gain_range[0] == 0 and trf.gain_range[1] == 0.2
 
 
 def test_salt_and_pepper_no_gain(img_6x6):
@@ -716,8 +716,8 @@ def test_image_doesnt_change_when_gain_0_in_gaussian_noise_addition(img_3x3):
 def test_scale_range_from_number(scale, expected):
     if expected is not None:
         trf = slt.RandomScale(range_x=scale, range_y=scale)
-        assert trf.scale_range_x == expected
-        assert trf.scale_range_x == expected
+        assert trf.range_x == expected
+        assert trf.range_x == expected
     else:
         with pytest.raises(ValueError):
             slt.RandomScale(range_x=scale)
@@ -750,8 +750,8 @@ def test_scale_sampling_scale(same, scale_x, scale_y, expected):
 )
 def test_translate_range_from_number(translate, expected):
     trf = slt.RandomTranslate(range_x=translate, range_y=translate)
-    assert trf.translate_range_x == expected
-    assert trf.translate_range_y == expected
+    assert trf.range_x == expected
+    assert trf.range_y == expected
 
 
 @pytest.mark.parametrize(
@@ -1073,7 +1073,7 @@ def test_random_proj_and_selective_stream(img_5x5):
     ppl = slt.RandomProjection(
         slc.SelectiveStream(
             [
-                slt.RandomRotate(rotation_range=(90, 90), p=0),
+                slt.RandomRotate(angle_range=(90, 90), p=0),
                 slt.RandomScale(range_y=(0, 0.1), same=True, p=0),
                 slt.RandomShear(range_y=(-0.1, 0.1), p=0),
             ],
