@@ -28,7 +28,7 @@ from ..utils import (
 )
 
 
-class RandomFlip(BaseTransform):
+class Flip(BaseTransform):
     """Random Flipping transform.
 
     Parameters
@@ -42,7 +42,7 @@ class RandomFlip(BaseTransform):
 
     def __init__(self, p=0.5, axis=1, data_indices=None):
 
-        super(RandomFlip, self).__init__(p=p, data_indices=data_indices)
+        super(Flip, self).__init__(p=p, data_indices=data_indices)
         if axis not in [-1, 0, 1]:
             raise ValueError("Incorrect Value of axis!")
 
@@ -83,7 +83,7 @@ class RandomFlip(BaseTransform):
         return KeyPoints(pts=pts_data, height=pts.height, width=pts.width)
 
 
-class RandomRotate(MatrixTransform):
+class Rotate(MatrixTransform):
     """Random rotation around the center clockwise
 
     Parameters
@@ -113,7 +113,7 @@ class RandomRotate(MatrixTransform):
         p=0.5,
         ignore_state=True,
     ):
-        super(RandomRotate, self).__init__(
+        super(Rotate, self).__init__(
             interpolation=interpolation, padding=padding, p=p, ignore_state=ignore_state
         )
         if isinstance(angle_range, (int, float)):
@@ -145,7 +145,7 @@ class RandomRotate(MatrixTransform):
         self.state_dict["transform_matrix"][2, 2] = 1
 
 
-class RandomRotate90(RandomRotate):
+class Rotate90(Rotate):
     """Random rotation around the center by 90 degrees.
 
     Parameters
@@ -161,7 +161,7 @@ class RandomRotate90(RandomRotate):
     def __init__(self, k=0, p=0.5):
         if not isinstance(k, int):
             raise TypeError("Argument `k` must be an integer!")
-        super(RandomRotate90, self).__init__(p=p, angle_range=(k * 90, k * 90))
+        super(Rotate90, self).__init__(p=p, angle_range=(k * 90, k * 90))
         self.k = -k
 
     @img_shape_checker
@@ -172,7 +172,7 @@ class RandomRotate90(RandomRotate):
         return np.ascontiguousarray(np.rot90(mask, self.k))
 
 
-class RandomShear(MatrixTransform):
+class Shear(MatrixTransform):
     """Random shear around the center.
 
     Parameters
@@ -206,7 +206,7 @@ class RandomShear(MatrixTransform):
         p=0.5,
         ignore_state=True,
     ):
-        super(RandomShear, self).__init__(
+        super(Shear, self).__init__(
             p=p, padding=padding, interpolation=interpolation, ignore_state=ignore_state
         )
         if isinstance(range_x, (int, float)):
@@ -238,7 +238,7 @@ class RandomShear(MatrixTransform):
         self.state_dict["transform_matrix"][2, 2] = 1
 
 
-class RandomScale(MatrixTransform):
+class Scale(MatrixTransform):
     """Random scale transform.
 
     Parameters
@@ -275,7 +275,7 @@ class RandomScale(MatrixTransform):
         ignore_state=True,
     ):
 
-        super(RandomScale, self).__init__(
+        super(Scale, self).__init__(
             interpolation=interpolation, padding=None, p=p, ignore_state=ignore_state
         )
 
@@ -334,7 +334,7 @@ class RandomScale(MatrixTransform):
         self.state_dict["transform_matrix"][2, 2] = 1
 
 
-class RandomTranslate(MatrixTransform):
+class Translate(MatrixTransform):
     """Random Translate transform..
 
     Parameters
@@ -364,7 +364,7 @@ class RandomTranslate(MatrixTransform):
         p=0.5,
         ignore_state=True,
     ):
-        super(RandomTranslate, self).__init__(
+        super(Translate, self).__init__(
             interpolation=interpolation, padding=padding, p=p, ignore_state=ignore_state
         )
         if isinstance(range_x, (int, float)):
@@ -396,7 +396,7 @@ class RandomTranslate(MatrixTransform):
         self.state_dict["transform_matrix"][2, 2] = 1
 
 
-class RandomProjection(MatrixTransform):
+class Projection(MatrixTransform):
     """Random Projective transform.
 
     Takes a set of affine transforms.
@@ -424,7 +424,7 @@ class RandomProjection(MatrixTransform):
         ignore_state=True,
     ):
 
-        super(RandomProjection, self).__init__(
+        super(Projection, self).__init__(
             interpolation=interpolation, padding=padding, p=p, ignore_state=ignore_state
         )
 
@@ -465,7 +465,7 @@ class RandomProjection(MatrixTransform):
         self.state_dict["transform_matrix"] = transform_matrix
 
 
-class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
+class Pad(DataDependentSamplingTransform, PaddingPropertyHolder):
     """Transformation, which pads the input to a given size
 
     Parameters
@@ -566,7 +566,7 @@ class PadTransform(DataDependentSamplingTransform, PaddingPropertyHolder):
         )
 
 
-class ResizeTransform(BaseTransform, InterpolationPropertyHolder):
+class Resize(BaseTransform, InterpolationPropertyHolder):
     """Transformation, which resizes the input to a given size
 
     Parameters
@@ -629,7 +629,7 @@ class ResizeTransform(BaseTransform, InterpolationPropertyHolder):
         return KeyPoints(pts_data, resize_y, resize_x)
 
 
-class CropTransform(DataDependentSamplingTransform):
+class Crop(DataDependentSamplingTransform):
     """Center / Random crop transform.
 
     Object performs center or random cropping depending on the parameters.
@@ -644,7 +644,7 @@ class CropTransform(DataDependentSamplingTransform):
     """
 
     def __init__(self, crop_size=None, crop_mode="c"):
-        super(CropTransform, self).__init__(p=1, data_indices=None)
+        super(Crop, self).__init__(p=1, data_indices=None)
 
         if crop_size is not None:
             if not isinstance(crop_size, int) and not isinstance(crop_size, tuple):
@@ -711,7 +711,7 @@ class CropTransform(DataDependentSamplingTransform):
         return KeyPoints(pts_data, self.crop_size[1], self.crop_size[0])
 
 
-class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
+class Noise(DataDependentSamplingTransform):
     """Adds noise to an image. Other types of data than the image are ignored.
 
     Parameters
@@ -731,7 +731,7 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
     _default_range = (0, 0)
 
     def __init__(self, p=0.5, gain_range=0.1, data_indices=None):
-        super(ImageAdditiveGaussianNoise, self).__init__(p=p, data_indices=data_indices)
+        super(Noise, self).__init__(p=p, data_indices=data_indices)
         if isinstance(gain_range, float):
             gain_range = (0, gain_range)
 
@@ -789,7 +789,7 @@ class ImageAdditiveGaussianNoise(DataDependentSamplingTransform):
         return pts
 
 
-class ImageCutOut(ImageTransform, DataDependentSamplingTransform):
+class CutOut(ImageTransform, DataDependentSamplingTransform):
     """Does cutout augmentation.
 
     https://arxiv.org/abs/1708.04552
@@ -808,7 +808,7 @@ class ImageCutOut(ImageTransform, DataDependentSamplingTransform):
     """
 
     def __init__(self, p=0.5, cutout_size=2, data_indices=None):
-        super(ImageCutOut, self).__init__(p=p, data_indices=data_indices)
+        super(CutOut, self).__init__(p=p, data_indices=data_indices)
         if not isinstance(cutout_size, int) and not isinstance(cutout_size, tuple):
             raise TypeError
 
@@ -847,7 +847,7 @@ class ImageCutOut(ImageTransform, DataDependentSamplingTransform):
         return self.__cutout_img(img)
 
 
-class ImageSaltAndPepper(ImageTransform, DataDependentSamplingTransform):
+class SaltAndPepper(ImageTransform, DataDependentSamplingTransform):
     """Adds salt and pepper noise to an image. Other types of data than the image are ignored.
 
     Parameters
@@ -870,7 +870,7 @@ class ImageSaltAndPepper(ImageTransform, DataDependentSamplingTransform):
     _default_range = (0, 0)
 
     def __init__(self, p=0.5, gain_range=0.1, salt_p=0.5, data_indices=None):
-        super(ImageSaltAndPepper, self).__init__(p=p, data_indices=data_indices)
+        super(SaltAndPepper, self).__init__(p=p, data_indices=data_indices)
         if not isinstance(gain_range, float) and not isinstance(gain_range, tuple):
             raise TypeError
         if not isinstance(salt_p, float) and not isinstance(salt_p, tuple):
@@ -916,7 +916,7 @@ class ImageSaltAndPepper(ImageTransform, DataDependentSamplingTransform):
         return img
 
 
-class ImageGammaCorrection(ImageTransform):
+class GammaCorrection(ImageTransform):
     """Transform applies random gamma correction
 
     Parameters
@@ -936,7 +936,7 @@ class ImageGammaCorrection(ImageTransform):
     _default_range = (1, 1)
 
     def __init__(self, p=0.5, gamma_range=0.1, data_indices=None):
-        super(ImageGammaCorrection, self).__init__(p=p, data_indices=data_indices)
+        super(GammaCorrection, self).__init__(p=p, data_indices=data_indices)
 
         if not isinstance(gamma_range, float) and not isinstance(gamma_range, tuple):
             raise TypeError
@@ -962,7 +962,7 @@ class ImageGammaCorrection(ImageTransform):
         return cv2.LUT(img, self.state_dict["LUT"])
 
 
-class ImageRandomContrast(ImageTransform):
+class Contrast(ImageTransform):
     """Transform randomly changes the contrast
 
     Parameters
@@ -982,7 +982,7 @@ class ImageRandomContrast(ImageTransform):
     _default_range = (1, 1)
 
     def __init__(self, p=0.5, contrast_range=0.1, data_indices=None):
-        super(ImageRandomContrast, self).__init__(p=p, data_indices=data_indices)
+        super(Contrast, self).__init__(p=p, data_indices=data_indices)
 
         if not isinstance(contrast_range, float) and not isinstance(
             contrast_range, tuple
@@ -1007,7 +1007,7 @@ class ImageRandomContrast(ImageTransform):
         return cv2.LUT(img, self.state_dict["LUT"])
 
 
-class ImageBlur(ImageTransform):
+class Blur(ImageTransform):
     """Transform blurs an image
 
     Parameters
@@ -1033,7 +1033,7 @@ class ImageBlur(ImageTransform):
     def __init__(
         self, p=0.5, blur_type="g", k_size=3, gaussian_sigma=None, data_indices=None
     ):
-        super(ImageBlur, self).__init__(p=p, data_indices=data_indices)
+        super(Blur, self).__init__(p=p, data_indices=data_indices)
         if not isinstance(k_size, (int, tuple)):
             raise TypeError
 
@@ -1092,7 +1092,7 @@ class ImageBlur(ImageTransform):
             return cv2.filter2D(img, -1, self.state_dict["motion_kernel"])
 
 
-class ImageRandomHSV(ImageTransform):
+class HSV(ImageTransform):
     """Performs a random HSV color shift.
 
     Parameters
@@ -1117,7 +1117,7 @@ class ImageRandomHSV(ImageTransform):
     def __init__(
         self, h_range=None, s_range=None, v_range=None, data_indices=None, p=0.5
     ):
-        super(ImageRandomHSV, self).__init__(p=p, data_indices=data_indices)
+        super(HSV, self).__init__(p=p, data_indices=data_indices)
         self.h_range = validate_numeric_range_parameter(h_range, self._default_range)
         self.s_range = validate_numeric_range_parameter(s_range, self._default_range)
         self.v_range = validate_numeric_range_parameter(v_range, self._default_range)
@@ -1151,7 +1151,7 @@ class ImageRandomHSV(ImageTransform):
         return img
 
 
-class ImageRandomBrightness(ImageTransform):
+class Brightness(ImageTransform):
     """Performs a random brightness augmentation
 
     Parameters
@@ -1170,7 +1170,7 @@ class ImageRandomBrightness(ImageTransform):
     _default_range = (0, 0)
 
     def __init__(self, brightness_range=None, data_indices=None, p=0.5):
-        super(ImageRandomBrightness, self).__init__(p=p, data_indices=data_indices)
+        super(Brightness, self).__init__(p=p, data_indices=data_indices)
         self.brightness_range = validate_numeric_range_parameter(
             brightness_range, self._default_range
         )
@@ -1188,7 +1188,7 @@ class ImageRandomBrightness(ImageTransform):
         return cv2.LUT(img, self.state_dict["LUT"])
 
 
-class ImageColorTransform(ImageTransform):
+class ConvertColor(ImageTransform):
     """RGB to grayscale or grayscale to RGB image conversion.
 
     If converting from grayscale to RGB, then the gs channel is simply clonned.
@@ -1209,7 +1209,7 @@ class ImageColorTransform(ImageTransform):
     """
 
     def __init__(self, mode=None, data_indices=None):
-        super(ImageColorTransform, self).__init__(p=1, data_indices=data_indices)
+        super(ConvertColor, self).__init__(p=1, data_indices=data_indices)
         self.mode = validate_parameter(
             mode, allowed_color_conversions, "none", heritable=False
         )
@@ -1288,7 +1288,7 @@ class KeypointsJitter(DataDependentSamplingTransform):
         return labels
 
 
-class ImageJPEGCompression(ImageTransform):
+class JPEGCompression(ImageTransform):
     """Performs random JPEG-based worsening of images.
 
     Parameters
@@ -1307,7 +1307,7 @@ class ImageJPEGCompression(ImageTransform):
     """
 
     def __init__(self, p=0.5, quality_range=None, data_indices=None):
-        super(ImageJPEGCompression, self).__init__(p=p, data_indices=data_indices)
+        super(JPEGCompression, self).__init__(p=p, data_indices=data_indices)
         if quality_range is None:
             quality_range = (100, 100)
 

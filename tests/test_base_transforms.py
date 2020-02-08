@@ -63,9 +63,9 @@ def test_transform_returns_original_data_if_use_transform_is_false(img_2x2, trf)
 
 
 @pytest.mark.parametrize('trf', [
-    slt.RandomFlip,
-    slt.ImageRandomHSV,
-    slt.ImageRandomBrightness,
+    slt.Flip,
+    slt.HSV,
+    slt.Brightness,
 ])
 def test_transform_returns_original_data_if_not_in_specified_indices(trf, img_3x3_rgb):
     img_3x3 = img_3x3_rgb*128
@@ -99,9 +99,9 @@ def test_transform_returns_original_data_if_not_in_specified_indices(trf, img_3x
 @pytest.mark.parametrize('trf_cls', filter_trfs_subclass(all_trfs_solt, slb.DataDependentSamplingTransform))
 def test_data_dependent_samplers_raise_nie_when_sample_transform_is_called(trf_cls):
     with pytest.raises(NotImplementedError):
-        if issubclass(trf_cls, slt.CropTransform):
+        if issubclass(trf_cls, slt.Crop):
             trf = trf_cls(crop_size=10)
-        elif issubclass(trf_cls, slt.PadTransform):
+        elif issubclass(trf_cls, slt.Pad):
             trf = trf_cls(pad_to=10)
         else:
             trf = trf_cls()
@@ -114,20 +114,20 @@ def test_data_dependent_samplers_raise_nie_when_sample_transform_is_called(trf_c
     ]
 )
 def test_data_dep_trf_raises_value_error_when_imgs_are_of_different_size(img_1, img_2):
-    trf = slt.ImageSaltAndPepper(gain_range=0., p=1)
+    trf = slt.SaltAndPepper(gain_range=0., p=1)
     with pytest.raises(ValueError):
         trf(sld.DataContainer((1, img_1().astype(np.uint8), img_2().astype(np.uint8),), 'LII'))
 
 
 def test_transform_returns_original_data_when_not_used_and_applied(img_2x2):
-    trf = slt.RandomFlip(p=0)
+    trf = slt.Flip(p=0)
     dc = sld.DataContainer(img_2x2, 'I')
     dc_res = trf(dc)
     assert dc_res == dc
 
 
 @pytest.mark.parametrize('return_torch', [False, True])
-@pytest.mark.parametrize('trf', filter(lambda t: not issubclass(t, slt.ImageRandomHSV), all_trfs_solt))
+@pytest.mark.parametrize('trf', filter(lambda t: not issubclass(t, slt.HSV), all_trfs_solt))
 def test_transforms_return_torch(img_3x3, trf, return_torch):
     if 'p' in inspect.getfullargspec(trf.__init__):
         trf: slb.BaseTransform = trf(p=1)

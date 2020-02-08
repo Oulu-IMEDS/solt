@@ -35,7 +35,7 @@ def test_validate_parameter_raises_value_errors(parameter):
         validate_parameter(parameter, {1, 2}, 1, basic_type=int)
 
 
-@pytest.mark.parametrize('obj', [slt.RandomRotate, Stream, ])
+@pytest.mark.parametrize('obj', [slt.Rotate, Stream, ])
 @pytest.mark.parametrize('fmt', ['j', 'jsonn', 'ffmt', 'ftm', 0, 5.2])
 def test_incorrect_serialization_format(obj, fmt):
     obj = obj()

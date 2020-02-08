@@ -160,11 +160,11 @@ def test_nested_stream(img_3x4, mask_3x4):
     dc = sld.DataContainer((img, mask), 'IM')
 
     stream = slc.Stream([
-        slt.RandomFlip(p=1, axis=0),
-        slt.RandomFlip(p=1, axis=1),
+        slt.Flip(p=1, axis=0),
+        slt.Flip(p=1, axis=1),
         slc.Stream([
-            slt.RandomFlip(p=1, axis=1),
-            slt.RandomFlip(p=1, axis=0),
+            slt.Flip(p=1, axis=1),
+            slt.Flip(p=1, axis=0),
         ])
     ])
 
@@ -181,11 +181,11 @@ def test_image_shape_equal_3_after_nested_flip(img_3x4):
     dc = sld.DataContainer((img,), 'I')
 
     stream = slc.Stream([
-        slt.RandomFlip(p=1, axis=0),
-        slt.RandomFlip(p=1, axis=1),
+        slt.Flip(p=1, axis=0),
+        slt.Flip(p=1, axis=1),
         slc.Stream([
-            slt.RandomFlip(p=1, axis=1),
-            slt.RandomFlip(p=1, axis=0),
+            slt.Flip(p=1, axis=1),
+            slt.Flip(p=1, axis=0),
         ])
     ])
 
@@ -237,10 +237,10 @@ def test_create_4_keypoints_change_grid_and_frame():
 
 def test_fusion_happens():
     ppl = slc.Stream([
-        slt.RandomScale((0.5, 1.5), (0.5, 1.5), p=1),
-        slt.RandomRotate((-50, 50), padding='z', p=1),
-        slt.RandomShear((-0.5, 0.5), (-0.5, 0.5), padding='z', p=1),
-        slt.RandomFlip(p=1, axis=1),
+        slt.Scale((0.5, 1.5), (0.5, 1.5), p=1),
+        slt.Rotate((-50, 50), padding='z', p=1),
+        slt.Shear((-0.5, 0.5), (-0.5, 0.5), padding='z', p=1),
+        slt.Flip(p=1, axis=1),
     ])
 
     st = ppl.optimize_transforms_stack(ppl.transforms)
@@ -252,14 +252,14 @@ def test_fusion_rotate_360(img_5x5):
     dc = sld.DataContainer((img,), 'I')
 
     ppl = slc.Stream([
-        slt.RandomRotate((45, 45), padding='z', p=1),
-        slt.RandomRotate((45, 45), padding='z', p=1),
-        slt.RandomRotate((45, 45), padding='z', p=1),
-        slt.RandomRotate((45, 45), padding='z', p=1),
-        slt.RandomRotate((45, 45), padding='z', p=1),
-        slt.RandomRotate((45, 45), padding='z', p=1),
-        slt.RandomRotate((45, 45), padding='z', p=1),
-        slt.RandomRotate((45, 45), padding='z', p=1),
+        slt.Rotate((45, 45), padding='z', p=1),
+        slt.Rotate((45, 45), padding='z', p=1),
+        slt.Rotate((45, 45), padding='z', p=1),
+        slt.Rotate((45, 45), padding='z', p=1),
+        slt.Rotate((45, 45), padding='z', p=1),
+        slt.Rotate((45, 45), padding='z', p=1),
+        slt.Rotate((45, 45), padding='z', p=1),
+        slt.Rotate((45, 45), padding='z', p=1),
     ], optimize_stack=True)
 
     img_res = ppl(dc, return_torch=False)[0][0]
@@ -272,24 +272,24 @@ def test_fusion_rotate_360_flip_rotate_360(img_5x5):
     dc = sld.DataContainer((img,), 'I')
 
     ppl = slc.Stream([
-        slt.RandomRotate((45, 45), padding='z', p=1),
-        slt.RandomRotate((45, 45), padding='z', p=1),
-        slt.RandomRotate((45, 45), padding='z', p=1),
-        slt.RandomRotate((45, 45), padding='z', p=1),
-        slt.RandomRotate((45, 45), padding='z', p=1),
-        slt.RandomRotate((45, 45), padding='z', p=1),
-        slt.RandomRotate((45, 45), padding='z', p=1),
-        slt.RandomRotate((45, 45), padding='z', p=1),
-        slt.RandomFlip(p=1, axis=1),
+        slt.Rotate((45, 45), padding='z', p=1),
+        slt.Rotate((45, 45), padding='z', p=1),
+        slt.Rotate((45, 45), padding='z', p=1),
+        slt.Rotate((45, 45), padding='z', p=1),
+        slt.Rotate((45, 45), padding='z', p=1),
+        slt.Rotate((45, 45), padding='z', p=1),
+        slt.Rotate((45, 45), padding='z', p=1),
+        slt.Rotate((45, 45), padding='z', p=1),
+        slt.Flip(p=1, axis=1),
         slc.Stream([
-            slt.RandomRotate((45, 45), padding='z', p=1),
-            slt.RandomRotate((45, 45), padding='z', p=1),
-            slt.RandomRotate((45, 45), padding='z', p=1),
-            slt.RandomRotate((45, 45), padding='z', p=1),
-            slt.RandomRotate((45, 45), padding='z', p=1),
-            slt.RandomRotate((45, 45), padding='z', p=1),
-            slt.RandomRotate((45, 45), padding='z', p=1),
-            slt.RandomRotate((45, 45), padding='z', p=1),
+            slt.Rotate((45, 45), padding='z', p=1),
+            slt.Rotate((45, 45), padding='z', p=1),
+            slt.Rotate((45, 45), padding='z', p=1),
+            slt.Rotate((45, 45), padding='z', p=1),
+            slt.Rotate((45, 45), padding='z', p=1),
+            slt.Rotate((45, 45), padding='z', p=1),
+            slt.Rotate((45, 45), padding='z', p=1),
+            slt.Rotate((45, 45), padding='z', p=1),
         ], optimize_stack=True)
     ], optimize_stack=True)
 
@@ -300,10 +300,10 @@ def test_fusion_rotate_360_flip_rotate_360(img_5x5):
 
 def test_stream_settings():
     ppl = slc.Stream([
-        slt.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
-        slt.RandomRotate((45, 45), padding='r', p=1),
-        slt.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
-        slt.RandomShear(0.1, 0.1, interpolation='bilinear', padding='z'),
+        slt.Rotate((45, 45), interpolation='bicubic', padding='z', p=1),
+        slt.Rotate((45, 45), padding='r', p=1),
+        slt.Rotate((45, 45), interpolation='bicubic', padding='z', p=1),
+        slt.Shear(0.1, 0.1, interpolation='bilinear', padding='z'),
     ],
         interpolation='nearest',
         padding='z'
@@ -316,10 +316,10 @@ def test_stream_settings():
 
 def test_stream_settings_replacement():
     ppl = slc.Stream([
-        slt.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
-        slt.RandomRotate((45, 45), padding='r', p=1),
-        slt.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
-        slt.RandomShear(0.1, 0.1, interpolation='bilinear', padding='z'),
+        slt.Rotate((45, 45), interpolation='bicubic', padding='z', p=1),
+        slt.Rotate((45, 45), padding='r', p=1),
+        slt.Rotate((45, 45), interpolation='bicubic', padding='z', p=1),
+        slt.Shear(0.1, 0.1, interpolation='bilinear', padding='z'),
     ],
         interpolation='nearest',
         padding='z'
@@ -335,10 +335,10 @@ def test_stream_settings_replacement():
 
 def test_stream_settings_strict():
     ppl = slc.Stream([
-        slt.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
-        slt.RandomRotate((45, 45), padding='r', p=1),
-        slt.RandomRotate((45, 45), interpolation=('bicubic', 'strict'), padding=('r', 'strict'), p=1),
-        slt.RandomShear(0.1, 0.1, interpolation='bilinear', padding='z'),
+        slt.Rotate((45, 45), interpolation='bicubic', padding='z', p=1),
+        slt.Rotate((45, 45), padding='r', p=1),
+        slt.Rotate((45, 45), interpolation=('bicubic', 'strict'), padding=('r', 'strict'), p=1),
+        slt.Shear(0.1, 0.1, interpolation='bilinear', padding='z'),
     ],
         interpolation='nearest',
         padding='z'
@@ -355,11 +355,11 @@ def test_stream_settings_strict():
 
 def test_stream_nested_settings():
     ppl = slc.Stream([
-        slt.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
-        slt.RandomRotate((45, 45), padding='r', p=1),
+        slt.Rotate((45, 45), interpolation='bicubic', padding='z', p=1),
+        slt.Rotate((45, 45), padding='r', p=1),
         slc.Stream([
-            slt.RandomRotate((45, 45), interpolation='bicubic', padding='z', p=1),
-            slt.RandomRotate((45, 45), padding='r', p=1),
+            slt.Rotate((45, 45), interpolation='bicubic', padding='z', p=1),
+            slt.Rotate((45, 45), padding='r', p=1),
         ], interpolation='bicubic', padding='r'
         )
     ],
@@ -381,12 +381,12 @@ def test_stream_raises_assertion_error_when_not_basetransform_or_stream_in_the_t
 
 def test_stream_serializes_all_args_are_set():
     ppl = slc.Stream([
-        slt.RandomRotate(angle_range=(-106, 90), p=0.7, interpolation='nearest'),
-        slt.RandomRotate(angle_range=(-106, 90), p=0.7, interpolation='nearest'),
-        slt.RandomRotate(angle_range=(-106, 90), p=0.7, interpolation='nearest'),
-        slt.RandomProjection(
+        slt.Rotate(angle_range=(-106, 90), p=0.7, interpolation='nearest'),
+        slt.Rotate(angle_range=(-106, 90), p=0.7, interpolation='nearest'),
+        slt.Rotate(angle_range=(-106, 90), p=0.7, interpolation='nearest'),
+        slt.Projection(
             slc.Stream([
-                slt.RandomRotate(angle_range=(-6, 90), p=0.2, padding='r', interpolation='nearest'),
+                slt.Rotate(angle_range=(-6, 90), p=0.2, padding='r', interpolation='nearest'),
             ])
         )
     ])
@@ -402,23 +402,23 @@ def test_stream_serializes_all_args_are_set():
     for i, el in enumerate(trfs):
         t = list(el.keys())[0]
         if i < len(serialized) - 1:
-            assert list(el.keys())[0] == 'RandomRotate'
+            assert list(el.keys())[0] == 'Rotate'
             assert trfs[i][t]['p'] == 0.7
             assert trfs[i][t]['interpolation'] == ('nearest', 'inherit')
             assert trfs[i][t]['padding'] == ('z', 'inherit')
             assert trfs[i][t]['angle_range'] == (-106, 90)
         else:
-            assert list(el.keys())[0] == 'RandomProjection'
-            assert trfs[i][t]['affine_transforms']['transforms'][0]['RandomRotate']['p'] == 0.2
-            assert trfs[i][t]['affine_transforms']['transforms'][0]['RandomRotate']['interpolation'] == ('nearest', 'inherit')
-            assert trfs[i][t]['affine_transforms']['transforms'][0]['RandomRotate']['padding'] == ('r', 'inherit')
-            assert trfs[i][t]['affine_transforms']['transforms'][0]['RandomRotate']['angle_range'] == (-6, 90)
+            assert list(el.keys())[0] == 'Projection'
+            assert trfs[i][t]['affine_transforms']['transforms'][0]['Rotate']['p'] == 0.2
+            assert trfs[i][t]['affine_transforms']['transforms'][0]['Rotate']['interpolation'] == ('nearest', 'inherit')
+            assert trfs[i][t]['affine_transforms']['transforms'][0]['Rotate']['padding'] == ('r', 'inherit')
+            assert trfs[i][t]['affine_transforms']['transforms'][0]['Rotate']['angle_range'] == (-6, 90)
 
 
 def test_selective_pipeline_selects_transforms_and_does_the_fusion():
     ppl = slc.SelectiveStream([
-        slt.RandomRotate(angle_range=(90, 90), p=1),
-        slt.RandomRotate(angle_range=(-90, -90), p=1),
+        slt.Rotate(angle_range=(90, 90), p=1),
+        slt.Rotate(angle_range=(-90, -90), p=1),
     ], n=2, probs=[0.5, 0.5], optimize_stack=True)
 
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
@@ -431,8 +431,8 @@ def test_selective_pipeline_selects_transforms_and_does_the_fusion():
 
 def test_value_error_when_optimizeing_wrong_elements_transforms_list():
     trfs = [
-        slt.RandomRotate(angle_range=(90, 90), p=1),
-        slt.RandomRotate(angle_range=(-90, -90), p=1),
+        slt.Rotate(angle_range=(90, 90), p=1),
+        slt.Rotate(angle_range=(-90, -90), p=1),
         lambda x: x ** 2
     ]
 
@@ -442,12 +442,12 @@ def test_value_error_when_optimizeing_wrong_elements_transforms_list():
 
 def test_nested_streams_are_not_fused_with_matrix_trf():
     trfs = [
-        slt.RandomRotate(angle_range=(90, 90), p=1),
-        slt.RandomRotate(angle_range=(-90, -90), p=1),
+        slt.Rotate(angle_range=(90, 90), p=1),
+        slt.Rotate(angle_range=(-90, -90), p=1),
         slc.Stream([
-            slt.RandomRotate(angle_range=(90, 90), p=1),
+            slt.Rotate(angle_range=(90, 90), p=1),
         ]),
-        slt.RandomRotate(angle_range=(-90, -90), p=1),
+        slt.Rotate(angle_range=(-90, -90), p=1),
     ]
 
     trfs_optimized = slc.Stream.optimize_transforms_stack(trfs)
@@ -462,8 +462,8 @@ def test_putting_wrong_format_in_data_container(img_2x2):
 def test_selective_stream_too_many_probs():
     with pytest.raises(ValueError):
         slc.SelectiveStream([
-            slt.RandomRotate(angle_range=(90, 90), p=1),
-            slt.RandomRotate(angle_range=(-90, -90), p=1),
+            slt.Rotate(angle_range=(90, 90), p=1),
+            slt.Rotate(angle_range=(-90, -90), p=1),
         ], n=2, probs=[0.4, 0.3, 0.3])
 
 
@@ -472,8 +472,8 @@ def test_selective_stream_low_prob_transform_should_not_change_the_data(img_5x5)
     dc = sld.DataContainer((img,), 'I')
 
     ppl = slc.SelectiveStream([
-        slt.RandomRotate(angle_range=(90, 90), p=0),
-        slt.RandomRotate(angle_range=(-90, -90), p=0)
+        slt.Rotate(angle_range=(90, 90), p=0),
+        slt.Rotate(angle_range=(-90, -90), p=0)
     ])
 
     dc_res = ppl(dc, return_torch=False)
@@ -533,11 +533,11 @@ def test_matrix_transforms_state_reset(img_5x5, ignore_state, pipeline):
     n_iter = 50
     if pipeline:
         ppl = slc.Stream([
-            slt.RandomRotate(angle_range=(-180, 180), p=1, ignore_state=ignore_state),
-            slt.PadTransform(pad_to=(10, 10)),
+            slt.Rotate(angle_range=(-180, 180), p=1, ignore_state=ignore_state),
+            slt.Pad(pad_to=(10, 10)),
         ])
     else:
-        ppl = slt.RandomRotate(angle_range=(-180, 180), p=1, ignore_state=ignore_state)
+        ppl = slt.Rotate(angle_range=(-180, 180), p=1, ignore_state=ignore_state)
 
     img_test = img_5x5.copy()
     img_test[0, 0] = 1
@@ -581,11 +581,11 @@ def test_matrix_transforms_use_cache_for_different_dc_items_raises_error(img_5x5
     dc = sld.DataContainer((img_5x5, mask_3x4), 'IM')
     if pipeline:
         ppl = slc.Stream([
-            slt.RandomRotate(angle_range=(-180, 180), p=1, ignore_state=False),
-            slt.PadTransform(pad_to=(10, 10)),
+            slt.Rotate(angle_range=(-180, 180), p=1, ignore_state=False),
+            slt.Pad(pad_to=(10, 10)),
         ])
     else:
-        ppl = slt.RandomRotate(angle_range=(-180, 180), p=1, ignore_state=False)
+        ppl = slt.Rotate(angle_range=(-180, 180), p=1, ignore_state=False)
 
     with pytest.raises(ValueError):
         if pipeline:
@@ -651,8 +651,8 @@ def test_data_container_from_and_to_dict(img_3x4, mask_3x4, order, presence):
 def test_image_mask_pipeline_to_torch(img_3x4, mask_3x4):
     ppl = slc.Stream(
         [
-            slt.RandomRotate(angle_range=(90, 90), p=1),
-            slt.RandomRotate(angle_range=(90, 90), p=1),
+            slt.Rotate(angle_range=(90, 90), p=1),
+            slt.Rotate(angle_range=(90, 90), p=1),
         ],
     )
     img, mask = ppl({'image': img_3x4, 'mask': mask_3x4}, normalize=False, as_dict=False)
@@ -665,8 +665,8 @@ def test_image_mask_pipeline_to_torch(img_3x4, mask_3x4):
 def test_image_mask_pipeline_to_torch_uint16(img_3x4, mask_3x4):
     ppl = slc.Stream(
         [
-            slt.RandomRotate(angle_range=(90, 90), p=1),
-            slt.RandomRotate(angle_range=(90, 90), p=1),
+            slt.Rotate(angle_range=(90, 90), p=1),
+            slt.Rotate(angle_range=(90, 90), p=1),
         ],
     )
     img, mask = ppl({'image': (img_3x4 // 255).astype(np.uint16) * 65535,
@@ -684,8 +684,8 @@ def test_image_mask_pipeline_to_torch_uint16(img_3x4, mask_3x4):
 def test_image_mask_pipeline_to_torch_normalization(img_3x3_rgb, mask_3x3, mean, std):
     ppl = slc.Stream(
         [
-            slt.RandomRotate(angle_range=(90, 90), p=1),
-            slt.RandomRotate(angle_range=(90, 90), p=1),
+            slt.Rotate(angle_range=(90, 90), p=1),
+            slt.Rotate(angle_range=(90, 90), p=1),
         ],
     )
     img, mask = ppl({'image': img_3x3_rgb, 'mask': mask_3x3}, as_dict=False,
@@ -717,8 +717,8 @@ def test_image_mask_pipeline_to_torch_normalization(img_3x3_rgb, mask_3x3, mean,
 def test_image_mask_pipeline_to_torch_checks_mean_type_and_shape_rgb(img_3x3_rgb, mask_3x3, mean, std, expected):
     ppl = slc.Stream(
         [
-            slt.RandomRotate(angle_range=(90, 90), p=1),
-            slt.RandomRotate(angle_range=(90, 90), p=1),
+            slt.Rotate(angle_range=(90, 90), p=1),
+            slt.Rotate(angle_range=(90, 90), p=1),
         ],
     )
     dc_res = ppl({'image': img_3x3_rgb, 'mask': mask_3x3}, return_torch=False)
@@ -742,8 +742,8 @@ def test_selective_stream_returns_torch_when_asked(img_5x5):
     dc = sld.DataContainer((img,), 'I')
 
     ppl = slc.SelectiveStream([
-        slt.RandomRotate(angle_range=(90, 90), p=0),
-        slt.RandomRotate(angle_range=(-90, -90), p=0)
+        slt.Rotate(angle_range=(90, 90), p=0),
+        slt.Rotate(angle_range=(-90, -90), p=0)
     ])
 
     res = ppl(dc, normalize=False)
