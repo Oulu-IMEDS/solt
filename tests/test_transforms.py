@@ -544,7 +544,7 @@ def test_2x2_pad_to_20x20_center_crop_2x2(pad_size, crop_size, img_2x2, mask_2x2
     dc = sld.DataContainer((img, mask, kpts,), "IMP")
 
     stream = slc.Stream(
-        [slt.Pad(pad_to=pad_size), slt.Crop(crop_size=crop_size)]
+        [slt.Pad(pad_to=pad_size), slt.Crop(crop_to=crop_size)]
     )
     res = stream(dc, return_torch=False)
 
@@ -561,12 +561,12 @@ def test_2x2_pad_to_20x20_center_crop_2x2(pad_size, crop_size, img_2x2, mask_2x2
 def test_different_crop_modes(crop_mode, img_2x2, mask_2x2):
     if crop_mode == "d":
         with pytest.raises(ValueError):
-            slt.Crop(crop_size=2, crop_mode=crop_mode)
+            slt.Crop(crop_to=2, crop_mode=crop_mode)
     else:
         stream = slc.Stream(
             [
                 slt.Pad(pad_to=20),
-                slt.Crop(crop_size=2, crop_mode=crop_mode),
+                slt.Crop(crop_to=2, crop_mode=crop_mode),
             ]
         )
         img, mask = img_2x2, mask_2x2
@@ -821,7 +821,7 @@ def test_reflective_padding_cant_be_applied_to_kpts():
 @pytest.mark.parametrize("cutout_crop_size", [(2, 3), (3, 2),])
 def test_crop_or_cutout_size_are_too_big(img_2x2, cutout_crop_size):
     dc = sld.DataContainer((img_2x2,), "I")
-    trf = slt.Crop(crop_size=cutout_crop_size)
+    trf = slt.Crop(crop_to=cutout_crop_size)
     with pytest.raises(ValueError):
         trf(dc)
 
@@ -833,7 +833,7 @@ def test_crop_or_cutout_size_are_too_big(img_2x2, cutout_crop_size):
 @pytest.mark.parametrize("cutout_crop_size", ["123", 2.5, (2.5, 2), (2, 2.2)])
 def test_wrong_crop_size_types(cutout_crop_size):
     with pytest.raises(TypeError):
-        slt.Crop(crop_size=cutout_crop_size)
+        slt.Crop(crop_to=cutout_crop_size)
 
     with pytest.raises(TypeError):
         slt.CutOut(cutout_size=cutout_crop_size)
@@ -1058,7 +1058,7 @@ def test_hsv_doesnt_work_for_1_channel(img_6x6):
     ],
 )
 def test_hsv_returns_expected_results(mode, img, expected):
-    trf = slt.ConvertColor(mode=mode)
+    trf = slt.CvtColor(mode=mode)
     dc = sld.DataContainer(img, "I")
     dc_res = trf(dc)
     np.testing.assert_array_equal(expected, dc_res.data[0])
@@ -1066,7 +1066,7 @@ def test_hsv_returns_expected_results(mode, img, expected):
 
 @pytest.mark.parametrize("mode", ["gs2rgb", "rgb2gs"])
 def test_image_color_conversion_raises_error(mode, mask_3x4):
-    trf = slt.ConvertColor(mode=mode)
+    trf = slt.CvtColor(mode=mode)
     dc = sld.DataContainer(mask_3x4.squeeze(), "I")
     with pytest.raises(ValueError):
         trf(dc)

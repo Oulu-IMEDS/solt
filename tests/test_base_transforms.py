@@ -100,7 +100,7 @@ def test_transform_returns_original_data_if_not_in_specified_indices(trf, img_3x
 def test_data_dependent_samplers_raise_nie_when_sample_transform_is_called(trf_cls):
     with pytest.raises(NotImplementedError):
         if issubclass(trf_cls, slt.Crop):
-            trf = trf_cls(crop_size=10)
+            trf = trf_cls(crop_to=10)
         elif issubclass(trf_cls, slt.Pad):
             trf = trf_cls(pad_to=10)
         else:

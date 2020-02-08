@@ -13,34 +13,33 @@ from solt.utils import Serializable
 
 
 class Stream(Serializable):
-    """
-    Stream class. Executes the list of transformations
+    """Stream class. Executes the list of transformations
+
+    Parameters
+    ----------
+    transforms : list or None
+        List of transforms to execute
+    interpolation : str or None
+        Stream-wide settings for interpolation. If for some particular transform your would like
+        to still use its own mode, simply pass (<interpolation_value>, 'strict')
+        in the constructor of that transform.
+    padding : str or None
+        Stream-wide settings for padding. If for some particular transform your would like
+        to still use its own mode, simply pass (<padding_value>, 'strict')
+        in the constructor of that transform.
+    optimize_stack : bool
+        Whether to run transforms stack optimization. It can only be useful if many matrix transformations are
+        in a row.
 
     """
+
+    serializable_name = "stream"
 
     def __init__(
         self, transforms=None, interpolation=None, padding=None, optimize_stack=False
     ):
-        """
-        Class constructor.
+        super(Stream, self).__init__()
 
-        Parameters
-        ----------
-        transforms : list or None
-            List of transforms to execute
-        interpolation : str or None
-            Stream-wide settings for interpolation. If for some particular transform your would like
-            to still use its own mode, simply pass (<interpolation_value>, 'strict')
-            in the constructor of that transform.
-        padding : str or None
-            Stream-wide settings for padding. If for some particular transform your would like
-            to still use its own mode, simply pass (<padding_value>, 'strict')
-            in the constructor of that transform.
-        optimize_stack : bool
-            Whether to run transforms stack optimization. It can only be useful if many matrix transformations are
-            in a row.
-
-        """
         if transforms is None:
             transforms = []
 
@@ -247,8 +246,8 @@ class SelectiveStream(Stream):
         if probs is not None:
             if len(probs) != len(transforms):
                 raise ValueError
-        self._n = n
-        self._probs = probs
+        self.n = n
+        self.probs = probs
 
     def __call__(
         self,
@@ -289,7 +288,7 @@ class SelectiveStream(Stream):
         if len(self.transforms) > 0:
             random_state = np.random.RandomState(random.randint(0, 2 ** 32 - 1))
             trfs = random_state.choice(
-                self.transforms, self._n, replace=False, p=self._probs
+                self.transforms, self.n, replace=False, p=self.probs
             )
             if self.optimize_stack:
                 trfs = [copy.deepcopy(x) for x in trfs]

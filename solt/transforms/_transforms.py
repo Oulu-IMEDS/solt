@@ -40,8 +40,9 @@ class Flip(BaseTransform):
         both axes.
     """
 
-    def __init__(self, p=0.5, axis=1, data_indices=None):
+    serializable_name = "flip"
 
+    def __init__(self, p=0.5, axis=1, data_indices=None):
         super(Flip, self).__init__(p=p, data_indices=data_indices)
         if axis not in [-1, 0, 1]:
             raise ValueError("Incorrect Value of axis!")
@@ -104,6 +105,7 @@ class Rotate(MatrixTransform):
     """
 
     _default_range = (0, 0)
+    serializable_name = "rotate"
 
     def __init__(
         self,
@@ -158,6 +160,8 @@ class Rotate90(Rotate):
 
     """
 
+    serializable_name = "rotate_90"
+
     def __init__(self, k=0, p=0.5):
         if not isinstance(k, int):
             raise TypeError("Argument `k` must be an integer!")
@@ -196,6 +200,8 @@ class Shear(MatrixTransform):
     """
 
     _default_range = (0, 0)
+
+    serializable_name = "shear"
 
     def __init__(
         self,
@@ -264,6 +270,7 @@ class Scale(MatrixTransform):
     """
 
     _default_range = (1, 1)
+    serializable_name = "scale"
 
     def __init__(
         self,
@@ -354,6 +361,7 @@ class Translate(MatrixTransform):
     """
 
     _default_range = (0, 0)
+    serializable_name = "translate"
 
     def __init__(
         self,
@@ -413,6 +421,7 @@ class Projection(MatrixTransform):
     """
 
     _default_range = (0, 0)
+    serializable_name = "projection"
 
     def __init__(
         self,
@@ -481,6 +490,8 @@ class Pad(DataDependentSamplingTransform, PaddingPropertyHolder):
         Padding type.
 
     """
+
+    serializable_name = "pad"
 
     def __init__(self, pad_to=None, padding=None):
         DataDependentSamplingTransform.__init__(self, p=1)
@@ -578,6 +589,8 @@ class Resize(BaseTransform, InterpolationPropertyHolder):
 
     """
 
+    serializable_name = "resize"
+
     def __init__(self, resize_to=None, interpolation="bilinear"):
         BaseTransform.__init__(self, p=1)
         InterpolationPropertyHolder.__init__(self, interpolation=interpolation)
@@ -636,32 +649,32 @@ class Crop(DataDependentSamplingTransform):
 
     Parameters
     ----------
-    crop_size : tuple or int or None
+    crop_to : tuple or int or None
         Size of the crop (W_new, H_new). If int, then a square crop will be made.
     crop_mode : str
         Crop mode. Can be either 'c' - center or 'r' - random.
 
     """
 
-    def __init__(self, crop_size=None, crop_mode="c"):
+    serializable_name = "crop"
+
+    def __init__(self, crop_to=None, crop_mode="c"):
         super(Crop, self).__init__(p=1, data_indices=None)
 
-        if crop_size is not None:
-            if not isinstance(crop_size, int) and not isinstance(crop_size, tuple):
+        if crop_to is not None:
+            if not isinstance(crop_to, int) and not isinstance(crop_to, tuple):
                 raise TypeError("Argument crop_size has an incorrect type!")
             if crop_mode not in allowed_crops:
                 raise ValueError("Argument crop_mode has an incorrect type!")
 
-            if isinstance(crop_size, tuple):
-                if not isinstance(crop_size[0], int) or not isinstance(
-                    crop_size[1], int
-                ):
+            if isinstance(crop_to, tuple):
+                if not isinstance(crop_to[0], int) or not isinstance(crop_to[1], int):
                     raise TypeError("Incorrect type of the crop_size!")
 
-            if isinstance(crop_size, int):
-                crop_size = (crop_size, crop_size)
+            if isinstance(crop_to, int):
+                crop_to = (crop_to, crop_to)
 
-        self.crop_size = crop_size
+        self.crop_size = crop_to
         self.crop_mode = crop_mode
 
     def sample_transform(self):
@@ -729,6 +742,7 @@ class Noise(DataDependentSamplingTransform):
     """
 
     _default_range = (0, 0)
+    serializable_name = "noise"
 
     def __init__(self, p=0.5, gain_range=0.1, data_indices=None):
         super(Noise, self).__init__(p=p, data_indices=data_indices)
@@ -796,18 +810,19 @@ class CutOut(ImageTransform, DataDependentSamplingTransform):
 
     Parameters
     ----------
-    p : float
-        Probability of applying this transform,
     cutout_size : tuple or int or None
         The size of the cutout. If None, then it is equal to 2.
     data_indices : tuple or None
         Indices of the images within the data container to which this transform needs to be applied.
         Every element within the tuple must be integer numbers.
         If None, then the transform will be applied to all the images withing the DataContainer.
-
+    p : float
+        Probability of applying this transform.
     """
 
-    def __init__(self, p=0.5, cutout_size=2, data_indices=None):
+    serializable_name = "cutout"
+
+    def __init__(self, cutout_size=2, data_indices=None, p=0.5):
         super(CutOut, self).__init__(p=p, data_indices=data_indices)
         if not isinstance(cutout_size, int) and not isinstance(cutout_size, tuple):
             raise TypeError
@@ -830,7 +845,7 @@ class CutOut(ImageTransform, DataDependentSamplingTransform):
         h, w = DataDependentSamplingTransform.sample_transform_from_data(self, data)
 
         if self.cutout_size[0] > w or self.cutout_size[1] > h:
-            raise ValueError
+            raise ValueError("Cutout size is too large!")
 
         self.state_dict["x"] = int(random.random() * (w - self.cutout_size[0]))
         self.state_dict["y"] = int(random.random() * (h - self.cutout_size[1]))
@@ -868,6 +883,7 @@ class SaltAndPepper(ImageTransform, DataDependentSamplingTransform):
     """
 
     _default_range = (0, 0)
+    serializable_name = "salt_and_pepper"
 
     def __init__(self, p=0.5, gain_range=0.1, salt_p=0.5, data_indices=None):
         super(SaltAndPepper, self).__init__(p=p, data_indices=data_indices)
@@ -934,6 +950,7 @@ class GammaCorrection(ImageTransform):
     """
 
     _default_range = (1, 1)
+    serializable_name = "gamma_correction"
 
     def __init__(self, p=0.5, gamma_range=0.1, data_indices=None):
         super(GammaCorrection, self).__init__(p=p, data_indices=data_indices)
@@ -980,6 +997,7 @@ class Contrast(ImageTransform):
     """
 
     _default_range = (1, 1)
+    serializable_name = "contrast"
 
     def __init__(self, p=0.5, contrast_range=0.1, data_indices=None):
         super(Contrast, self).__init__(p=p, data_indices=data_indices)
@@ -1029,6 +1047,7 @@ class Blur(ImageTransform):
     """
 
     _default_range = (1, 1)
+    serializable_name = "blur"
 
     def __init__(
         self, p=0.5, blur_type="g", k_size=3, gaussian_sigma=None, data_indices=None
@@ -1113,6 +1132,7 @@ class HSV(ImageTransform):
     """
 
     _default_range = (0, 0)
+    serializable_name = "hsv"
 
     def __init__(
         self, h_range=None, s_range=None, v_range=None, data_indices=None, p=0.5
@@ -1168,6 +1188,7 @@ class Brightness(ImageTransform):
     """
 
     _default_range = (0, 0)
+    serializable_name = "brightness"
 
     def __init__(self, brightness_range=None, data_indices=None, p=0.5):
         super(Brightness, self).__init__(p=p, data_indices=data_indices)
@@ -1188,7 +1209,7 @@ class Brightness(ImageTransform):
         return cv2.LUT(img, self.state_dict["LUT"])
 
 
-class ConvertColor(ImageTransform):
+class CvtColor(ImageTransform):
     """RGB to grayscale or grayscale to RGB image conversion.
 
     If converting from grayscale to RGB, then the gs channel is simply clonned.
@@ -1208,8 +1229,10 @@ class ConvertColor(ImageTransform):
 
     """
 
+    serializable_name = "cvt_color"
+
     def __init__(self, mode=None, data_indices=None):
-        super(ConvertColor, self).__init__(p=1, data_indices=data_indices)
+        super(CvtColor, self).__init__(p=1, data_indices=data_indices)
         self.mode = validate_parameter(
             mode, allowed_color_conversions, "none", heritable=False
         )
@@ -1251,6 +1274,8 @@ class KeypointsJitter(DataDependentSamplingTransform):
         Jittering across Y-axis. Valid range is (-1, 1)
 
     """
+
+    serializable_name = "keypoints_jitter"
 
     def __init__(self, p=0.5, dx_range=None, dy_range=None):
         super(KeypointsJitter, self).__init__(data_indices=None, p=p)
@@ -1305,6 +1330,8 @@ class JPEGCompression(ImageTransform):
         If None, then the transform will be applied to all the images withing the DataContainer.
 
     """
+
+    serializable_name = "jpeg_compression"
 
     def __init__(self, p=0.5, quality_range=None, data_indices=None):
         super(JPEGCompression, self).__init__(p=p, data_indices=data_indices)
