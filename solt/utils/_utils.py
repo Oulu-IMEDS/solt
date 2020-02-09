@@ -30,7 +30,9 @@ class Serializable(object):
                 continue
             if hasattr(item[1], "to_dict") and isinstance(item[1], Serializable):
                 if item[0] != "affine_transforms":
-                    d[item[0]] = item[1].to_dict()
+                    raise ValueError(
+                        "Found an attribute of the class that is a tranform!"
+                    )
                 else:
                     d[item[0]] = {"stream": item[1].to_dict()}
             elif item[0] != "transforms":
@@ -109,7 +111,7 @@ def from_json(s):
         else:
             raise ValueError("Filename must end with .json")
 
-    return Serializable.from_dict(d)
+    return from_dict(d)
 
 
 def from_yaml(s):
@@ -132,7 +134,7 @@ def from_yaml(s):
             with open(s, "r") as f:
                 d = yaml.load(f.read(), Loader=yaml.Loader)
         else:
-            d = yaml.load(s)
+            d = yaml.load(s, Loader=yaml.Loader)
     elif isinstance(s, pathlib.Path):
         if s.suffix == ".yaml":
             d = yaml.load(s)
@@ -141,7 +143,7 @@ def from_yaml(s):
     else:
         raise TypeError("Input must be a string or a pathlib.Path")
 
-    return Serializable.from_dict(d)
+    return from_dict(d)
 
 
 def img_shape_checker(method):
