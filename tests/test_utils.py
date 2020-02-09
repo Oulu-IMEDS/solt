@@ -1,9 +1,11 @@
 import solt.utils as slu
 import solt.transforms as slt
 import solt.core as slc
+import solt.base_transforms as slb
 import pytest
 import json
-
+import pathlib
+import yaml
 
 def test_parameter_validation_range_default_value_not_tuple():
     with pytest.raises(TypeError):
@@ -12,7 +14,7 @@ def test_parameter_validation_range_default_value_not_tuple():
 
 def test_parameter_validation_raises_error_when_types_dont_match():
     with pytest.raises(NotImplementedError):
-        slu.validate_parameter([1, 2], {1, 2}, 10, int)
+        slu.validate_parameter({1, 2}, 10, int)
 
 
 def test_parameter_validation_raises_error_when_default_type_is_wrong():
@@ -211,14 +213,73 @@ def test_stream_serializes_all_args_are_set():
     for i, el in enumerate(trfs):
         t = list(el.keys())[0]
         if i < len(serialized) - 1:
-            assert list(el.keys())[0] == 'Rotate'
+            assert list(el.keys())[0] == 'rotate'
             assert trfs[i][t]['p'] == 0.7
             assert trfs[i][t]['interpolation'] == ('nearest', 'inherit')
             assert trfs[i][t]['padding'] == ('z', 'inherit')
             assert trfs[i][t]['angle_range'] == (-106, 90)
         else:
-            assert t == 'Projection'
-            assert trfs[i][t]['affine_transforms']['stream']['transforms'][0]['Rotate']['p'] == 0.2
-            assert trfs[i][t]['affine_transforms']['stream']['transforms'][0]['Rotate']['interpolation'] == ('nearest', 'inherit')
-            assert trfs[i][t]['affine_transforms']['stream']['transforms'][0]['Rotate']['padding'] == ('r', 'inherit')
-            assert trfs[i][t]['affine_transforms']['stream']['transforms'][0]['Rotate']['angle_range'] == (-6, 90)
+            assert t == 'projection'
+            assert trfs[i][t]['affine_transforms']['stream']['transforms'][0]['rotate']['p'] == 0.2
+            assert trfs[i][t]['affine_transforms']['stream']['transforms'][0]['rotate']['interpolation'] == ('nearest', 'inherit')
+            assert trfs[i][t]['affine_transforms']['stream']['transforms'][0]['rotate']['padding'] == ('r', 'inherit')
+            assert trfs[i][t]['affine_transforms']['stream']['transforms'][0]['rotate']['angle_range'] == (-6, 90)
+
+
+def test_transforms_type_when_deserializing():
+    with pytest.raises(TypeError):
+        slu.from_dict(2)
+
+
+def test_transforms_not_in_registry_and_in_when_initialized():
+    with pytest.raises(ValueError):
+        slu.from_dict({'stream': {'transforms': [
+            {'mycrop': {
+                'crop_to': 32,
+                'crop_mode': 'c'
+            }},
+        ]}})
+
+    assert 'mycrop' not in slb.BaseTransform.registry
+
+    class MyCrop(slb.BaseTransform):
+
+        serializable_name = 'mycrop'
+
+
+    assert 'mycrop' in slb.BaseTransform.registry
+
+
+def test_to_from_yaml_json():
+    ppl = slc.Stream([
+        slt.Rotate(angle_range=(-106, 90), p=0.7, interpolation='nearest'),
+        slt.Rotate(angle_range=(-106, 91), p=0.8, interpolation='nearest'),
+        slt.Rotate(angle_range=(-106, 92), p=0.2, interpolation='bilinear'),
+        slt.Projection(
+            slc.Stream([
+                slt.Rotate(angle_range=(-6, 90), p=0.2, padding='r', interpolation='nearest'),
+            ])
+        )
+    ])
+
+    serialized = {'stream': ppl.to_dict()}
+    with open('/tmp/solt_tmp_json0.json', 'w') as f:
+        json_s = json.dumps(serialized, indent=4)
+        f.write(json_s)
+
+    with open('/tmp/solt_tmp_yaml0.yaml', 'w') as f:
+        yaml_s = yaml.safe_dump(serialized)
+        f.write(yaml_s)
+
+    ppl.to_json('/tmp/solt_tmp_json1.json')
+    ppl.to_yaml('/tmp/solt_tmp_yaml1.yaml')
+
+    loaded_from_json = slu.from_json('/tmp/solt_tmp_json1.json')
+    loaded_from_yaml = slu.from_yaml('/tmp/solt_tmp_yaml1.yaml')
+    assert json_s == loaded_from_json.to_json()
+    assert yaml_s == loaded_from_yaml.to_yaml()
+
+    loaded_from_json = slu.from_json(pathlib.Path('/tmp/solt_tmp_json1.json'))
+    loaded_from_yaml = slu.from_yaml(pathlib.Path('/tmp/solt_tmp_yaml1.yaml'))
+    assert json_s == slu.from_yaml(loaded_from_json.to_yaml()).to_json()
+    assert yaml_s == slu.from_json(loaded_from_yaml.to_json()).to_yaml()

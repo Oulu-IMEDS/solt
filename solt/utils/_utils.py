@@ -1,7 +1,7 @@
 from functools import wraps
 import json
 import yaml
-import pathlib
+import inspect
 
 
 class Serializable(object):
@@ -24,28 +24,67 @@ class Serializable(object):
         """
 
         d = {}
+        argspec = inspect.getfullargspec(self.__class__)
+
         for item in self.__dict__.items():
-            # state_dict is not serialized
-            if item[0] == "state_dict":
+            if item[0] not in argspec.args:
                 continue
             if hasattr(item[1], "to_dict") and isinstance(item[1], Serializable):
-                if item[0] != "affine_transforms":
-                    raise ValueError(
-                        "Found an attribute of the class that is a tranform!"
-                    )
-                else:
-                    d[item[0]] = {"stream": item[1].to_dict()}
+                # Thsi situation is only possible when we serialize the stream
+                d[item[0]] = {"stream": item[1].to_dict()}
             elif item[0] != "transforms":
                 d[item[0]] = item[1]
             elif isinstance(item[1], (tuple, list)) and item[0] == "transforms":
-                d[item[0]] = [{x.__class__.__name__: x.to_dict()} for x in item[1]]
+                d[item[0]] = [
+                    {x.__class__.serializable_name: x.to_dict()} for x in item[1]
+                ]
 
         return d
 
+    def to_yaml(self, filename=None):
+        """Writes a Serializable object into a file. If the filename is None,
+        then this function just returns a string.
+
+        Parameters
+        ----------
+        filename : str or pathlib.Path or None
+            Path to the .yaml file.
+        Returns
+        -------
+        out : str
+            Serialized object
+        """
+        res = yaml.safe_dump({"stream": self.to_dict()})
+        if filename is not None:
+            with open(filename, "w") as f:
+                f.write(res)
+
+        return res
+
+    def to_json(self, filename=None):
+        """Writes a Serializable object into a json file. If the filename is None,
+        then this function returns a string.
+
+
+        Parameters
+        ----------
+        filename : str or pathlib.Path or None
+
+        Returns
+        -------
+
+        """
+        res = json.dumps({"stream": self.to_dict()}, indent=4)
+        if filename is not None:
+            with open(filename, "w") as f:
+                f.write(res)
+
+        return res
+
     def __init_subclass__(cls, **kwargs):
         super(Serializable, cls).__init_subclass__(**kwargs)
-        if hasattr(cls, "serializablie_name"):
-            cls.registry[f"{cls.serializablie_name}"] = cls
+        if hasattr(cls, "serializable_name"):
+            cls.registry[f"{cls.serializable_name}"] = cls
 
 
 def from_dict(transforms):
@@ -99,17 +138,13 @@ def from_json(s):
     """
 
     d = None
-    if isinstance(s, str):
-        if s.endswith(".json"):
-            with open(s, "r") as f:
-                d = json.load(f)
-        else:
-            d = json.loads(s)
-    elif isinstance(s, pathlib.Path):
-        if s.suffix == ".json":
-            d = json.load(s)
-        else:
-            raise ValueError("Filename must end with .json")
+    s = str(s)
+
+    if s.endswith(".json"):
+        with open(s, "r") as f:
+            d = json.load(f)
+    else:
+        d = json.loads(s)
 
     return from_dict(d)
 
@@ -128,20 +163,12 @@ def from_yaml(s):
         A serializable object
 
     """
-
-    if isinstance(s, str):
-        if s.endswith(".yaml"):
-            with open(s, "r") as f:
-                d = yaml.safe_load(f.read(), Loader=yaml.Loader)
-        else:
-            d = yaml.safe_load(s, Loader=yaml.Loader)
-    elif isinstance(s, pathlib.Path):
-        if s.suffix == ".yaml":
-            d = yaml.safe_load(s)
-        else:
-            raise ValueError("File type must end with .yaml")
+    s = str(s)
+    if s.endswith(".yaml"):
+        with open(s, "r") as f:
+            d = yaml.safe_load(f.read())
     else:
-        raise TypeError("Input must be a string or a pathlib.Path")
+        d = yaml.safe_load(s)
 
     return from_dict(d)
 
@@ -211,6 +238,9 @@ def validate_parameter(
     if isinstance(parameter, basic_type) and heritable:
         parameter = (parameter, "inherit")
 
+    if isinstance(parameter, list):
+        parameter = tuple(parameter)
+
     if isinstance(parameter, tuple) and heritable:
         if len(parameter) != 2:
             raise ValueError
@@ -253,6 +283,9 @@ def validate_numeric_range_parameter(
 
     if parameter is None:
         parameter = default_val
+
+    if isinstance(parameter, list):
+        parameter = tuple(parameter)
 
     if not isinstance(parameter, tuple):
         raise TypeError

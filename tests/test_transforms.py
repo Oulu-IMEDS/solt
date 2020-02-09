@@ -928,7 +928,6 @@ def test_translate_when_range_x_is_none(translate_x, translate_y, expected):
         {"affine_transforms": slc.Stream([slt.Flip(), ])},
         {"v_range": "123"},
         {"v_range": 123},
-        {"v_range": [0, 0]},
         {"v_range": ("123", "456")},
         {"v_range": ((2,), (4,))},
     ],
