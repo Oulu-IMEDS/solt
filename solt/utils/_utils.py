@@ -132,12 +132,12 @@ def from_yaml(s):
     if isinstance(s, str):
         if s.endswith(".yaml"):
             with open(s, "r") as f:
-                d = yaml.load(f.read(), Loader=yaml.Loader)
+                d = yaml.safe_load(f.read(), Loader=yaml.Loader)
         else:
-            d = yaml.load(s, Loader=yaml.Loader)
+            d = yaml.safe_load(s, Loader=yaml.Loader)
     elif isinstance(s, pathlib.Path):
         if s.suffix == ".yaml":
-            d = yaml.load(s)
+            d = yaml.safe_load(s)
         else:
             raise ValueError("File type must end with .yaml")
     else:
