@@ -12,33 +12,31 @@ class Serializable(object):
         if self.serializable_name is not None:
             self.registry[self.serializable_name] = self.__class__
 
-    def serialize(self, fmt="dict"):
-        """Method returns an ordered dict, describing the object.
+    def to_dict(self):
+        """Method returns a dict, describing the object sufficiently enough to reconstruct it
+        back.
 
-        Parameters
-        ----------
-        fmt : str
-            Serialization type. Can be dict, json or yaml.
         Returns
         -------
         out : OrderedDict
             OrderedDict, ready for json serialization.
 
         """
-        if fmt not in ["dict", "json", "yaml"]:
-            raise ValueError("Format of serialization can only be dict, json or yaml!")
+
         d = {}
         for item in self.__dict__.items():
             # state_dict is not serialized
             if item[0] == "state_dict":
                 continue
-
-            if hasattr(item[1], "serialize"):
-                d[item[0]] = item[1].serialize()
+            if hasattr(item[1], "to_dict") and isinstance(item[1], Serializable):
+                if item[0] != "affine_transforms":
+                    d[item[0]] = item[1].to_dict()
+                else:
+                    d[item[0]] = {"stream": item[1].to_dict()}
             elif item[0] != "transforms":
                 d[item[0]] = item[1]
             elif isinstance(item[1], (tuple, list)) and item[0] == "transforms":
-                d[item[0]] = [{x.__class__.__name__: x.serialize()} for x in item[1]]
+                d[item[0]] = [{x.__class__.__name__: x.to_dict()} for x in item[1]]
 
         return d
 
@@ -47,102 +45,103 @@ class Serializable(object):
         if hasattr(cls, "serializablie_name"):
             cls.registry[f"{cls.serializablie_name}"] = cls
 
-    @staticmethod
-    def from_dict(transforms):
-        """Deserializes the transformations stored in a dict, yaml file, json file or a string.
-            Supports deserialization of Streams only.
 
-        Parameters
-        ----------
-        transforms : dict
-            Transforms
+def from_dict(transforms):
+    """Deserializes the transformations stored in a dict.
+        Supports deserialization of Streams only.
 
-        Returns
-        -------
-        out : slc.Stream
-            An instance of solt.Stream
+    Parameters
+    ----------
+    transforms : dict
+        Transforms
 
-        """
+    Returns
+    -------
+    out : slc.Stream
+        An instance of solt.Stream
 
-        if not isinstance(transforms, dict):
-            raise TypeError("Transforms must be a dict!")
-        for t in transforms:
-            if "transforms" in transforms[t]:
-                transforms[t]["transforms"] = [
-                    Serializable.from_dict(x) for x in transforms[t]["transforms"]
-                ]
-            if "affine_transforms" in transforms[t]:
-                transforms[t]["affine_transforms"] = Serializable.from_dict(
-                    transforms[t]["affine_transforms"]
-                )
-            if t in Serializable.registry:
-                cls = Serializable.registry[t]
-            else:
-                raise ValueError(f"Could not find {t} in the registry!")
-            return cls(**transforms[t])
+    """
 
-    @staticmethod
-    def from_json(s):
-        """Allows to deserialize transforms from a json file.
-
-        Parameters
-        ----------
-        s : str or pathlib.Path
-            Json string or path. Path can be stored as a string or as a pathlib object.
-
-        Returns
-        -------
-        s : Serializable
-            A serializable object
-
-        """
-
-        d = None
-        if isinstance(s, str):
-            if s.endswith(".json"):
-                with open(s, "r") as f:
-                    d = json.load(f)
-            else:
-                d = json.loads(s)
-        elif isinstance(s, pathlib.Path):
-            if s.suffix == ".json":
-                d = json.load(s)
-            else:
-                raise ValueError("Filename must end with .json")
-
-        return Serializable.from_dict(d)
-
-    @staticmethod
-    def from_yaml(s):
-        """Allows to deserialize transforms from a yaml file.
-
-        Parameters
-        ----------
-        s : str or pathlib.Path
-            Path to the yaml object.
-
-        Returns
-        -------
-        s : Serializable
-            A serializable object
-
-        """
-
-        if isinstance(s, str):
-            if s.endswith(".yaml"):
-                with open(s, "r") as f:
-                    d = yaml.load(f.read(), Loader=yaml.Loader)
-            else:
-                d = json.load(s)
-        elif isinstance(s, pathlib.Path):
-            if s.suffix == ".yaml":
-                d = yaml.load(s)
-            else:
-                raise ValueError("File type must end with .yaml")
+    if not isinstance(transforms, dict):
+        raise TypeError("Transforms must be a dict!")
+    for t in transforms:
+        if "transforms" in transforms[t]:
+            transforms[t]["transforms"] = [
+                from_dict(x) for x in transforms[t]["transforms"]
+            ]
+        if "affine_transforms" in transforms[t]:
+            transforms[t]["affine_transforms"] = from_dict(
+                transforms[t]["affine_transforms"]
+            )
+        if t in Serializable.registry:
+            cls = Serializable.registry[t]
         else:
-            raise TypeError("Input must be a string or a pathlib.Path")
+            raise ValueError(f"Could not find {t} in the registry!")
 
-        return Serializable.from_dict(d)
+        return cls(**transforms[t])
+
+
+def from_json(s):
+    """Allows to deserialize transforms from a json file.
+
+    Parameters
+    ----------
+    s : str or pathlib.Path
+        Json string or path. Path can be stored as a string or as a pathlib object.
+
+    Returns
+    -------
+    s : Serializable
+        A serializable object
+
+    """
+
+    d = None
+    if isinstance(s, str):
+        if s.endswith(".json"):
+            with open(s, "r") as f:
+                d = json.load(f)
+        else:
+            d = json.loads(s)
+    elif isinstance(s, pathlib.Path):
+        if s.suffix == ".json":
+            d = json.load(s)
+        else:
+            raise ValueError("Filename must end with .json")
+
+    return Serializable.from_dict(d)
+
+
+def from_yaml(s):
+    """Allows to deserialize transforms from a yaml file.
+
+    Parameters
+    ----------
+    s : str or pathlib.Path
+        Path to the yaml object.
+
+    Returns
+    -------
+    s : Serializable
+        A serializable object
+
+    """
+
+    if isinstance(s, str):
+        if s.endswith(".yaml"):
+            with open(s, "r") as f:
+                d = yaml.load(f.read(), Loader=yaml.Loader)
+        else:
+            d = yaml.load(s)
+    elif isinstance(s, pathlib.Path):
+        if s.suffix == ".yaml":
+            d = yaml.load(s)
+        else:
+            raise ValueError("File type must end with .yaml")
+    else:
+        raise TypeError("Input must be a string or a pathlib.Path")
+
+    return Serializable.from_dict(d)
 
 
 def img_shape_checker(method):

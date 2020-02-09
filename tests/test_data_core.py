@@ -379,41 +379,6 @@ def test_stream_raises_assertion_error_when_not_basetransform_or_stream_in_the_t
         slc.Stream([1, 2, 3])
 
 
-def test_stream_serializes_all_args_are_set():
-    ppl = slc.Stream([
-        slt.Rotate(angle_range=(-106, 90), p=0.7, interpolation='nearest'),
-        slt.Rotate(angle_range=(-106, 90), p=0.7, interpolation='nearest'),
-        slt.Rotate(angle_range=(-106, 90), p=0.7, interpolation='nearest'),
-        slt.Projection(
-            slc.Stream([
-                slt.Rotate(angle_range=(-6, 90), p=0.2, padding='r', interpolation='nearest'),
-            ])
-        )
-    ])
-
-    serialized = ppl.serialize()
-    assert 'interpolation' in serialized
-    assert 'padding' in serialized
-    assert 'optimize_stack' in serialized
-    assert 'transforms' in serialized
-    assert len(serialized) == 4
-
-    trfs = serialized['transforms']
-    for i, el in enumerate(trfs):
-        t = list(el.keys())[0]
-        if i < len(serialized) - 1:
-            assert list(el.keys())[0] == 'Rotate'
-            assert trfs[i][t]['p'] == 0.7
-            assert trfs[i][t]['interpolation'] == ('nearest', 'inherit')
-            assert trfs[i][t]['padding'] == ('z', 'inherit')
-            assert trfs[i][t]['angle_range'] == (-106, 90)
-        else:
-            assert list(el.keys())[0] == 'Projection'
-            assert trfs[i][t]['affine_transforms']['transforms'][0]['Rotate']['p'] == 0.2
-            assert trfs[i][t]['affine_transforms']['transforms'][0]['Rotate']['interpolation'] == ('nearest', 'inherit')
-            assert trfs[i][t]['affine_transforms']['transforms'][0]['Rotate']['padding'] == ('r', 'inherit')
-            assert trfs[i][t]['affine_transforms']['transforms'][0]['Rotate']['angle_range'] == (-6, 90)
-
 
 def test_selective_pipeline_selects_transforms_and_does_the_fusion():
     ppl = slc.SelectiveStream([
