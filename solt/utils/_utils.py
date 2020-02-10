@@ -18,7 +18,7 @@ class Serializable(object):
 
         Returns
         -------
-        out : OrderedDict
+        out : dict
             OrderedDict, ready for json serialization.
 
         """
@@ -72,6 +72,8 @@ class Serializable(object):
 
         Returns
         -------
+        out : str
+            Serialized object
 
         """
         res = json.dumps({"stream": self.to_dict()}, indent=4)
@@ -99,8 +101,8 @@ def from_dict(transforms):
 
     Returns
     -------
-    out : slc.Stream
-        An instance of solt.Stream
+    out : solt.core.Stream
+        An instance of solt.core.Stream.
 
     """
 
