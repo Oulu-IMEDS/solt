@@ -84,7 +84,8 @@ class Serializable(object):
     def __init_subclass__(cls, **kwargs):
         super(Serializable, cls).__init_subclass__(**kwargs)
         if hasattr(cls, "serializable_name"):
-            cls.registry[f"{cls.serializable_name}"] = cls
+            if cls.serializable_name is not None:
+                cls.registry[f"{cls.serializable_name}"] = cls
 
 
 def from_dict(transforms):
