@@ -7,6 +7,7 @@ import inspect
 class Serializable(object):
     registry = {}
     serializable_name = None
+    """How the class should be stored in the registry. If ``None`` (default), the transform is not added."""
 
     def __init__(self):
         if self.serializable_name is not None:

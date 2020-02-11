@@ -41,6 +41,7 @@ class Flip(BaseTransform):
     """
 
     serializable_name = "flip"
+    """How the class should be stored in the registry"""
 
     def __init__(self, p=0.5, axis=1, data_indices=None):
         super(Flip, self).__init__(p=p, data_indices=data_indices)
@@ -105,7 +106,9 @@ class Rotate(MatrixTransform):
     """
 
     _default_range = (0, 0)
+
     serializable_name = "rotate"
+    """How the class should be stored in the registry"""
 
     def __init__(
         self,
@@ -161,6 +164,7 @@ class Rotate90(Rotate):
     """
 
     serializable_name = "rotate_90"
+    """How the class should be stored in the registry"""
 
     def __init__(self, k=0, p=0.5):
         if not isinstance(k, int):
@@ -202,6 +206,7 @@ class Shear(MatrixTransform):
     _default_range = (0, 0)
 
     serializable_name = "shear"
+    """How the class should be stored in the registry"""
 
     def __init__(
         self,
@@ -270,7 +275,9 @@ class Scale(MatrixTransform):
     """
 
     _default_range = (1, 1)
+
     serializable_name = "scale"
+    """How the class should be stored in the registry"""
 
     def __init__(
         self,
@@ -361,7 +368,9 @@ class Translate(MatrixTransform):
     """
 
     _default_range = (0, 0)
+
     serializable_name = "translate"
+    """How the class should be stored in the registry"""
 
     def __init__(
         self,
@@ -421,7 +430,9 @@ class Projection(MatrixTransform):
     """
 
     _default_range = (0, 0)
+
     serializable_name = "projection"
+    """How the class should be stored in the registry"""
 
     def __init__(
         self,
@@ -498,6 +509,7 @@ class Pad(DataDependentSamplingTransform, PaddingPropertyHolder):
     """
 
     serializable_name = "pad"
+    """How the class should be stored in the registry"""
 
     def __init__(self, pad_to=None, padding=None):
         DataDependentSamplingTransform.__init__(self, p=1)
@@ -600,6 +612,7 @@ class Resize(BaseTransform, InterpolationPropertyHolder):
     """
 
     serializable_name = "resize"
+    """How the class should be stored in the registry"""
 
     def __init__(self, resize_to=None, interpolation="bilinear"):
         BaseTransform.__init__(self, p=1)
@@ -671,6 +684,7 @@ class Crop(DataDependentSamplingTransform):
     """
 
     serializable_name = "crop"
+    """How the class should be stored in the registry"""
 
     def __init__(self, crop_to=None, crop_mode="c"):
         super(Crop, self).__init__(p=1, data_indices=None)
@@ -756,7 +770,9 @@ class Noise(DataDependentSamplingTransform):
     """
 
     _default_range = (0, 0)
+
     serializable_name = "noise"
+    """How the class should be stored in the registry"""
 
     def __init__(self, p=0.5, gain_range=0.1, data_indices=None):
         super(Noise, self).__init__(p=p, data_indices=data_indices)
@@ -835,6 +851,7 @@ class CutOut(ImageTransform, DataDependentSamplingTransform):
     """
 
     serializable_name = "cutout"
+    """How the class should be stored in the registry"""
 
     def __init__(self, cutout_size=2, data_indices=None, p=0.5):
         super(CutOut, self).__init__(p=p, data_indices=data_indices)
@@ -897,7 +914,9 @@ class SaltAndPepper(ImageTransform, DataDependentSamplingTransform):
     """
 
     _default_range = (0, 0)
+
     serializable_name = "salt_and_pepper"
+    """How the class should be stored in the registry"""
 
     def __init__(self, p=0.5, gain_range=0.1, salt_p=0.5, data_indices=None):
         super(SaltAndPepper, self).__init__(p=p, data_indices=data_indices)
@@ -964,7 +983,9 @@ class GammaCorrection(ImageTransform):
     """
 
     _default_range = (1, 1)
+
     serializable_name = "gamma_correction"
+    """How the class should be stored in the registry"""
 
     def __init__(self, p=0.5, gamma_range=0.1, data_indices=None):
         super(GammaCorrection, self).__init__(p=p, data_indices=data_indices)
@@ -1012,6 +1033,7 @@ class Contrast(ImageTransform):
 
     _default_range = (1, 1)
     serializable_name = "contrast"
+    """How the class should be stored in the registry"""
 
     def __init__(self, p=0.5, contrast_range=0.1, data_indices=None):
         super(Contrast, self).__init__(p=p, data_indices=data_indices)
@@ -1065,7 +1087,9 @@ class Blur(ImageTransform):
     """
 
     _default_range = (1, 1)
+
     serializable_name = "blur"
+    """How the class should be stored in the registry"""
 
     def __init__(
         self, p=0.5, blur_type="g", k_size=3, gaussian_sigma=None, data_indices=None
@@ -1150,7 +1174,9 @@ class HSV(ImageTransform):
     """
 
     _default_range = (0, 0)
+
     serializable_name = "hsv"
+    """How the class should be stored in the registry"""
 
     def __init__(
         self, h_range=None, s_range=None, v_range=None, data_indices=None, p=0.5
@@ -1206,7 +1232,9 @@ class Brightness(ImageTransform):
     """
 
     _default_range = (0, 0)
+
     serializable_name = "brightness"
+    """How the class should be stored in the registry"""
 
     def __init__(self, brightness_range=None, data_indices=None, p=0.5):
         super(Brightness, self).__init__(p=p, data_indices=data_indices)
@@ -1252,6 +1280,7 @@ class CvtColor(ImageTransform):
     """
 
     serializable_name = "cvt_color"
+    """How the class should be stored in the registry"""
 
     def __init__(self, mode=None, data_indices=None):
         super(CvtColor, self).__init__(p=1, data_indices=data_indices)
@@ -1298,6 +1327,7 @@ class KeypointsJitter(DataDependentSamplingTransform):
     """
 
     serializable_name = "keypoints_jitter"
+    """How the class should be stored in the registry"""
 
     def __init__(self, p=0.5, dx_range=None, dy_range=None):
         super(KeypointsJitter, self).__init__(data_indices=None, p=p)
@@ -1360,6 +1390,7 @@ class JPEGCompression(ImageTransform):
     """
 
     serializable_name = "jpeg_compression"
+    """How the class should be stored in the registry"""
 
     def __init__(self, p=0.5, quality_range=None, data_indices=None):
         super(JPEGCompression, self).__init__(p=p, data_indices=data_indices)
