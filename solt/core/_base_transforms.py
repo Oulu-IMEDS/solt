@@ -5,9 +5,8 @@ import cv2
 import numpy as np
 
 from solt.utils import Serializable
-import solt.data as sld
 from solt.constants import allowed_interpolations, allowed_paddings
-from solt.data import DataContainer, KeyPoints
+from ._data import DataContainer, Keypoints
 from solt.utils import (
     img_shape_checker,
     validate_parameter,
@@ -133,12 +132,13 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
         Parameters
         ----------
         data : DataContainer or dict
-            Data to be augmented. See `sld.DataContainer.from_dict` for details.
+            Data to be augmented. See ``solt.core.DataContainer.from_dict`` for details.
         return_torch : bool
-            Whether to convert the result into a torch tensors. By default, it is false for transforms and
-            true for the streams.
+            Whether to convert the result into a torch tensors.
+            By default, it is `False` for transforms and ``True`` for the streams.
         as_dict : bool
-            Whether to pool the results into a dict. See `sld.DataContainer.to_dict` for details
+            Whether to pool the results into a dict.
+            See ``solt.core.DataContainer.to_dict`` for details
         scale_keypoints : bool
             Whether to scale the keypoints into 0-1 range
         normalize : bool
@@ -157,7 +157,7 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
         """
 
         if isinstance(data, dict):
-            data = sld.DataContainer.from_dict(data)
+            data = DataContainer.from_dict(data)
 
         self.reset_state()
         if self.use_transform():
@@ -224,17 +224,17 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def _apply_pts(self, pts: KeyPoints, settings: dict):
+    def _apply_pts(self, pts: Keypoints, settings: dict):
         """Abstract method, which determines the transform's behaviour when it is applied to keypoints.
 
         Parameters
         ----------
-        pts : KeyPoints
+        pts : Keypoints
             Keypoints object
 
         Returns
         -------
-        out : KeyPoints
+        out : Keypoints
             Result
 
         """
@@ -251,7 +251,7 @@ class ImageTransform(BaseTransform):
     def _apply_mask(self, mask, settings: dict):
         return mask
 
-    def _apply_pts(self, pts: KeyPoints, settings: dict):
+    def _apply_pts(self, pts: Keypoints, settings: dict):
         return pts
 
     def _apply_labels(self, labels, settings: dict):
@@ -341,12 +341,12 @@ class DataDependentSamplingTransform(BaseTransform):
         Parameters
         ----------
         data : DataContainer or dict
-            Data to be augmented. See `sld.DataContainer.from_dict` for details.
+            Data to be augmented. See `solt.core.DataContainer.from_dict` for details.
         return_torch : bool
             Whether to convert the result into a torch tensors. By default, it is false for transforms and
             true for the streams.
         as_dict : bool
-            Whether to pool the results into a dict. See `sld.DataContainer.to_dict` for details
+            Whether to pool the results into a dict. See `solt.core.DataContainer.to_dict` for details
         scale_keypoints : bool
             Whether to scale the keypoints into 0-1 range
         normalize : bool
@@ -365,7 +365,7 @@ class DataDependentSamplingTransform(BaseTransform):
         """
 
         if isinstance(data, dict):
-            data = sld.DataContainer.from_dict(data)
+            data = DataContainer.from_dict(data)
 
         self.reset_state()
         if self.use_transform():
@@ -432,17 +432,17 @@ class DataDependentSamplingTransform(BaseTransform):
         """
 
     @abstractmethod
-    def _apply_pts(self, pts: KeyPoints, settings: dict):
+    def _apply_pts(self, pts: Keypoints, settings: dict):
         """Abstract method, which determines the transform's behaviour when it is applied to keypoints.
 
         Parameters
         ----------
-        pts : KeyPoints
+        pts : Keypoints
             Keypoints object
 
         Returns
         -------
-        out : KeyPoints
+        out : Keypoints
             Result
 
         """
@@ -724,19 +724,19 @@ class MatrixTransform(
         """
         return labels
 
-    def _apply_pts(self, pts: KeyPoints, settings: dict):
+    def _apply_pts(self, pts: Keypoints, settings: dict):
         """Abstract method, which defines the transform's behaviour when it is applied to keypoints.
 
         Parameters
         ----------
-        pts : KeyPoints
+        pts : Keypoints
             Keypoints object
         settings : dict
             Item-wise settings
 
         Returns
         -------
-        out : KeyPoints
+        out : Keypoints
             Result
 
         """
@@ -771,4 +771,4 @@ class MatrixTransform(
         pts_data[:, 0] /= pts_data[:, 2]
         pts_data[:, 1] /= pts_data[:, 2]
 
-        return KeyPoints(pts_data[:, :-1], h_new, w_new)
+        return Keypoints(pts_data[:, :-1], h_new, w_new)

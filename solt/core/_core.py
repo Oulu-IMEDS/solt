@@ -1,13 +1,13 @@
 import numpy as np
 
-from solt.base_transforms import (
+from ._base_transforms import (
     BaseTransform,
     MatrixTransform,
     DataDependentSamplingTransform,
 )
 import copy
 import random
-import solt.data as sld
+import solt.core as slc
 
 from solt.utils import Serializable
 
@@ -21,11 +21,11 @@ class Stream(Serializable):
         List of transforms to execute
     interpolation : str or None
         Stream-wide settings for interpolation. If for some particular transform your would like
-        to still use its own mode, simply pass (<interpolation_value>, 'strict')
+        to still use its own mode, simply pass ``(<interpolation_value>, 'strict')``
         in the constructor of that transform.
     padding : str or None
         Stream-wide settings for padding. If for some particular transform your would like
-        to still use its own mode, simply pass (<padding_value>, 'strict')
+        to still use its own mode, simply pass ``(<padding_value>, 'strict')``
         in the constructor of that transform.
     optimize_stack : bool
         Whether to run transforms stack optimization. It can only be useful if many matrix transformations are
@@ -55,6 +55,18 @@ class Stream(Serializable):
         self.reset_interpolation(interpolation)
 
     def reset_interpolation(self, value):
+        """Resets the interpolation for the whole pipeline of transforms.
+
+        Parameters
+        ----------
+        value : str or None
+            A value from `solt.constants.allowed_interpolations`
+
+        See also
+        --------
+        solt.constants.allowed_interpolations
+
+        """
         if value is None:
             return
         self.interpolation = value
@@ -67,6 +79,18 @@ class Stream(Serializable):
                     trf.reset_interpolation(self.interpolation)
 
     def reset_padding(self, value):
+        """Allows to reset the padding for the whole Stream
+
+        Parameters
+        ----------
+        value : str
+            Should be a string from ``solt.constants.allowed_paddings``
+
+        See also
+        --------
+        solt.constants.allowed_paddings
+
+        """
         if value is None:
             return
         self.padding = value
@@ -94,12 +118,12 @@ class Stream(Serializable):
         Parameters
         ----------
         data : DataContainer or dict
-            Data to be augmented. See `sld.DataContainer.from_dict` for details.
+            Data to be augmented. See ``solt.core.DataContainer.from_dict`` for details.
         return_torch : bool
             Whether to convert the result into a torch tensors. By default, it is false for transforms and
             true for the streams.
         as_dict : bool
-            Whether to pool the results into a dict. See `sld.DataContainer.to_dict` for details
+            Whether to pool the results into a dict. See ``solt.core.DataContainer.to_dict`` for details
         scale_keypoints : bool
             Whether to scale the keypoints into 0-1 range
         normalize : bool
@@ -117,7 +141,7 @@ class Stream(Serializable):
 
         """
 
-        res: sld.DataContainer = Stream.exec_stream(
+        res: slc.DataContainer = Stream.exec_stream(
             self.transforms, data, self.optimize_stack
         )
 
@@ -185,7 +209,8 @@ class Stream(Serializable):
         transforms : list
             List of transformations to execute
         data : DataContainer or dict
-            Data to be augmented. See `sld.DataContainer.from_dict` for details
+            Data to be augmented. See ``solt.data.DataContainer.from_dict``
+            to check how a conversion from dict is done.
         optimize_stack : bool
             Whether to execute augmentations stack optimization.
 
@@ -196,7 +221,7 @@ class Stream(Serializable):
         """
 
         if isinstance(data, dict):
-            data = sld.DataContainer.from_dict(data)
+            data = slc.DataContainer.from_dict(data)
 
         # Performing the transforms using the optimized stack
         if optimize_stack:
@@ -218,8 +243,7 @@ class Stream(Serializable):
 
 
 class SelectiveStream(Stream):
-    """
-    Stream, which uniformly selects n out of k given transforms.
+    """Stream that uniformly selects n out of k given transforms.
 
     """
 
@@ -259,8 +283,7 @@ class SelectiveStream(Stream):
         mean=None,
         std=None,
     ):
-        """
-        Applies randomly selected n transforms to the given data item
+        """Applies randomly selected n transforms to the given data item
 
         Parameters
         ----------
@@ -269,7 +292,8 @@ class SelectiveStream(Stream):
         return_torch : bool
             Whether to convert the result into a torch tensors
         as_dict : bool
-            Whether to pool the results into a dict. See `sld.DataContainer.to_dict` for details
+            Whether to pool the results into a dict. See ``solt.core.DataContainer.to_dict``
+            for details.
         scale_keypoints : bool
             Whether to scale the keypoints into 0-1 range
         normalize : bool

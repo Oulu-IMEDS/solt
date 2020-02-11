@@ -1,8 +1,8 @@
 import numpy as np
 import torch
 
-from ..constants import allowed_interpolations, allowed_paddings, allowed_types
-from ..utils import validate_parameter
+from solt.constants import allowed_interpolations, allowed_paddings, allowed_types
+from solt.utils import validate_parameter
 
 
 class DataContainer(object):
@@ -21,7 +21,7 @@ class DataContainer(object):
         The key in this dict corresponds to the index of the element in the given data tuple.
         The value is another dict, which has all the settings. Segmentation masks have nearest neighbor interpolation
         by default, this can be changed manually if needed.
-        Example: transform_settings={0:{'interpolation':'bilinear'}, 1: {'interpolation':'bicubic'}}
+        Example: ``transform_settings={0:{'interpolation':'bilinear'}, 1: {'interpolation':'bicubic'}}``
 
     """
 
@@ -113,22 +113,36 @@ class DataContainer(object):
     def from_dict(data):
         """Creates a data container from a dictionary.
 
-        If data is a dict, then the `DataContainer` will be created so that the images stored
-        by the key `image` will be stored first. Subsequently, multiple images stored under the key `images`
-        will be stored. The same applies to masks (first `mask` and then `masks`), labels,
-        and the keypoints (`keypoints` and`keypoints_array`). You must use `solt.data.KeyPoints` object here.
-        Labels will always be stored last.
+        If data is a dict, then the ``solt.data.DataContainer`` will be created so that the
+        ``image`` data will be stored first. Subsequently, multiple images under the key ``images``
+        will be stored. The same applies to masks (first ``mask`` and then ``masks``),
+        labels (``label`` and ``labels``), and the keypoints (``keypoints`` and ``keypoints_array``).
+        You must use ``solt.data.KeyPoints`` object here. Labels will always be stored last.
 
-        For example, if the input `dict` looks like this: `d = {'label': l1, 'image': i1, 'mask': m1}` or
-        `d = {'mask': m1, 'image': i1, 'label': l1}`, the `DataContainer` will convert this
-        into `sld.DataContainer((i1, m1, l1), 'IML')`.
+        For example, if the input ``dict`` looks like this: ``d = {'label': l1, 'image': i1, 'mask': m1}`` or
+        ``d = {'mask': m1, 'image': i1, 'label': l1}``, the ``DataContainer`` will convert this
+        into ``sld.DataContainer((i1, m1, l1), 'IML')``.
 
-        In a more complex case: `d={'image': i1, masks: (m1, m2, m3, m4), 'labels': (l1, l2, l3, l4, l5),
-        'keypoints': sld.KeyPoints(k, h, w)` would be equivalent to
-        `sld.DataContainer((i1, m1, m2, m3, m4, sld.KeyPoints(k, h, w), l1, l2, l3, l4, l5), 'IMMMMPLLLLLL')`.
+        More complex case:
+
+        .. highlight:: python
+        .. code-block:: python
+
+            d = {'image': i1, masks: (m1, m2, m3, m4), 'labels': (l1, l2, l3, l4, l5),
+            'keypoints': solt.core.KeyPoints(k, h, w)
+            dc_from_dict = solt.core.DataContainer.from_dict(d)
+
+        will be equivalent to
+
+        .. highlight:: python
+        .. code-block:: python
+
+            dc = solt.core.DataContainer((i1, m1, m2, m3, m4, solt.core.KeyPoints(k, h, w), l1, l2, l3, l4, l5),
+            'IMMMMPLLLLLL').
+
 
         Please note, that when you create DataContainer using such a simplified interface,
-        you cannot setup the transform parameters. Use a proper constructor instead.
+        you cannot setup the transform parameters per item. Use a proper constructor instead.
 
         Parameters
         ----------
@@ -179,10 +193,10 @@ class DataContainer(object):
         as_dict : bool
             Whether to return the result as a dictionary. If a single item is present, then the singular naming
             will be used. If plural, then the plural will be used. The items will be stored and
-            sorted a similar manner to the method `from_dict`: images, masks, keypoints_array, and labels.
+            sorted a similar manner to the method ``from_dict``: images, masks, keypoints_array, and labels.
             The same applies to a singular case/
         scale_keypoints : bool
-            Whether to scale keypoints to 0-1 range
+            Whether to scale keypoints to 0-1 range. ``True`` by default.
         normalize : bool
             Whether to subtract mean
         mean : torch.Tensor
@@ -319,7 +333,7 @@ class DataContainer(object):
         for d1, d2 in zip(self.data, other.data):
             if isinstance(d1, np.ndarray):
                 data_equal = data_equal and np.array_equal(d1, d2)
-            elif isinstance(d1, KeyPoints):
+            elif isinstance(d1, Keypoints):
                 data_equal = data_equal and (d1 == d2)
             else:
                 data_equal = data_equal and d1 == d2
@@ -327,7 +341,7 @@ class DataContainer(object):
         return fmt_equal and data_equal
 
 
-class KeyPoints(object):
+class Keypoints(object):
     """Keypoints class
 
     Parameters

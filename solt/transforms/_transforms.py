@@ -3,7 +3,7 @@ import random
 import cv2
 import numpy as np
 
-from ..base_transforms import (
+from ..core import (
     BaseTransform,
     DataDependentSamplingTransform,
     ImageTransform,
@@ -20,7 +20,7 @@ from ..constants import (
     dtypes_max,
 )
 from ..core import Stream
-from ..data import DataContainer, KeyPoints
+from ..core import DataContainer, Keypoints
 from ..utils import (
     img_shape_checker,
     validate_numeric_range_parameter,
@@ -70,7 +70,7 @@ class Flip(BaseTransform):
     def _apply_labels(self, labels, settings: dict):
         return labels
 
-    def _apply_pts(self, pts: KeyPoints, settings: dict):
+    def _apply_pts(self, pts: Keypoints, settings: dict):
         # We should guarantee that we do not change the original data.
         pts_data = pts.data.copy()
         if self.axis == 0:
@@ -81,7 +81,7 @@ class Flip(BaseTransform):
             pts_data[:, 1] = pts.height - 1 - pts_data[:, 1]
             pts_data[:, 0] = pts.width - 1 - pts_data[:, 0]
 
-        return KeyPoints(pts=pts_data, height=pts.height, width=pts.width)
+        return Keypoints(pts=pts_data, height=pts.height, width=pts.width)
 
 
 class Rotate(MatrixTransform):
@@ -415,7 +415,7 @@ class Projection(MatrixTransform):
         Stream object, which has a parameterized Affine Transform.
         If None, then a zero degrees rotation matrix is instantiated.
     v_range : tuple or None
-        Projective parameters range. If None, then v_range = (0, 0)
+        Projective parameters range. If None, then ``v_range = (0, 0)``
     p : float
         Probability of using this transform.
     """
@@ -480,14 +480,20 @@ class Pad(DataDependentSamplingTransform, PaddingPropertyHolder):
     Parameters
     ----------
     pad_to : tuple or int or None
-        Target size (width_new, height_new). The padding is computed using teh following equations:
+        Target size ``(width_new, height_new)``.
+        The padding is computed using the following equations:
 
-        left_pad = (pad_to[0] - w) // 2
-        right_pad = (pad_to[0] - w) // 2 + (pad_to[0] - w) % 2
-        top_pad = (pad_to[1] - h) // 2
-        bottom_pad = (pad_to[1] - h) // 2 + (pad_to[1] - h) % 2
-    padding :
+        ``left_pad = (pad_to[0] - w) // 2``
+        ``right_pad = (pad_to[0] - w) // 2 + (pad_to[0] - w) % 2``
+        ``top_pad = (pad_to[1] - h) // 2``
+        ``bottom_pad = (pad_to[1] - h) // 2 + (pad_to[1] - h) % 2``
+
+    padding : str
         Padding type.
+
+    See also
+    --------
+    solt.constants.allowed_paddings
 
     """
 
@@ -557,7 +563,7 @@ class Pad(DataDependentSamplingTransform, PaddingPropertyHolder):
     def _apply_labels(self, labels, settings: dict):
         return labels
 
-    def _apply_pts(self, pts: KeyPoints, settings: dict):
+    def _apply_pts(self, pts: Keypoints, settings: dict):
         if self.pad_to is None:
             return pts
         if self.padding[0] != "z":
@@ -570,7 +576,7 @@ class Pad(DataDependentSamplingTransform, PaddingPropertyHolder):
         pts_data[:, 0] += pad_w_left
         pts_data[:, 1] += pad_h_top
 
-        return KeyPoints(
+        return Keypoints(
             pts_data,
             pad_h_top + pts.height + pad_h_bottom,
             pad_w_left + pts.width + pad_w_right,
@@ -583,9 +589,13 @@ class Resize(BaseTransform, InterpolationPropertyHolder):
     Parameters
     ----------
     resize_to : tuple or int or None
-        Target size (W_new, Y_new).
+        Target size ``(width_new, height_new)``.
     interpolation :
         Interpolation type.
+
+    See also
+    --------
+    solt.constants.allowed_interpolations
 
     """
 
@@ -624,7 +634,7 @@ class Resize(BaseTransform, InterpolationPropertyHolder):
     def _apply_labels(self, labels, settings: dict):
         return labels
 
-    def _apply_pts(self, pts: KeyPoints, settings: dict):
+    def _apply_pts(self, pts: Keypoints, settings: dict):
         if self.resize_to is None:
             return pts
         pts_data = pts.data.copy().astype(float)
@@ -639,7 +649,7 @@ class Resize(BaseTransform, InterpolationPropertyHolder):
 
         pts_data = pts_data.astype(int)
 
-        return KeyPoints(pts_data, resize_y, resize_x)
+        return Keypoints(pts_data, resize_y, resize_x)
 
 
 class Crop(DataDependentSamplingTransform):
@@ -650,9 +660,13 @@ class Crop(DataDependentSamplingTransform):
     Parameters
     ----------
     crop_to : tuple or int or None
-        Size of the crop (W_new, H_new). If int, then a square crop will be made.
+        Size of the crop ``(width_new, height_new)``. If ``int``, then a square crop will be made.
     crop_mode : str
-        Crop mode. Can be either 'c' - center or 'r' - random.
+        Crop mode. Can be either ``'c'`` - center or ``'r'`` - random.
+
+    See also
+    --------
+    solt.constants.allowed_crops
 
     """
 
@@ -712,7 +726,7 @@ class Crop(DataDependentSamplingTransform):
     def _apply_labels(self, labels, settings: dict):
         return labels
 
-    def _apply_pts(self, pts: KeyPoints, settings: dict):
+    def _apply_pts(self, pts: Keypoints, settings: dict):
         if self.crop_size is None:
             return pts
         pts_data = pts.data.copy()
@@ -721,7 +735,7 @@ class Crop(DataDependentSamplingTransform):
         pts_data[:, 0] -= x
         pts_data[:, 1] -= y
 
-        return KeyPoints(pts_data, self.crop_size[1], self.crop_size[0])
+        return Keypoints(pts_data, self.crop_size[1], self.crop_size[0])
 
 
 class Noise(DataDependentSamplingTransform):
@@ -732,8 +746,8 @@ class Noise(DataDependentSamplingTransform):
     p : float
         Probability of applying this transform,
     gain_range : tuple or float or None
-        Gain of the noise. Final image is created as (1-gain)*img + gain*noise.
-        If float, then gain_range = (0, gain_range). If None, then gain_range=(0, 0).
+        Gain of the noise. Final image is created as ``(1-gain)*img + gain*noise``.
+        If float, then ``gain_range = (0, gain_range)``. If None, then ``gain_range=(0, 0)``.
     data_indices : tuple or None
         Indices of the images within the data container to which this transform needs to be applied.
         Every element within the tuple must be integer numbers.
@@ -799,7 +813,7 @@ class Noise(DataDependentSamplingTransform):
     def _apply_labels(self, labels, settings: dict):
         return labels
 
-    def _apply_pts(self, pts: KeyPoints, settings: dict):
+    def _apply_pts(self, pts: Keypoints, settings: dict):
         return pts
 
 
@@ -871,13 +885,13 @@ class SaltAndPepper(ImageTransform, DataDependentSamplingTransform):
         Probability of applying this transform,
     gain_range : tuple or float or None
         Gain of the noise. Indicates percentage of indices, which will be changed.
-        If float, then gain_range = (0, gain_range).
+        If float, then ``gain_range = (0, gain_range)``.
     salt_p : float or tuple or None
-        Percentage of salt. Percentage of pepper is 1-salt_p. If tuple, then salt_p is chosen uniformly from the
-        given range.
+        Percentage of salt. Percentage of pepper is ``1-salt_p``. If tuple, then ``salt_p`` is chosen
+        uniformly from the given range.
     data_indices : tuple or None
         Indices of the images within the data container to which this transform needs to be applied.
-        Every element within the tuple must be integer numebers.
+        Every element within the tuple must be integer numbers.
         If None, then the transform will be applied to all the images withing the DataContainer.
 
     """
@@ -941,7 +955,7 @@ class GammaCorrection(ImageTransform):
         Probability of applying this transform,
     gamma_range : tuple or float or None
         Gain of the noise. Indicates percentage of indices, which will be changed.
-        If float, then gain_range = (1-gamma_range, 1+gamma_range).
+        If float, then ``gain_range = (1-gamma_range, 1+gamma_range)``.
     data_indices : tuple or None
         Indices of the images within the data container to which this transform needs to be applied.
         Every element within the tuple must be integer numbers.
@@ -988,7 +1002,7 @@ class Contrast(ImageTransform):
         Probability of applying this transform,
     contrast_range : tuple or float or None
         Gain of the noise. Indicates percentage of indices, which will be changed.
-        If float, then gain_range = (1-contrast_range, 1+contrast_range).
+        If float, then ``gain_range = (1-contrast_range, 1+contrast_range)``.
     data_indices : tuple or None
         Indices of the images within the data container to which this transform needs to be applied.
         Every element within the tuple must be integer numbers.
@@ -1033,9 +1047,9 @@ class Blur(ImageTransform):
     p : float
         Probability of applying this transform,
     blur_type : str
-        Blur type. Allowed blurs
+        Blur type. See allowed blurs in `solt.constants`
     k_size: int or tuple
-        Kernel sizes of the blur. if int, then sampled from (k_size, k_size). If tuple,
+        Kernel sizes of the blur. if int, then sampled from ``(k_size, k_size)``. If tuple,
         then sampled from the whole tuple. All the values here must be odd.
     gaussian_sigma: int or float or tuple
         Gaussian sigma value. Used for both X and Y axes. If None, then gaussian_sigma=1.
@@ -1043,6 +1057,10 @@ class Blur(ImageTransform):
         Indices of the images within the data container to which this transform needs to be applied.
         Every element within the tuple must be integer numbers.
         If None, then the transform will be applied to all the images withing the DataContainer.
+
+    See also
+    --------
+    solt.constants.allowed_blurs
 
     """
 
@@ -1117,11 +1135,11 @@ class HSV(ImageTransform):
     Parameters
     ----------
     h_range: tuple or None
-        Hue shift range. If None, than h_range=(0, 0).
+        Hue shift range. If None, than ``h_range=(0, 0)``.
     s_range: tuple or None
-        Saturation shift range. If None, then s_range=(0, 0).
+        Saturation shift range. If None, then ``s_range=(0, 0)``.
     v_range: tuple or None
-        Value shift range. If None, then v_range=(0, 0).
+        Value shift range. If None, then ``v_range=(0, 0)``.
     data_indices : tuple or None
         Indices of the images within the data container to which this transform needs to be applied.
         Every element within the tuple must be integer numbers.
@@ -1179,7 +1197,7 @@ class Brightness(ImageTransform):
     p : float
         Probability of applying this transform,
     brightness_range: tuple or None
-        brightness_range shift range. If None, then brightness_range=(0, 0).
+        brightness_range shift range. If None, then ``brightness_range=(0, 0)``.
     data_indices : tuple or None
         Indices of the images within the data container to which this transform needs to be applied.
         Every element within the tuple must be integer numbers.
@@ -1219,13 +1237,17 @@ class CvtColor(ImageTransform):
     ----------
     mode : str or None
         Color conversion mode. If None, then no conversion happens and mode=none.
-        If `mode == 'rgb2gs'` and the image is already grayscale,
-        then nothing happens. If `mode == 'gs2rgb'` and the image is already RGB,
+        If ``mode == 'rgb2gs'`` and the image is already grayscale,
+        then nothing happens. If ``mode == 'gs2rgb'`` and the image is already RGB,
         then also nothing happens.
     data_indices : tuple or None
         Indices of the images within the data container to which this transform needs to be applied.
         Every element within the tuple must be integer numbers.
         If None, then the transform will be applied to all the images withing the DataContainer.
+
+    See also
+    --------
+    solt.constants.allowed_color_conversions
 
     """
 
@@ -1269,9 +1291,9 @@ class KeypointsJitter(DataDependentSamplingTransform):
     p : float
         Probability of applying the transform
     dx_range: None or float or tuple of float
-        Jittering across X-axis. Valid range is (-1, 1)
+        Jittering across X-axis. Valid range is ``(-1, 1)``
     dy_range: None or float or tuple of float
-        Jittering across Y-axis. Valid range is (-1, 1)
+        Jittering across Y-axis. Valid range is ``(-1, 1)``
 
     """
 
@@ -1296,7 +1318,7 @@ class KeypointsJitter(DataDependentSamplingTransform):
     def _apply_mask(self, mask, settings: dict):
         return mask
 
-    def _apply_pts(self, pts: KeyPoints, settings: dict):
+    def _apply_pts(self, pts: Keypoints, settings: dict):
         pts_data = pts.data.copy()
         h = pts.height
         w = pts.width
@@ -1307,7 +1329,7 @@ class KeypointsJitter(DataDependentSamplingTransform):
             pts_data[j, 0] = min(pts_data[j, 0] + dx, w - 1)
             pts_data[j, 1] = min(pts_data[j, 1] + dy, h - 1)
 
-        return KeyPoints(pts_data, h, w)
+        return Keypoints(pts_data, h, w)
 
     def _apply_labels(self, labels, settings: dict):
         return labels
@@ -1319,11 +1341,17 @@ class JPEGCompression(ImageTransform):
     Parameters
     ----------
     quality_range : float or tuple of int or int or None
-        If float, then the lower bound to sample the quality is between [quality_range*100%, 100%].
+        If float, then the lower bound to sample the quality is
+        between ``(quality_range*100%, 100%)``.
+
         If tuple of int, then it directly sets the quality range.
-        If tuple of float, then the quality is sampled from [quality_range[0]*100%, quality_range[1]*100%].
-        If int, then the quality is sampled from [quality_range, 100].
-        If None, that the quality range is [100, 100]
+
+        If tuple of float, then the quality is sampled from
+        ``[quality_range[0]*100%, quality_range[1]*100%]``.
+
+        If int, then the quality is sampled from ``[quality_range, 100]``.
+        .
+        If None, that the quality range is ``[100, 100]``.
     data_indices : tuple or None
         Indices of the images within the data container to which this transform needs to be applied.
         Every element within the tuple must be integer numbers.

@@ -1,11 +1,11 @@
 import solt.utils as slu
 import solt.transforms as slt
 import solt.core as slc
-import solt.base_transforms as slb
 import pytest
 import json
 import pathlib
 import yaml
+
 
 def test_parameter_validation_range_default_value_not_tuple():
     with pytest.raises(TypeError):
@@ -36,7 +36,6 @@ def test_parameter_validation_raises_error_when_default_value_is_wrong_type():
 def test_validate_parameter_raises_value_errors(parameter):
     with pytest.raises(ValueError):
         slu.validate_parameter(parameter, {1, 2}, 1, basic_type=int)
-
 
 
 @pytest.mark.parametrize('serialized', [
@@ -189,7 +188,6 @@ def test_deserialize_from_dict_nested(serialized: dict, stream: slc.Stream):
     assert serialized_trfs == serialized_from_deserialized
 
 
-
 def test_stream_serializes_all_args_are_set():
     ppl = slc.Stream([
         slt.Rotate(angle_range=(-106, 90), p=0.7, interpolation='nearest'),
@@ -221,7 +219,8 @@ def test_stream_serializes_all_args_are_set():
         else:
             assert t == 'projection'
             assert trfs[i][t]['affine_transforms']['stream']['transforms'][0]['rotate']['p'] == 0.2
-            assert trfs[i][t]['affine_transforms']['stream']['transforms'][0]['rotate']['interpolation'] == ('nearest', 'inherit')
+            assert trfs[i][t]['affine_transforms']['stream']['transforms'][0]['rotate']['interpolation'] == (
+            'nearest', 'inherit')
             assert trfs[i][t]['affine_transforms']['stream']['transforms'][0]['rotate']['padding'] == ('r', 'inherit')
             assert trfs[i][t]['affine_transforms']['stream']['transforms'][0]['rotate']['angle_range'] == (-6, 90)
 
@@ -240,14 +239,12 @@ def test_transforms_not_in_registry_and_in_when_initialized():
             }},
         ]}})
 
-    assert 'mycrop' not in slb.BaseTransform.registry
+    assert 'mycrop' not in slc.BaseTransform.registry
 
-    class MyCrop(slb.BaseTransform):
-
+    class MyCrop(slc.BaseTransform):
         serializable_name = 'mycrop'
 
-
-    assert 'mycrop' in slb.BaseTransform.registry
+    assert 'mycrop' in slc.BaseTransform.registry
 
 
 def test_to_from_yaml_json():

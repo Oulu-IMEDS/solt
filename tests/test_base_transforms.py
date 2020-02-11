@@ -1,6 +1,5 @@
-import solt.data as sld
 import solt.transforms as slt
-import solt.base_transforms as slb
+import solt.core as slc
 import numpy as np
 import pytest
 import sys, inspect
@@ -56,7 +55,7 @@ def test_data_indices_can_be_only_nonnegative(trf):
 
 @pytest.mark.parametrize('trf', filter_trfs(all_trfs_solt, 'p'))
 def test_transform_returns_original_data_if_use_transform_is_false(img_2x2, trf):
-    dc = sld.DataContainer((img_2x2, ), 'I')
+    dc = slc.DataContainer((img_2x2, ), 'I')
     trf = trf(p=0)
     res = trf(dc)
     np.testing.assert_array_equal(res.data[0], img_2x2)
@@ -70,8 +69,8 @@ def test_transform_returns_original_data_if_use_transform_is_false(img_2x2, trf)
 def test_transform_returns_original_data_if_not_in_specified_indices(trf, img_3x3_rgb):
     img_3x3 = img_3x3_rgb*128
     kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data.copy(), 3, 3)
-    dc = sld.DataContainer((img_3x3.copy(), img_3x3.copy(), img_3x3.copy(), img_3x3.copy(), 1, kpts, 2), 'IIIILPL')
+    kpts = slc.Keypoints(kpts_data.copy(), 3, 3)
+    dc = slc.DataContainer((img_3x3.copy(), img_3x3.copy(), img_3x3.copy(), img_3x3.copy(), 1, kpts, 2), 'IIIILPL')
 
     kwargs = {"p": 1, "data_indices": (0, 1, 4)}
     if class_accepts(trf, 'gain_range'):
@@ -96,7 +95,7 @@ def test_transform_returns_original_data_if_not_in_specified_indices(trf, img_3x
     np.testing.assert_array_equal(res.data[5].data, kpts_data)
 
 
-@pytest.mark.parametrize('trf_cls', filter_trfs_subclass(all_trfs_solt, slb.DataDependentSamplingTransform))
+@pytest.mark.parametrize('trf_cls', filter_trfs_subclass(all_trfs_solt, slc.DataDependentSamplingTransform))
 def test_data_dependent_samplers_raise_nie_when_sample_transform_is_called(trf_cls):
     with pytest.raises(NotImplementedError):
         if issubclass(trf_cls, slt.Crop):
@@ -116,12 +115,12 @@ def test_data_dependent_samplers_raise_nie_when_sample_transform_is_called(trf_c
 def test_data_dep_trf_raises_value_error_when_imgs_are_of_different_size(img_1, img_2):
     trf = slt.SaltAndPepper(gain_range=0., p=1)
     with pytest.raises(ValueError):
-        trf(sld.DataContainer((1, img_1().astype(np.uint8), img_2().astype(np.uint8),), 'LII'))
+        trf(slc.DataContainer((1, img_1().astype(np.uint8), img_2().astype(np.uint8),), 'LII'))
 
 
 def test_transform_returns_original_data_when_not_used_and_applied(img_2x2):
     trf = slt.Flip(p=0)
-    dc = sld.DataContainer(img_2x2, 'I')
+    dc = slc.DataContainer(img_2x2, 'I')
     dc_res = trf(dc)
     assert dc_res == dc
 
@@ -130,9 +129,9 @@ def test_transform_returns_original_data_when_not_used_and_applied(img_2x2):
 @pytest.mark.parametrize('trf', filter(lambda t: not issubclass(t, slt.HSV), all_trfs_solt))
 def test_transforms_return_torch(img_3x3, trf, return_torch):
     if 'p' in inspect.getfullargspec(trf.__init__):
-        trf: slb.BaseTransform = trf(p=1)
+        trf: slc.BaseTransform = trf(p=1)
     else:
-        trf: slb.BaseTransform = trf()
+        trf: slc.BaseTransform = trf()
     res = trf({'image': img_3x3}, return_torch=return_torch, as_dict=False, mean=(0.5, ), std=(0.5, ))
 
     assert isinstance(res, torch.FloatTensor) == return_torch

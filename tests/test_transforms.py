@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 import solt.core as slc
-import solt.data as sld
+
 import solt.transforms as slt
 from solt.constants import allowed_interpolations, allowed_paddings
 
@@ -17,7 +17,7 @@ from .fixtures import (img_2x2, img_3x3, img_3x4, img_5x5, img_6x6, img_6x6_lc,
 
 def test_img_mask_vertical_flip(img_3x4, mask_3x4):
     img, mask = img_3x4, mask_3x4
-    dc = sld.DataContainer((img, mask), "IM")
+    dc = slc.DataContainer((img, mask), "IM")
 
     stream = slc.Stream([slt.Flip(p=1, axis=0)])
 
@@ -37,7 +37,7 @@ def test_flip_invalid_axis():
 
 def test_img_mask_mask_vertical_flip(img_3x4, mask_3x4):
     img, mask = img_3x4, mask_3x4
-    dc = sld.DataContainer((img, mask, mask), "IMM")
+    dc = slc.DataContainer((img, mask, mask), "IMM")
 
     stream = slc.Stream([slt.Flip(p=1, axis=0)])
 
@@ -52,7 +52,7 @@ def test_img_mask_mask_vertical_flip(img_3x4, mask_3x4):
 
 def test_img_mask_horizontal_flip(img_3x4, mask_3x4):
     img, mask = img_3x4, mask_3x4
-    dc = sld.DataContainer((img, mask), "IM")
+    dc = slc.DataContainer((img, mask), "IM")
 
     stream = slc.Stream([slt.Flip(p=1, axis=1)])
 
@@ -67,7 +67,7 @@ def test_img_mask_horizontal_flip(img_3x4, mask_3x4):
 
 def test_img_mask_vertical_horizontal_flip(img_3x4, mask_3x4):
     img, mask = img_3x4, mask_3x4
-    dc = sld.DataContainer((img, mask), "IM")
+    dc = slc.DataContainer((img, mask), "IM")
 
     stream = slc.Stream([slt.Flip(p=1, axis=0), slt.Flip(p=1, axis=1)])
 
@@ -82,7 +82,7 @@ def test_img_mask_vertical_horizontal_flip(img_3x4, mask_3x4):
 
 def test_img_mask_vertical_horizontal_flip_negative_axes(img_3x4, mask_3x4):
     img, mask = img_3x4, mask_3x4
-    dc = sld.DataContainer((img, mask), "IM")
+    dc = slc.DataContainer((img, mask), "IM")
 
     stream = slt.Flip(p=1, axis=-1)
 
@@ -99,8 +99,8 @@ def test_img_mask__kptsvertical_horizontal_flip_negative_axes(img_3x4, mask_3x4)
     img, mask = img_3x4, mask_3x4
 
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data.copy(), 3, 4)
-    dc = sld.DataContainer((img, mask, kpts), "IMP")
+    kpts = slc.Keypoints(kpts_data.copy(), 3, 4)
+    dc = slc.DataContainer((img, mask, kpts), "IMP")
 
     stream = slt.Flip(p=1, axis=-1)
 
@@ -121,9 +121,9 @@ def test_img_mask__kptsvertical_horizontal_flip_negative_axes(img_3x4, mask_3x4)
 
 def test_keypoints_vertical_flip():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 2, 2)
+    kpts = slc.Keypoints(kpts_data, 2, 2)
     stream = slt.Flip(p=1, axis=0)
-    dc = sld.DataContainer((kpts,), "P")
+    dc = slc.DataContainer((kpts,), "P")
 
     dc_res = stream(dc)
 
@@ -134,9 +134,9 @@ def test_keypoints_vertical_flip():
 
 def test_keypoints_horizontal_flip_within_stream():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 2, 2)
+    kpts = slc.Keypoints(kpts_data, 2, 2)
     stream = slc.Stream([slt.Flip(p=1, axis=1)])
-    dc = sld.DataContainer((kpts,), "P")
+    dc = slc.DataContainer((kpts,), "P")
 
     dc_res = stream(dc, return_torch=False)
 
@@ -147,9 +147,9 @@ def test_keypoints_horizontal_flip_within_stream():
 
 def test_keypoints_vertical_flip_within_stream():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 2, 2)
+    kpts = slc.Keypoints(kpts_data, 2, 2)
     stream = slc.Stream([slt.Flip(p=1, axis=0)])
-    dc = sld.DataContainer((kpts,), "P")
+    dc = slc.DataContainer((kpts,), "P")
 
     dc_res = stream(dc, return_torch=False)
 
@@ -198,11 +198,11 @@ def test_rotate_90_img_mask_keypoints_destructive(
     # Setting up the data
 
     kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 3, 3)
+    kpts = slc.Keypoints(kpts_data, 3, 3)
     img, mask = img_3x3, mask_3x3
     H, W = mask.shape
 
-    dc = sld.DataContainer(
+    dc = slc.DataContainer(
         (img, mask, kpts, 1),
         "IMPL",
         transform_settings=copy.deepcopy(transform_settings),
@@ -241,7 +241,7 @@ def test_rotate_90_img_mask_nondestructive(k, img_3x3, mask_3x3):
     img, mask = img_3x3, mask_3x3
     H, W = mask.shape
 
-    dc = sld.DataContainer((img, mask), "IM")
+    dc = slc.DataContainer((img, mask), "IM")
     # Defining the 90 degrees transform (counterclockwise)
     stream = slt.Rotate90(k=k, p=1)
     dc_res = stream(dc)
@@ -277,7 +277,7 @@ def test_rotate_90_transforms_have_same_bahavior(k):
 
 def test_zoom_x_axis_odd(img_5x5):
     stream = slt.Scale(range_x=(0.5, 0.5), range_y=(1, 1), same=False, p=1)
-    dc = sld.DataContainer((img_5x5,), "I")
+    dc = slc.DataContainer((img_5x5,), "I")
     H, W = img_5x5.shape[0], img_5x5.shape[1]
     img_res = stream(dc)[0][0]
     assert H == img_res.shape[0]
@@ -286,7 +286,7 @@ def test_zoom_x_axis_odd(img_5x5):
 
 def test_scale_x_axis_even(img_6x6):
     stream = slt.Scale((0.5, 0.5), (1, 1), same=False, p=1)
-    dc = sld.DataContainer((img_6x6,), "I")
+    dc = slc.DataContainer((img_6x6,), "I")
     H, W = img_6x6.shape[0], img_6x6.shape[1]
     img_res = stream(dc)[0][0]
     assert H == img_res.shape[0]
@@ -295,7 +295,7 @@ def test_scale_x_axis_even(img_6x6):
 
 def test_scale_xy_axis_odd(img_5x5):
     stream = slt.Scale((0.5, 0.5), (3, 3), same=False, p=1)
-    dc = sld.DataContainer((img_5x5,), "I")
+    dc = slc.DataContainer((img_5x5,), "I")
     H, W = img_5x5.shape[0], img_5x5.shape[1]
     img_res = stream(dc)[0][0]
     assert H * 3 == img_res.shape[0]
@@ -304,7 +304,7 @@ def test_scale_xy_axis_odd(img_5x5):
 
 def test_scale_xy_axis_even(img_6x6):
     stream = slt.Scale((0.5, 0.5), (2, 2), same=False, p=1)
-    dc = sld.DataContainer((img_6x6,), "I")
+    dc = slc.DataContainer((img_6x6,), "I")
     H, W = img_6x6.shape[0], img_6x6.shape[1]
     img_res = stream(dc)[0][0]
     assert H * 2 == img_res.shape[0]
@@ -314,7 +314,7 @@ def test_scale_xy_axis_even(img_6x6):
 def test_scale_img_mask(img_3x4, mask_3x4):
     img_mask_3x4 = img_3x4, mask_3x4
     stream = slt.Scale((0.5, 0.5), (2, 2), same=False, p=1)
-    dc = sld.DataContainer(img_mask_3x4, "IM")
+    dc = slc.DataContainer(img_mask_3x4, "IM")
     H, W = img_mask_3x4[0].shape[0], img_mask_3x4[0].shape[1]
     img_res = stream(dc)[0][0]
     mask_res = stream(dc)[1][0]
@@ -325,10 +325,10 @@ def test_scale_img_mask(img_3x4, mask_3x4):
 def test_keypoints_assert_reflective(img_3x3, mask_3x3):
     # Setting up the data
     kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 3, 3)
+    kpts = slc.Keypoints(kpts_data, 3, 3)
     img, mask = img_3x3, mask_3x3
 
-    dc = sld.DataContainer((img, mask, kpts,), "IMP")
+    dc = slc.DataContainer((img, mask, kpts,), "IMP")
     # Defining the 90 degrees transform (clockwise)
     stream = slt.Rotate(angle_range=(20, 20), p=1, padding="r")
     with pytest.raises(ValueError):
@@ -337,7 +337,7 @@ def test_keypoints_assert_reflective(img_3x3, mask_3x3):
 
 def test_padding_img_2x2_4x4(img_2x2):
     img = img_2x2
-    dc = sld.DataContainer((img,), "I")
+    dc = slc.DataContainer((img,), "I")
     transf = slt.Pad((4, 4))
     res = transf(dc)
     assert (res[0][0].shape[0] == 4) and (res[0][0].shape[1] == 4)
@@ -345,7 +345,7 @@ def test_padding_img_2x2_4x4(img_2x2):
 
 def test_padding_img_2x2_2x2(img_2x2):
     img = img_2x2
-    dc = sld.DataContainer((img,), "I")
+    dc = slc.DataContainer((img,), "I")
     transf = slt.Pad((2, 2))
     res = transf(dc)
     assert (res[0][0].shape[0] == 2) and (res[0][0].shape[1] == 2)
@@ -353,7 +353,7 @@ def test_padding_img_2x2_2x2(img_2x2):
 
 def test_padding_img_mask_2x2_4x4(img_2x2, mask_2x2):
     img, mask = img_2x2, mask_2x2
-    dc = sld.DataContainer((img, mask), "IM")
+    dc = slc.DataContainer((img, mask), "IM")
     transf = slt.Pad((4, 4))
     res = transf(dc)
     assert (res[0][0].shape[0] == 4) and (res[0][0].shape[1] == 4)
@@ -362,7 +362,7 @@ def test_padding_img_mask_2x2_4x4(img_2x2, mask_2x2):
 
 def test_padding_img_2x2_3x3(img_2x2):
     img = img_2x2
-    dc = sld.DataContainer((img,), "I")
+    dc = slc.DataContainer((img,), "I")
     transf = slt.Pad((3, 3))
     res = transf(dc)
     assert (res[0][0].shape[0] == 3) and (res[0][0].shape[1] == 3)
@@ -370,7 +370,7 @@ def test_padding_img_2x2_3x3(img_2x2):
 
 def test_padding_img_mask_2x2_3x3(img_2x2, mask_2x2):
     img, mask = img_2x2, mask_2x2
-    dc = sld.DataContainer((img, mask), "IM")
+    dc = slc.DataContainer((img, mask), "IM")
     transf = slt.Pad((3, 3))
     res = transf(dc)
     assert (res[0][0].shape[0] == 3) and (res[0][0].shape[1] == 3)
@@ -379,7 +379,7 @@ def test_padding_img_mask_2x2_3x3(img_2x2, mask_2x2):
 
 def test_padding_img_mask_3x4_3x4(img_3x4, mask_3x4):
     img, mask = img_3x4, mask_3x4
-    dc = sld.DataContainer((img, mask), "IM")
+    dc = slc.DataContainer((img, mask), "IM")
     transf = slt.Pad((4, 3))
     res = transf(dc)
     assert (res[0][0].shape[0] == 3) and (res[0][0].shape[1] == 4)
@@ -388,7 +388,7 @@ def test_padding_img_mask_3x4_3x4(img_3x4, mask_3x4):
 
 def test_padding_img_mask_3x4_5x5(img_3x4, mask_3x4):
     img, mask = img_3x4, mask_3x4
-    dc = sld.DataContainer((img, mask), "IM")
+    dc = slc.DataContainer((img, mask), "IM")
     transf = slt.Pad((5, 5))
     res = transf(dc)
     assert (res[0][0].shape[0] == 5) and (res[0][0].shape[1] == 5)
@@ -398,10 +398,10 @@ def test_padding_img_mask_3x4_5x5(img_3x4, mask_3x4):
 def test_pad_to_20x20_img_mask_keypoints_3x3(img_3x3, mask_3x3):
     # Setting up the data
     kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 3, 3)
+    kpts = slc.Keypoints(kpts_data, 3, 3)
     img, mask = img_3x3, mask_3x3
 
-    dc = sld.DataContainer((img, mask, kpts,), "IMP")
+    dc = slc.DataContainer((img, mask, kpts,), "IMP")
     transf = slt.Pad((20, 20))
     res = transf(dc)
 
@@ -418,10 +418,10 @@ def test_pad_to_20x20_img_mask_keypoints_3x3(img_3x3, mask_3x3):
 def test_pad_crop_resize_dont_change_data_when_parameters_are_not_set(img_3x3, mask_3x3, trf):
     # Setting up the data
     kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 3, 3)
+    kpts = slc.Keypoints(kpts_data, 3, 3)
     img, mask = img_3x3, mask_3x3
 
-    dc = sld.DataContainer((img, mask, kpts,), "IMP")
+    dc = slc.DataContainer((img, mask, kpts,), "IMP")
     res = trf()(dc, return_torch=False)
     assert dc == res
 
@@ -460,9 +460,9 @@ def test_resize_img_to_arbitrary_size(img, mask, resize_to):
     kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape(
         (4, 2)
     )  # Top left corner
-    kpts = sld.KeyPoints(kpts_data.copy(), img.shape[0], img.shape[1])
+    kpts = slc.Keypoints(kpts_data.copy(), img.shape[0], img.shape[1])
 
-    dc = sld.DataContainer((img, mask, kpts,), "IMP")
+    dc = slc.DataContainer((img, mask, kpts,), "IMP")
     transf = slt.Resize(resize_to=resize_to)
     res = transf(dc).data
 
@@ -492,7 +492,7 @@ def test_wrong_resize_types(resize_to):
 
 def test_resize_does_not_change_labels():
     trf = slt.Resize(resize_to=(5, 5))
-    dc = sld.DataContainer((1,), "L")
+    dc = slc.DataContainer((1,), "L")
     dc = trf(dc)
     assert dc.data[0] == 1
 
@@ -500,10 +500,10 @@ def test_resize_does_not_change_labels():
 def test_pad_to_20x20_img_mask_keypoints_3x3_kpts_first(img_3x3, mask_3x3):
     # Setting up the data
     kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 3, 3)
+    kpts = slc.Keypoints(kpts_data, 3, 3)
     img, mask = img_3x3, mask_3x3
 
-    dc = sld.DataContainer((kpts, img, mask), "PIM")
+    dc = slc.DataContainer((kpts, img, mask), "PIM")
     transf = slt.Pad((20, 20))
     res = transf(dc)
 
@@ -519,10 +519,10 @@ def test_pad_to_20x20_img_mask_keypoints_3x3_kpts_first(img_3x3, mask_3x3):
 def test_3x3_pad_to_20x20_center_crop_3x3_shape_stayes_unchanged(img_3x3, mask_3x3):
     # Setting up the data
     kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 3, 3)
+    kpts = slc.Keypoints(kpts_data, 3, 3)
     img, mask = img_3x3, mask_3x3
 
-    dc = sld.DataContainer((img, mask, kpts,), "IMP")
+    dc = slc.DataContainer((img, mask, kpts,), "IMP")
 
     stream = slc.Stream([slt.Pad((20, 20)), slt.Crop((3, 3))])
     res = stream(dc, return_torch=False)
@@ -538,10 +538,10 @@ def test_3x3_pad_to_20x20_center_crop_3x3_shape_stayes_unchanged(img_3x3, mask_3
 def test_2x2_pad_to_20x20_center_crop_2x2(pad_size, crop_size, img_2x2, mask_2x2):
     # Setting up the data
     kpts_data = np.array([[0, 0], [0, 1], [1, 1], [1, 0]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 2, 2)
+    kpts = slc.Keypoints(kpts_data, 2, 2)
     img, mask = img_2x2, mask_2x2
 
-    dc = sld.DataContainer((img, mask, kpts,), "IMP")
+    dc = slc.DataContainer((img, mask, kpts,), "IMP")
 
     stream = slc.Stream(
         [slt.Pad(pad_to=pad_size), slt.Crop(crop_to=crop_size)]
@@ -570,7 +570,7 @@ def test_different_crop_modes(crop_mode, img_2x2, mask_2x2):
             ]
         )
         img, mask = img_2x2, mask_2x2
-        dc = sld.DataContainer((img, mask,), "IM")
+        dc = slc.DataContainer((img, mask,), "IM")
         dc_res = stream(dc, return_torch=False)
 
         for el in dc_res.data:
@@ -581,10 +581,10 @@ def test_different_crop_modes(crop_mode, img_2x2, mask_2x2):
 def test_6x6_pad_to_20x20_center_crop_6x6_img_kpts(img_6x6):
     # Setting up the data
     kpts_data = np.array([[0, 0], [0, 5], [1, 3], [2, 0]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 6, 6)
+    kpts = slc.Keypoints(kpts_data, 6, 6)
     img = img_6x6
 
-    dc = sld.DataContainer((img, kpts, 1), "IPL")
+    dc = slc.DataContainer((img, kpts, 1), "IPL")
 
     stream = slc.Stream([slt.Pad((20, 20)), slt.Crop((6, 6))])
     res = stream(dc, return_torch=False)
@@ -599,10 +599,10 @@ def test_6x6_pad_to_20x20_center_crop_6x6_img_kpts(img_6x6):
 def test_6x6_pad_to_20x20_center_crop_6x6_kpts_img(img_6x6):
     # Setting up the data
     kpts_data = np.array([[0, 0], [0, 5], [1, 3], [2, 0]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 6, 6)
+    kpts = slc.Keypoints(kpts_data, 6, 6)
     img = img_6x6
 
-    dc = sld.DataContainer((kpts, img), "PI")
+    dc = slc.DataContainer((kpts, img), "PI")
 
     stream = slc.Stream([slt.Pad((20, 20)), slt.Crop((6, 6))])
     res = stream(dc, return_torch=False)
@@ -675,8 +675,8 @@ def test_gaussian_noise_no_image_throws_value_error():
     trf = slt.Noise(p=1)
     # Setting up the data
     kpts_data = np.array([[0, 0], [0, 5], [1, 3], [2, 0]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 6, 6)
-    dc = sld.DataContainer((kpts,), "P")
+    kpts = slc.Keypoints(kpts_data, 6, 6)
+    dc = slc.DataContainer((kpts,), "P")
 
     with pytest.raises(ValueError):
         trf(dc)
@@ -691,7 +691,7 @@ def test_gaussian_noise_float_gain():
 
 def test_salt_and_pepper_no_gain(img_6x6):
     trf = slt.SaltAndPepper(gain_range=0.0, p=1)
-    dc_res = trf(sld.DataContainer((img_6x6.astype(np.uint8),), "I"))
+    dc_res = trf(slc.DataContainer((img_6x6.astype(np.uint8),), "I"))
     assert np.array_equal(img_6x6, dc_res[0][0])
 
 
@@ -701,7 +701,7 @@ def test_salt_and_pepper_no_gain(img_6x6):
 def test_pad_does_not_change_the_data_when_the_image_and_the_mask_are_big(
     pad_size, pad_type, img_3x3, mask_3x3
 ):
-    dc = sld.DataContainer((img_3x3, mask_3x3), "IM")
+    dc = slc.DataContainer((img_3x3, mask_3x3), "IM")
     trf = slt.Pad(pad_to=pad_size, padding=pad_type)
     dc_res = trf(dc)
 
@@ -710,7 +710,7 @@ def test_pad_does_not_change_the_data_when_the_image_and_the_mask_are_big(
 
 
 def test_image_doesnt_change_when_gain_0_in_gaussian_noise_addition(img_3x3):
-    dc = sld.DataContainer((img_3x3,), "I")
+    dc = slc.DataContainer((img_3x3,), "I")
     trf = slt.Noise(gain_range=(0, 0), p=1)
     dc_res = trf(dc)
     np.testing.assert_array_equal(img_3x3, dc_res.data[0])
@@ -778,8 +778,8 @@ def test_image_trfs_dont_change_mask_labels_kpts(
 ):
     trf = trf_cls(**trf_params)
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [2, 0]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 3, 4)
-    dc = sld.DataContainer((img_3x4, mask_3x4, kpts, 1), "IMPL")
+    kpts = slc.Keypoints(kpts_data, 3, 4)
+    dc = slc.DataContainer((img_3x4, mask_3x4, kpts, 1), "IMPL")
     dc_res = trf(dc)
 
     assert np.all(dc.data[1] == dc_res.data[1])
@@ -789,7 +789,7 @@ def test_image_trfs_dont_change_mask_labels_kpts(
 
 def test_brightness_returns_correct_number_of_channels(img_3x4, img_6x6_rgb):
     trf = slt.Brightness(p=1, brightness_range=(10, 10))
-    dc = sld.DataContainer((img_3x4, img_3x4, img_6x6_rgb), "III")
+    dc = slc.DataContainer((img_3x4, img_3x4, img_6x6_rgb), "III")
     dc_res = trf(dc)
 
     img1, img2, img3 = dc_res.data
@@ -811,8 +811,8 @@ def test_padding_cant_be_float():
 
 def test_reflective_padding_cant_be_applied_to_kpts():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [2, 0]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 3, 4)
-    dc = sld.DataContainer((1, kpts), "LP")
+    kpts = slc.Keypoints(kpts_data, 3, 4)
+    dc = slc.DataContainer((1, kpts), "LP")
     trf = slt.Pad(pad_to=(10, 10), padding="r")
     with pytest.raises(ValueError):
         trf(dc)
@@ -820,7 +820,7 @@ def test_reflective_padding_cant_be_applied_to_kpts():
 
 @pytest.mark.parametrize("cutout_crop_size", [(2, 3), (3, 2),])
 def test_crop_or_cutout_size_are_too_big(img_2x2, cutout_crop_size):
-    dc = sld.DataContainer((img_2x2,), "I")
+    dc = slc.DataContainer((img_2x2,), "I")
     trf = slt.Crop(crop_to=cutout_crop_size)
     with pytest.raises(ValueError):
         trf(dc)
@@ -856,7 +856,7 @@ def test_wrong_salt_p_salt_and_pepper(salt_p):
     ],
 )
 def test_padding_for_item(inp, transform_settings, expected):
-    dc = sld.DataContainer((inp,), "I", transform_settings)
+    dc = slc.DataContainer((inp,), "I", transform_settings)
     dc_res = slt.Pad(pad_to=(7, 7))(dc)
     assert np.array_equal(expected, dc_res.data[0])
 
@@ -1016,7 +1016,7 @@ def test_blur_samples_correctly(blur_t, k_size, sigma):
 def test_hsv_doesnt_change_an_image(h_range, s_range, v_range, img_6x6):
     trf = slt.HSV(p=1, h_range=h_range, s_range=s_range, v_range=v_range)
     img_rgb = np.dstack((img_6x6, img_6x6, img_6x6)).astype(np.uint8) * 255
-    dc = sld.DataContainer(img_rgb, "I")
+    dc = slc.DataContainer(img_rgb, "I")
 
     dc_res = trf(dc)
 
@@ -1031,7 +1031,7 @@ def test_hsv_doesnt_change_an_image(h_range, s_range, v_range, img_6x6):
 def test_hsv_trying_use_not_uint8(dtype, img_6x6):
     trf = slt.HSV(p=1)
     img_rgb = np.dstack((img_6x6, img_6x6, img_6x6)).astype(dtype)
-    dc = sld.DataContainer(img_rgb, "I")
+    dc = slc.DataContainer(img_rgb, "I")
 
     with pytest.raises(TypeError):
         trf(dc)
@@ -1039,7 +1039,7 @@ def test_hsv_trying_use_not_uint8(dtype, img_6x6):
 
 def test_hsv_doesnt_work_for_1_channel(img_6x6):
     trf = slt.HSV(p=1)
-    dc = sld.DataContainer(img_6x6.astype(np.uint8), "I")
+    dc = slc.DataContainer(img_6x6.astype(np.uint8), "I")
 
     with pytest.raises(ValueError):
         trf(dc)
@@ -1058,7 +1058,7 @@ def test_hsv_doesnt_work_for_1_channel(img_6x6):
 )
 def test_hsv_returns_expected_results(mode, img, expected):
     trf = slt.CvtColor(mode=mode)
-    dc = sld.DataContainer(img, "I")
+    dc = slc.DataContainer(img, "I")
     dc_res = trf(dc)
     np.testing.assert_array_equal(expected, dc_res.data[0])
 
@@ -1066,14 +1066,14 @@ def test_hsv_returns_expected_results(mode, img, expected):
 @pytest.mark.parametrize("mode", ["gs2rgb", "rgb2gs"])
 def test_image_color_conversion_raises_error(mode, mask_3x4):
     trf = slt.CvtColor(mode=mode)
-    dc = sld.DataContainer(mask_3x4.squeeze(), "I")
+    dc = slc.DataContainer(mask_3x4.squeeze(), "I")
     with pytest.raises(ValueError):
         trf(dc)
 
 
 def test_random_proj_and_selective_stream(img_5x5):
     img = img_5x5
-    dc = sld.DataContainer((img,), "I")
+    dc = slc.DataContainer((img,), "I")
 
     ppl = slt.Projection(
         slc.SelectiveStream(
@@ -1094,7 +1094,7 @@ def test_random_proj_and_selective_stream(img_5x5):
 
 def test_random_contrast_multiplies_the_data(img_5x5):
     img = img_5x5
-    dc = sld.DataContainer((img,), "I")
+    dc = slc.DataContainer((img,), "I")
 
     ppl = slt.Contrast(p=1, contrast_range=(2, 2))
     dc_res = ppl(dc)
@@ -1107,7 +1107,7 @@ def test_random_contrast_multiplies_the_data(img_5x5):
     [None, {0: {"interpolation": "nearest"}}, {0: {"interpolation": "bicubic"}},],
 )
 def test_different_interpolations_per_item_per_transform(img_6x6, transform_settings):
-    dc = sld.DataContainer((img_6x6,), "I", transform_settings=transform_settings)
+    dc = slc.DataContainer((img_6x6,), "I", transform_settings=transform_settings)
     dc_res = slt.Resize(resize_to=(10, 15), interpolation="bilinear")(dc)
 
     interp = allowed_interpolations["bilinear"]
@@ -1128,7 +1128,7 @@ def test_different_interpolations_per_item_per_transform(img_6x6, transform_sett
     ],
 )
 def test_cutout_blacks_out_image(img, expected):
-    dc = sld.DataContainer((img,), "I")
+    dc = slc.DataContainer((img,), "I")
     trf = slc.Stream([slt.CutOut(p=1, cutout_size=6)])
 
     dc_res = trf(dc, return_torch=False)
@@ -1137,7 +1137,7 @@ def test_cutout_blacks_out_image(img, expected):
 
 
 def test_cutout_1x1_blacks_corner_pixels_2x2_img(img_2x2):
-    dc = sld.DataContainer((img_2x2.copy(),), "I")
+    dc = slc.DataContainer((img_2x2.copy(),), "I")
     trf = slc.Stream([slt.CutOut(p=1, cutout_size=1)])
     dc_res = trf(dc, return_torch=False)
 
@@ -1158,9 +1158,9 @@ def test_cutout_1x1_blacks_corner_pixels_2x2_img(img_2x2):
 )
 def test_keypoint_jitter_works_correctly(jitter_x, jitter_y, exp_x, exp_y):
     kpts_data = np.array([[1, 1],]).reshape((1, 2))
-    kpts = sld.KeyPoints(kpts_data.copy(), 2, 2)
+    kpts = slc.Keypoints(kpts_data.copy(), 2, 2)
 
-    dc = sld.DataContainer((kpts,), "P")
+    dc = slc.DataContainer((kpts,), "P")
     trf = slc.Stream(
         [
             slt.KeypointsJitter(

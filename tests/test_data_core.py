@@ -1,5 +1,4 @@
 import solt.core as slc
-import solt.data as sld
 import solt.transforms as slt
 import solt.utils as slu
 import numpy as np
@@ -17,7 +16,7 @@ def assert_data_containers_equal(dc, dc_new):
     for d1, d2 in zip(dc_new.data, dc.data):
         if isinstance(d1, np.ndarray):
             np.testing.assert_array_equal(d1, d2)
-        elif isinstance(d1, sld.KeyPoints):
+        elif isinstance(d1, slc.Keypoints):
             assert d1.height == d2.height and d1.width == d2.width
             np.testing.assert_array_equal(d1.data, d2.data)
         else:
@@ -25,7 +24,7 @@ def assert_data_containers_equal(dc, dc_new):
 
 
 def generate_data_container_based_on_presence(img, mask, kpts_data, order, presence):
-    kpts = sld.KeyPoints(kpts_data.copy(), 3, 4)
+    kpts = slc.Keypoints(kpts_data.copy(), 3, 4)
 
     n_obj1, n_obj2, n_obj3, n_obj4, n_obj5, n_obj6, n_obj7, n_obj8 = presence
     dc_content = []
@@ -58,13 +57,13 @@ def generate_data_container_based_on_presence(img, mask, kpts_data, order, prese
     else:
         del order[order.index('masks')]
     if n_obj5:
-        d['keypoints'] = sld.KeyPoints(kpts_data.copy(), 3, 4)
+        d['keypoints'] = slc.Keypoints(kpts_data.copy(), 3, 4)
         dc_content.append(kpts)
         dc_format += 'P'
     else:
         del order[order.index('keypoints')]
     if n_obj6:
-        d['keypoints_array'] = [sld.KeyPoints(kpts_data.copy(), 3, 4) for _ in range(n_obj6)]
+        d['keypoints_array'] = [slc.Keypoints(kpts_data.copy(), 3, 4) for _ in range(n_obj6)]
         dc_content.extend(d['keypoints_array'])
         dc_format += 'P' * n_obj6
     else:
@@ -81,12 +80,12 @@ def generate_data_container_based_on_presence(img, mask, kpts_data, order, prese
         dc_format += 'L' * n_obj8
     else:
         del order[order.index('labels')]
-    dc = sld.DataContainer(tuple(dc_content), dc_format)
+    dc = slc.DataContainer(tuple(dc_content), dc_format)
 
     reordered_d = {k: d[k] for k in order}
 
     # This tests whether the creation from dict works as expected
-    dc_reordered = sld.DataContainer.from_dict(reordered_d)
+    dc_reordered = slc.DataContainer.from_dict(reordered_d)
 
     return dc, dc_reordered
 
@@ -115,28 +114,28 @@ def test_img_shape_checker_decorator_shape_check():
 
 def test_data_container_different_length_of_data_and_format(img_2x2):
     with pytest.raises(ValueError):
-        sld.DataContainer((img_2x2,), 'II')
+        slc.DataContainer((img_2x2,), 'II')
 
 
 def test_data_container_create_from_any_data(img_2x2):
-    d = sld.DataContainer(img_2x2, 'I')
+    d = slc.DataContainer(img_2x2, 'I')
     assert np.array_equal(img_2x2, d.data[0])
     assert d.data_format == 'I'
 
 
 def test_data_container_can_be_only_tuple_if_iterable_single(img_2x2):
     with pytest.raises(TypeError):
-        sld.DataContainer([img_2x2, ], 'I')
+        slc.DataContainer([img_2x2, ], 'I')
 
 
 def test_data_container_can_be_only_tuple_if_iterable_multple(img_2x2):
     with pytest.raises(TypeError):
-        sld.DataContainer([img_2x2, img_2x2], 'II')
+        slc.DataContainer([img_2x2, img_2x2], 'II')
 
 
 def test_data_item_create_img(img_2x2):
     img = img_2x2
-    dc = sld.DataContainer((img,), 'I')
+    dc = slc.DataContainer((img,), 'I')
     assert len(dc) == 1
     assert np.array_equal(img, dc[0][0])
     assert dc[0][1] == 'I'
@@ -144,7 +143,7 @@ def test_data_item_create_img(img_2x2):
 
 def test_stream_empty(img_2x2):
     img = img_2x2
-    dc = sld.DataContainer((img,), 'I')
+    dc = slc.DataContainer((img,), 'I')
     stream = slc.Stream()
     res, _, _ = stream(dc, return_torch=False)[0]
     assert np.all(res == img)
@@ -157,7 +156,7 @@ def test_empty_stream_selective():
 
 def test_nested_stream(img_3x4, mask_3x4):
     img, mask = img_3x4, mask_3x4
-    dc = sld.DataContainer((img, mask), 'IM')
+    dc = slc.DataContainer((img, mask), 'IM')
 
     stream = slc.Stream([
         slt.Flip(p=1, axis=0),
@@ -178,7 +177,7 @@ def test_nested_stream(img_3x4, mask_3x4):
 
 def test_image_shape_equal_3_after_nested_flip(img_3x4):
     img = img_3x4
-    dc = sld.DataContainer((img,), 'I')
+    dc = slc.DataContainer((img,), 'I')
 
     stream = slc.Stream([
         slt.Flip(p=1, axis=0),
@@ -196,7 +195,7 @@ def test_image_shape_equal_3_after_nested_flip(img_3x4):
 
 
 def test_create_empty_keypoints():
-    kpts = sld.KeyPoints()
+    kpts = slc.Keypoints()
     assert kpts.height is None
     assert kpts.width is None
     assert kpts.data is None
@@ -204,7 +203,7 @@ def test_create_empty_keypoints():
 
 def test_create_4_keypoints():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 3, 4)
+    kpts = slc.Keypoints(kpts_data, 3, 4)
     assert kpts.height == 3
     assert kpts.width == 4
     assert np.array_equal(kpts_data, kpts.data)
@@ -212,7 +211,7 @@ def test_create_4_keypoints():
 
 def test_create_4_keypoints_change_frame():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 3, 4)
+    kpts = slc.Keypoints(kpts_data, 3, 4)
     kpts.height = 2
     kpts.width = 2
 
@@ -223,7 +222,7 @@ def test_create_4_keypoints_change_frame():
 
 def test_create_4_keypoints_change_grid_and_frame():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 3, 4)
+    kpts = slc.Keypoints(kpts_data, 3, 4)
 
     kpts_data_new = np.array([[0, 0], [0, 1], [1, 0], [1, 1], [0.5, 0.5]]).reshape((5, 2))
     kpts.height = 2
@@ -249,7 +248,7 @@ def test_fusion_happens():
 
 def test_fusion_rotate_360(img_5x5):
     img = img_5x5
-    dc = sld.DataContainer((img,), 'I')
+    dc = slc.DataContainer((img,), 'I')
 
     ppl = slc.Stream([
         slt.Rotate((45, 45), padding='z', p=1),
@@ -269,7 +268,7 @@ def test_fusion_rotate_360(img_5x5):
 
 def test_fusion_rotate_360_flip_rotate_360(img_5x5):
     img = img_5x5
-    dc = sld.DataContainer((img,), 'I')
+    dc = slc.DataContainer((img,), 'I')
 
     ppl = slc.Stream([
         slt.Rotate((45, 45), padding='z', p=1),
@@ -387,8 +386,8 @@ def test_selective_pipeline_selects_transforms_and_does_the_fusion():
     ], n=2, probs=[0.5, 0.5], optimize_stack=True)
 
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 3, 4)
-    dc = sld.DataContainer(kpts, 'P')
+    kpts = slc.Keypoints(kpts_data, 3, 4)
+    dc = slc.DataContainer(kpts, 'P')
     dc_res = ppl(dc, return_torch=False)
 
     assert np.array_equal(np.eye(3), ppl.transforms[0].state_dict['transform_matrix'])
@@ -421,7 +420,7 @@ def test_nested_streams_are_not_fused_with_matrix_trf():
 
 def test_putting_wrong_format_in_data_container(img_2x2):
     with pytest.raises(TypeError):
-        sld.DataContainer(img_2x2, 'Q')
+        slc.DataContainer(img_2x2, 'Q')
 
 
 def test_selective_stream_too_many_probs():
@@ -434,7 +433,7 @@ def test_selective_stream_too_many_probs():
 
 def test_selective_stream_low_prob_transform_should_not_change_the_data(img_5x5):
     img = img_5x5
-    dc = sld.DataContainer((img,), 'I')
+    dc = slc.DataContainer((img,), 'I')
 
     ppl = slc.SelectiveStream([
         slt.Rotate(angle_range=(90, 90), p=0),
@@ -447,7 +446,7 @@ def test_selective_stream_low_prob_transform_should_not_change_the_data(img_5x5)
 
 
 def test_manually_specified_padding_and_interpolation(img_5x5, mask_5x5):
-    dc = sld.DataContainer((img_5x5, img_5x5, mask_5x5, mask_5x5, 1), 'IIMML',
+    dc = slc.DataContainer((img_5x5, img_5x5, mask_5x5, mask_5x5, 1), 'IIMML',
                            {0: {'interpolation': 'bicubic', 'padding': 'z'},
                             2: {'interpolation': 'bilinear'},
                             3: {'padding': 'r'}
@@ -466,17 +465,17 @@ def test_manually_specified_padding_and_interpolation(img_5x5, mask_5x5):
 
 def test_transform_settings_wrong_type(img_5x5):
     with pytest.raises(TypeError):
-        sld.DataContainer((img_5x5, img_5x5, 1), 'IIL', ())
+        slc.DataContainer((img_5x5, img_5x5, 1), 'IIL', ())
 
 
 def test_transform_settings_wrong_length(img_5x5):
     with pytest.raises(ValueError):
-        sld.DataContainer((img_5x5, img_5x5, 1), 'IIL', {1: {}, 2: {}, 3: {}, 4: {}})
+        slc.DataContainer((img_5x5, img_5x5, 1), 'IIL', {1: {}, 2: {}, 3: {}, 4: {}})
 
 
 def test_transform_settings_wrong_type_for_item(img_5x5):
     with pytest.raises(TypeError):
-        sld.DataContainer((img_5x5, img_5x5, 1), 'IIL', {1: 123, 0: None})
+        slc.DataContainer((img_5x5, img_5x5, 1), 'IIL', {1: 123, 0: None})
 
 
 @pytest.mark.parametrize('setting', [
@@ -485,9 +484,9 @@ def test_transform_settings_wrong_type_for_item(img_5x5):
     {'padding': 'z'}
 ])
 def test_interpolation_or_padding_settings_for_labels_or_keypoints(setting):
-    kpts = sld.KeyPoints(pts=np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2)), height=3, width=3)
+    kpts = slc.Keypoints(pts=np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2)), height=3, width=3)
     with pytest.raises(TypeError):
-        sld.DataContainer(data=(kpts,),
+        slc.DataContainer(data=(kpts,),
                           fmt='P',
                           transform_settings={0: setting})
 
@@ -511,8 +510,8 @@ def test_matrix_transforms_state_reset(img_5x5, ignore_state, pipeline):
     trf_not_eq = 0
     imgs_not_eq = 0
     for i in range(n_iter):
-        dc1 = sld.DataContainer((img_test.copy(),), 'I')
-        dc2 = sld.DataContainer((img_test.copy(),), 'I')
+        dc1 = slc.DataContainer((img_test.copy(),), 'I')
+        dc2 = slc.DataContainer((img_test.copy(),), 'I')
         if pipeline:
             dc1_res = ppl(dc1, return_torch=False).data[0].squeeze()
         else:
@@ -543,7 +542,7 @@ def test_matrix_transforms_state_reset(img_5x5, ignore_state, pipeline):
 
 @pytest.mark.parametrize('pipeline', [True, False])
 def test_matrix_transforms_use_cache_for_different_dc_items_raises_error(img_5x5, mask_3x4, pipeline):
-    dc = sld.DataContainer((img_5x5, mask_3x4), 'IM')
+    dc = slc.DataContainer((img_5x5, mask_3x4), 'IM')
     if pipeline:
         ppl = slc.Stream([
             slt.Rotate(angle_range=(-180, 180), p=1, ignore_state=False),
@@ -561,7 +560,7 @@ def test_matrix_transforms_use_cache_for_different_dc_items_raises_error(img_5x5
 
 def test_keypoints_get_set():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 3, 4)
+    kpts = slc.Keypoints(kpts_data, 3, 4)
 
     assert np.array_equal(kpts[0], np.array([0, 0]))
     kpts[0] = np.array([2, 2])
@@ -597,7 +596,7 @@ def test_data_container_from_and_to_dict(img_3x4, mask_3x4, order, presence):
                 if 'mask' in k:
                     tmp[-1] = tmp[-1].astype(np.uint8).squeeze()
                 if 'keypoints' in k:
-                    tmp[-1] = sld.KeyPoints(tmp[-1], 3, 4)
+                    tmp[-1] = slc.Keypoints(tmp[-1], 3, 4)
 
             tensor_dict[k] = tmp
         else:
@@ -608,9 +607,9 @@ def test_data_container_from_and_to_dict(img_3x4, mask_3x4, order, presence):
             if 'mask' in k:
                 tensor_dict[k] = tensor_dict[k].astype(np.uint8).squeeze()
             if 'keypoints' in k:
-                tensor_dict[k] = sld.KeyPoints(tensor_dict[k], 3, 4)
+                tensor_dict[k] = slc.Keypoints(tensor_dict[k], 3, 4)
 
-    assert dc == sld.DataContainer.from_dict(tensor_dict)
+    assert dc == slc.DataContainer.from_dict(tensor_dict)
 
 
 def test_image_mask_pipeline_to_torch(img_3x4, mask_3x4):
@@ -693,7 +692,7 @@ def test_image_mask_pipeline_to_torch_checks_mean_type_and_shape_rgb(img_3x3_rgb
 
 def test_data_container_keypoints_rescale_to_torch():
     kpts_data = np.array([[100, 20], [1023, 80], [20, 20], [100, 700]]).reshape((4, 2))
-    kpts = sld.KeyPoints(kpts_data, 768, 1024)
+    kpts = slc.Keypoints(kpts_data, 768, 1024)
     ppl = slc.Stream()
     k, label = ppl({'keypoints': kpts, 'label': 1}, as_dict=False)
     assert isinstance(k, torch.FloatTensor)
@@ -704,7 +703,7 @@ def test_data_container_keypoints_rescale_to_torch():
 
 def test_selective_stream_returns_torch_when_asked(img_5x5):
     img = img_5x5 * 255
-    dc = sld.DataContainer((img,), 'I')
+    dc = slc.DataContainer((img,), 'I')
 
     ppl = slc.SelectiveStream([
         slt.Rotate(angle_range=(90, 90), p=0),
