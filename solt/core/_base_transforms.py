@@ -361,10 +361,11 @@ class MatrixTransform(
 
     """
 
-    def __init__(self, interpolation="bilinear", padding="z", p=0.5, ignore_state=True):
+    def __init__(self, interpolation="bilinear", padding="z", p=0.5, ignore_state=True, affine=True):
         BaseTransform.__init__(self, p=p, data_indices=None)
         InterpolationPropertyHolder.__init__(self, interpolation=interpolation)
         PaddingPropertyHolder.__init__(self, padding=padding)
+        self.affine = affine
         self.ignore_state = ignore_state
         self.reset_state()
 
@@ -520,12 +521,27 @@ class MatrixTransform(
 
         """
 
+        if self.affine:
+            return self._apply_img_or_mask_affine(img, settings)
+        else:
+            return self._apply_img_or_mask_perspective(img, settings)
+
+    def _apply_img_or_mask_perspective(self, img: np.ndarray, settings: dict):
         h_new, w_new = self.state_dict["h_new"], self.state_dict["w_new"]
         interp, padding = self.parse_settings(settings)
         transf_m = self.state_dict["transform_matrix_corrected"]
         return cv2.warpPerspective(
             img, transf_m, (w_new, h_new), flags=interp, borderMode=padding
         )
+
+    def _apply_img_or_mask_affine(self, img: np.ndarray, settings: dict):
+        h_new, w_new = self.state_dict["h_new"], self.state_dict["w_new"]
+        interp, padding = self.parse_settings(settings)
+        transf_m = self.state_dict["transform_matrix_corrected"]
+        return cv2.warpAffine(
+            img, transf_m[:2, :], (w_new, h_new), flags=interp, borderMode=padding
+        )
+
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):

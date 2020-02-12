@@ -115,7 +115,7 @@ class Rotate(MatrixTransform):
         ignore_state=True,
     ):
         super(Rotate, self).__init__(
-            interpolation=interpolation, padding=padding, p=p, ignore_state=ignore_state
+            interpolation=interpolation, padding=padding, p=p, ignore_state=ignore_state, affine=True
         )
         if isinstance(angle_range, (int, float)):
             angle_range = (-angle_range, angle_range)
@@ -125,8 +125,8 @@ class Rotate(MatrixTransform):
         )
 
     def sample_angle(self):
-        rot = np.deg2rad(random.uniform(self.angle_range[0], self.angle_range[1]))
-        self.state_dict["rot"] = rot
+        self.state_dict["rot"] = np.deg2rad(random.uniform(self.angle_range[0], self.angle_range[1]))
+        return self.state_dict["rot"]
 
     def sample_transform_matrix(self, data):
         """
@@ -216,7 +216,7 @@ class Shear(MatrixTransform):
         ignore_state=True,
     ):
         super(Shear, self).__init__(
-            p=p, padding=padding, interpolation=interpolation, ignore_state=ignore_state
+            p=p, padding=padding, interpolation=interpolation, ignore_state=ignore_state, affine=True
         )
         if isinstance(range_x, (int, float)):
             range_x = (-range_x, range_x)
@@ -227,12 +227,13 @@ class Shear(MatrixTransform):
         self.range_x = validate_numeric_range_parameter(range_x, self._default_range)
         self.range_y = validate_numeric_range_parameter(range_y, self._default_range)
 
-    def sample_transform_matrix(self, data):
-        shear_x = random.uniform(self.range_x[0], self.range_x[1])
-        shear_y = random.uniform(self.range_y[0], self.range_y[1])
+    def sample_shear(self):
+        self.state_dict["shear_x"] = random.uniform(self.range_x[0], self.range_x[1])
+        self.state_dict["shear_y"] = random.uniform(self.range_y[0], self.range_y[1])
+        return self.state_dict["shear_x"], self.state_dict["shear_y"]
 
-        self.state_dict["shear_x"] = shear_x
-        self.state_dict["shear_y"] = shear_y
+    def sample_transform_matrix(self, data):
+        shear_x, shear_y = self.sample_shear()
 
         self.state_dict["transform_matrix"][0, 0] = 1
         self.state_dict["transform_matrix"][0, 1] = shear_x
@@ -288,7 +289,7 @@ class Scale(MatrixTransform):
     ):
 
         super(Scale, self).__init__(
-            interpolation=interpolation, padding=None, p=p, ignore_state=ignore_state
+            interpolation=interpolation, padding=None, p=p, ignore_state=ignore_state, affine=True
         )
 
         if isinstance(range_x, (int, float)):
@@ -313,7 +314,7 @@ class Scale(MatrixTransform):
             )
         )
 
-    def sample_transform_matrix(self, data):
+    def sample_scale(self):
         if self.range_x is None:
             scale_x = 1
         else:
@@ -332,6 +333,11 @@ class Scale(MatrixTransform):
 
         self.state_dict["scale_x"] = scale_x
         self.state_dict["scale_y"] = scale_y
+
+        return scale_x, scale_y
+
+    def sample_transform_matrix(self, data):
+        scale_x, scale_y = self.sample_scale()
 
         self.state_dict["transform_matrix"][0, 0] = scale_x
         self.state_dict["transform_matrix"][0, 1] = 0
@@ -380,7 +386,7 @@ class Translate(MatrixTransform):
         ignore_state=True,
     ):
         super(Translate, self).__init__(
-            interpolation=interpolation, padding=padding, p=p, ignore_state=ignore_state
+            interpolation=interpolation, padding=padding, p=p, ignore_state=ignore_state, affine=True
         )
         if isinstance(range_x, (int, float)):
             range_x = (min(range_x, -range_x), max(range_x, -range_x))
@@ -391,12 +397,13 @@ class Translate(MatrixTransform):
         self.range_x = validate_numeric_range_parameter(range_x, self._default_range)
         self.range_y = validate_numeric_range_parameter(range_y, self._default_range)
 
-    def sample_transform_matrix(self, data):
-        tx = random.uniform(self.range_x[0], self.range_x[1])
-        ty = random.uniform(self.range_y[0], self.range_y[1])
+    def sample_translate(self):
+        self.state_dict["translate_x"] = random.uniform(self.range_x[0], self.range_x[1])
+        self.state_dict["translate_y"] = random.uniform(self.range_y[0], self.range_y[1])
+        return self.state_dict["translate_x"], self.state_dict["translate_y"]
 
-        self.state_dict["translate_x"] = tx
-        self.state_dict["translate_y"] = ty
+    def sample_transform_matrix(self, data):
+        tx, ty = self.sample_translate()
 
         self.state_dict["transform_matrix"][0, 0] = 1
         self.state_dict["transform_matrix"][0, 1] = 0
@@ -443,7 +450,7 @@ class Projection(MatrixTransform):
     ):
 
         super(Projection, self).__init__(
-            interpolation=interpolation, padding=padding, p=p, ignore_state=ignore_state
+            interpolation=interpolation, padding=padding, p=p, ignore_state=ignore_state, affine=False
         )
 
         if affine_transforms is None:
