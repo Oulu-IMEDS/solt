@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from solt.constants import allowed_interpolations, allowed_paddings, allowed_types
+from solt.constants import ALLOWED_INTERPOLATIONS, ALLOWED_PADDINGS, ALLOWED_TYPES
 from solt.utils import validate_parameter
 
 
@@ -54,12 +54,12 @@ class DataContainer(object):
                 val = ("nearest", "strict") if fmt[idx] == "M" else None
                 if "interpolation" not in transform_settings[idx]:
                     transform_settings[idx]["interpolation"] = validate_parameter(
-                        val, allowed_interpolations, "bilinear", str, True
+                        val, ALLOWED_INTERPOLATIONS, "bilinear", str, True
                     )
                 else:
                     transform_settings[idx]["interpolation"] = validate_parameter(
                         (transform_settings[idx]["interpolation"], "strict"),
-                        allowed_interpolations,
+                        ALLOWED_INTERPOLATIONS,
                         "bilinear",
                         str,
                         True,
@@ -67,12 +67,12 @@ class DataContainer(object):
 
                 if "padding" not in transform_settings[idx]:
                     transform_settings[idx]["padding"] = validate_parameter(
-                        None, allowed_paddings, "z", str, True
+                        None, ALLOWED_PADDINGS, "z", str, True
                     )
                 else:
                     transform_settings[idx]["padding"] = validate_parameter(
                         (transform_settings[idx]["padding"], "strict"),
-                        allowed_paddings,
+                        ALLOWED_PADDINGS,
                         "z",
                         str,
                         True,
@@ -88,7 +88,7 @@ class DataContainer(object):
             raise ValueError
 
         for t in fmt:
-            if t not in allowed_types:
+            if t not in ALLOWED_TYPES:
                 raise TypeError
 
         self.__data = data

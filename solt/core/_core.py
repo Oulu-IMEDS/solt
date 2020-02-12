@@ -59,11 +59,11 @@ class Stream(Serializable):
         Parameters
         ----------
         value : str or None
-            A value from `solt.constants.allowed_interpolations`
+            A value from `solt.constants.ALLOWED_INTERPOLATIONS`
 
         See also
         --------
-        solt.constants.allowed_interpolations
+        solt.constants.ALLOWED_INTERPOLATIONS
 
         """
         if value is None:
@@ -83,11 +83,11 @@ class Stream(Serializable):
         Parameters
         ----------
         value : str
-            Should be a string from ``solt.constants.allowed_paddings``
+            Should be a string from ``solt.constants.ALLOWED_PADDINGS``
 
         See also
         --------
-        solt.constants.allowed_paddings
+        solt.constants.ALLOWED_PADDINGS
 
         """
         if value is None:

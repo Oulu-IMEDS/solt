@@ -11,12 +11,12 @@ from ..core import (
     PaddingPropertyHolder,
 )
 from ..constants import (
-    allowed_blurs,
-    allowed_color_conversions,
-    allowed_crops,
-    allowed_interpolations,
-    allowed_paddings,
-    dtypes_max,
+    ALLOWED_BLURS,
+    ALLOWED_COLOR_CONVERSIONS,
+    ALLOWED_CROPS,
+    ALLOWED_INTERPOLATIONS,
+    ALLOWED_PADDINGS,
+    DTYPES_MAX,
 )
 from ..core import Stream
 from ..core import DataContainer, Keypoints
@@ -551,10 +551,10 @@ class Pad(BaseTransform, PaddingPropertyHolder):
             return img
         pad_h_top, pad_h_bottom = self.state_dict["pad_h"]
         pad_w_left, pad_w_right = self.state_dict["pad_w"]
-        padding = allowed_paddings[self.padding[0]]
+        padding = ALLOWED_PADDINGS[self.padding[0]]
 
         if settings["padding"][1] == "strict":
-            padding = allowed_paddings[settings["padding"][0]]
+            padding = ALLOWED_PADDINGS[settings["padding"][0]]
 
         return cv2.copyMakeBorder(
             img, pad_h_top, pad_h_bottom, pad_w_left, pad_w_right, padding, value=0
@@ -623,9 +623,9 @@ class Resize(BaseTransform, InterpolationPropertyHolder):
     def _apply_img_or_mask(self, img: np.ndarray, settings: dict):
         if self.resize_to is None:
             return img
-        interp = allowed_interpolations[self.interpolation[0]]
+        interp = ALLOWED_INTERPOLATIONS[self.interpolation[0]]
         if settings["interpolation"][1] == "strict":
-            interp = allowed_interpolations[settings["interpolation"][0]]
+            interp = ALLOWED_INTERPOLATIONS[settings["interpolation"][0]]
 
         return cv2.resize(img, self.resize_to, interpolation=interp)
 
@@ -671,7 +671,7 @@ class Crop(BaseTransform):
 
     See also
     --------
-    solt.constants.allowed_crops
+    solt.constants.ALLOWED_CROPS
 
     """
 
@@ -684,7 +684,7 @@ class Crop(BaseTransform):
         if crop_to is not None:
             if not isinstance(crop_to, int) and not isinstance(crop_to, tuple):
                 raise TypeError("Argument crop_size has an incorrect type!")
-            if crop_mode not in allowed_crops:
+            if crop_mode not in ALLOWED_CROPS:
                 raise ValueError("Argument crop_mode has an incorrect type!")
 
             if isinstance(crop_to, tuple):
@@ -940,7 +940,7 @@ class SaltAndPepper(ImageTransform):
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
         img = img.copy()
-        img[np.where(self.state_dict["salt"])] = dtypes_max[img.dtype]
+        img[np.where(self.state_dict["salt"])] = DTYPES_MAX[img.dtype]
         img[np.where(self.state_dict["pepper"])] = 0
         return img
 
@@ -1062,7 +1062,7 @@ class Blur(ImageTransform):
 
     See also
     --------
-    solt.constants.allowed_blurs
+    solt.constants.ALLOWED_BLURS
 
     """
 
@@ -1089,7 +1089,7 @@ class Blur(ImageTransform):
             gaussian_sigma = (gaussian_sigma, gaussian_sigma)
 
         self.blur = validate_parameter(
-            blur_type, allowed_blurs, "g", basic_type=str, heritable=False
+            blur_type, ALLOWED_BLURS, "g", basic_type=str, heritable=False
         )
         self.k_size = k_size
         self.gaussian_sigma = validate_numeric_range_parameter(
@@ -1255,7 +1255,7 @@ class CvtColor(ImageTransform):
 
     See also
     --------
-    solt.constants.allowed_color_conversions
+    solt.constants.ALLOWED_COLOR_CONVERSIONS
 
     """
 
@@ -1265,7 +1265,7 @@ class CvtColor(ImageTransform):
     def __init__(self, mode=None, data_indices=None):
         super(CvtColor, self).__init__(p=1, data_indices=data_indices)
         self.mode = validate_parameter(
-            mode, allowed_color_conversions, "none", heritable=False
+            mode, ALLOWED_COLOR_CONVERSIONS, "none", heritable=False
         )
 
     @img_shape_checker
