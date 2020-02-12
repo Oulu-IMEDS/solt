@@ -1,4 +1,4 @@
-core module
+solt.core
 ===========
 
 .. automodule:: solt.core

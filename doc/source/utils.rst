@@ -1,4 +1,4 @@
-utils module
+solt.utils module
 =======================
 
 .. automodule:: solt.utils
