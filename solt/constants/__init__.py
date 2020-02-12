@@ -10,7 +10,7 @@ Constants module
     Defines the allowed types to be stored in a DataCantainer. Can be
     ``'I'`` - image, ``'M'`` - mask, ``'L'`` - labels, ``'P'`` - Keypoints.
 
-.. data:: allowed_crops
+.. data:: ALLOWED_CROPS
 
     Defines the allowed crops. Can be ``'r'`` - random crop or ``'c'`` - center crop.
 
