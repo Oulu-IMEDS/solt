@@ -35,12 +35,7 @@ class Stream(Serializable):
     serializable_name = "stream"
 
     def __init__(
-        self,
-        transforms=None,
-        interpolation=None,
-        padding=None,
-        optimize_stack=False,
-        ignore_fast_mode=False,
+        self, transforms=None, interpolation=None, padding=None, optimize_stack=False, ignore_fast_mode=False,
     ):
         super(Stream, self).__init__()
 
@@ -116,14 +111,7 @@ class Stream(Serializable):
                     trf.reset_padding(self.padding)
 
     def __call__(
-        self,
-        data,
-        return_torch=True,
-        as_dict=True,
-        scale_keypoints=True,
-        normalize=True,
-        mean=None,
-        std=None,
+        self, data, return_torch=True, as_dict=True, scale_keypoints=True, normalize=True, mean=None, std=None,
     ):
         """
         Executes the list of the pre-defined transformations for a given data container.
@@ -154,17 +142,11 @@ class Stream(Serializable):
 
         """
 
-        res: DataContainer = Stream.exec_stream(
-            self.transforms, data, self.optimize_stack
-        )
+        res: DataContainer = Stream.exec_stream(self.transforms, data, self.optimize_stack)
 
         if return_torch:
             return res.to_torch(
-                as_dict=as_dict,
-                scale_keypoints=scale_keypoints,
-                normalize=normalize,
-                mean=mean,
-                std=std,
+                as_dict=as_dict, scale_keypoints=scale_keypoints, normalize=normalize, mean=mean, std=std,
             )
         return res
 
@@ -199,9 +181,7 @@ class Stream(Serializable):
                     else:
                         transforms_stack[-1].fuse_with(trf)
             else:
-                raise TypeError(
-                    "Nested streams or other transforms but the `Matrix` ones are not supported!"
-                )
+                raise TypeError("Nested streams or other transforms but the `Matrix` ones are not supported!")
 
         if len(transforms_stack) > 0:
             transforms_stack[-1].correct_transform()
@@ -253,12 +233,7 @@ class SelectiveStream(Stream):
     """
 
     def __init__(
-        self,
-        transforms=None,
-        n=1,
-        probs=None,
-        optimize_stack=False,
-        ignore_fast_mode=False,
+        self, transforms=None, n=1, probs=None, optimize_stack=False, ignore_fast_mode=False,
     ):
         """
         Constructor.
@@ -273,9 +248,7 @@ class SelectiveStream(Stream):
             Whether to execute stack optimization for augmentations.
         """
         super(SelectiveStream, self).__init__(
-            transforms=transforms,
-            optimize_stack=optimize_stack,
-            ignore_fast_mode=ignore_fast_mode,
+            transforms=transforms, optimize_stack=optimize_stack, ignore_fast_mode=ignore_fast_mode,
         )
         if transforms is None:
             transforms = []
@@ -288,14 +261,7 @@ class SelectiveStream(Stream):
         self.probs = probs
 
     def __call__(
-        self,
-        data,
-        return_torch=True,
-        as_dict=True,
-        scale_keypoints=True,
-        normalize=True,
-        mean=None,
-        std=None,
+        self, data, return_torch=True, as_dict=True, scale_keypoints=True, normalize=True, mean=None, std=None,
     ):
         """Applies randomly selected n transforms to the given data item
 
@@ -325,9 +291,7 @@ class SelectiveStream(Stream):
         """
         if len(self.transforms) > 0:
             random_state = np.random.RandomState(random.randint(0, 2 ** 32 - 1))
-            trfs = random_state.choice(
-                self.transforms, self.n, replace=False, p=self.probs
-            )
+            trfs = random_state.choice(self.transforms, self.n, replace=False, p=self.probs)
             if self.optimize_stack:
                 trfs = [copy.deepcopy(x) for x in trfs]
                 trfs = Stream.optimize_transforms_stack(trfs, data)
@@ -335,11 +299,7 @@ class SelectiveStream(Stream):
 
         if return_torch:
             return data.to_torch(
-                as_dict=as_dict,
-                scale_keypoints=scale_keypoints,
-                normalize=normalize,
-                mean=mean,
-                std=std,
+                as_dict=as_dict, scale_keypoints=scale_keypoints, normalize=normalize, mean=mean, std=std,
             )
 
         return data

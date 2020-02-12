@@ -36,9 +36,7 @@ class Serializable(object):
             elif item[0] != "transforms":
                 d[item[0]] = item[1]
             elif isinstance(item[1], (tuple, list)) and item[0] == "transforms":
-                d[item[0]] = [
-                    {x.__class__.serializable_name: x.to_dict()} for x in item[1]
-                ]
+                d[item[0]] = [{x.__class__.serializable_name: x.to_dict()} for x in item[1]]
 
         return d
 
@@ -111,13 +109,9 @@ def from_dict(transforms):
         raise TypeError("Transforms must be a dict!")
     for t in transforms:
         if "transforms" in transforms[t]:
-            transforms[t]["transforms"] = [
-                from_dict(x) for x in transforms[t]["transforms"]
-            ]
+            transforms[t]["transforms"] = [from_dict(x) for x in transforms[t]["transforms"]]
         if "affine_transforms" in transforms[t]:
-            transforms[t]["affine_transforms"] = from_dict(
-                transforms[t]["affine_transforms"]
-            )
+            transforms[t]["affine_transforms"] = from_dict(transforms[t]["affine_transforms"])
         if t in Serializable.registry:
             cls = Serializable.registry[t]
         else:
@@ -205,9 +199,7 @@ def img_shape_checker(method):
     return wrapper
 
 
-def validate_parameter(
-    parameter, allowed_modes, default_value, basic_type=str, heritable=True
-):
+def validate_parameter(parameter, allowed_modes, default_value, basic_type=str, heritable=True):
     """
     Validates the parameter and wraps it into a tuple with the
     inheritance option (if parameter is not a tuple already).
@@ -260,9 +252,7 @@ def validate_parameter(
     return parameter
 
 
-def validate_numeric_range_parameter(
-    parameter, default_val, min_val=None, max_val=None
-):
+def validate_numeric_range_parameter(parameter, default_val, min_val=None, max_val=None):
     """Validates the range-type parameter, e.g. angle in Random Rotation.
 
     Parameters
@@ -300,10 +290,7 @@ def validate_numeric_range_parameter(
     if parameter[0] > parameter[1]:
         raise ValueError
 
-    if not (
-        isinstance(parameter[0], (int, float))
-        and isinstance(parameter[1], (int, float))
-    ):
+    if not (isinstance(parameter[0], (int, float)) and isinstance(parameter[1], (int, float))):
         raise TypeError
 
     if min_val is not None:

@@ -107,13 +107,7 @@ class Rotate(MatrixTransform):
     """How the class should be stored in the registry"""
 
     def __init__(
-        self,
-        angle_range=None,
-        interpolation="bilinear",
-        padding="z",
-        p=0.5,
-        ignore_state=True,
-        ignore_fast_mode=False,
+        self, angle_range=None, interpolation="bilinear", padding="z", p=0.5, ignore_state=True, ignore_fast_mode=False,
     ):
         super(Rotate, self).__init__(
             interpolation=interpolation,
@@ -126,14 +120,10 @@ class Rotate(MatrixTransform):
         if isinstance(angle_range, (int, float)):
             angle_range = (-angle_range, angle_range)
 
-        self.angle_range = validate_numeric_range_parameter(
-            angle_range, self._default_range
-        )
+        self.angle_range = validate_numeric_range_parameter(angle_range, self._default_range)
 
     def sample_angle(self):
-        self.state_dict["rot"] = np.deg2rad(
-            random.uniform(self.angle_range[0], self.angle_range[1])
-        )
+        self.state_dict["rot"] = np.deg2rad(random.uniform(self.angle_range[0], self.angle_range[1]))
         return self.state_dict["rot"]
 
     def sample_transform_matrix(self, data):
@@ -175,9 +165,7 @@ class Rotate90(Rotate):
     def __init__(self, k=0, p=0.5, ignore_fast_mode=False):
         if not isinstance(k, int):
             raise TypeError("Argument `k` must be an integer!")
-        super(Rotate90, self).__init__(
-            p=p, angle_range=(k * 90, k * 90), ignore_fast_mode=ignore_fast_mode
-        )
+        super(Rotate90, self).__init__(p=p, angle_range=(k * 90, k * 90), ignore_fast_mode=ignore_fast_mode)
         self.k = -k
 
     @img_shape_checker
@@ -322,18 +310,10 @@ class Scale(MatrixTransform):
 
         self.same = same
         self.range_x = (
-            None
-            if range_x is None
-            else validate_numeric_range_parameter(
-                range_x, self._default_range, min_val=0
-            )
+            None if range_x is None else validate_numeric_range_parameter(range_x, self._default_range, min_val=0)
         )
         self.range_y = (
-            None
-            if range_y is None
-            else validate_numeric_range_parameter(
-                range_y, self._default_range, min_val=0
-            )
+            None if range_y is None else validate_numeric_range_parameter(range_y, self._default_range, min_val=0)
         )
 
     def sample_scale(self):
@@ -426,12 +406,8 @@ class Translate(MatrixTransform):
         self.range_y = validate_numeric_range_parameter(range_y, self._default_range)
 
     def sample_translate(self):
-        self.state_dict["translate_x"] = random.uniform(
-            self.range_x[0], self.range_x[1]
-        )
-        self.state_dict["translate_y"] = random.uniform(
-            self.range_y[0], self.range_y[1]
-        )
+        self.state_dict["translate_x"] = random.uniform(self.range_x[0], self.range_x[1])
+        self.state_dict["translate_y"] = random.uniform(self.range_y[0], self.range_y[1])
         return self.state_dict["translate_x"], self.state_dict["translate_y"]
 
     def sample_transform_matrix(self, data):
@@ -479,7 +455,7 @@ class Projection(MatrixTransform):
         padding="z",
         p=0.5,
         ignore_state=True,
-        ignore_fast_mode=True,
+        ignore_fast_mode=False,
     ):
 
         super(Projection, self).__init__(
@@ -488,7 +464,7 @@ class Projection(MatrixTransform):
             p=p,
             ignore_state=ignore_state,
             affine=False,
-            ignore_fast_mode=True,
+            ignore_fast_mode=ignore_fast_mode,
         )
 
         if affine_transforms is None:
@@ -501,15 +477,11 @@ class Projection(MatrixTransform):
                 raise TypeError
 
         self.affine_transforms = affine_transforms
-        self.vrange = validate_numeric_range_parameter(
-            v_range, self._default_range
-        )  # projection components.
+        self.vrange = validate_numeric_range_parameter(v_range, self._default_range)  # projection components.
 
     def sample_transform_matrix(self, data):
         if len(self.affine_transforms.transforms) > 1:
-            trf = Stream.optimize_transforms_stack(
-                self.affine_transforms.transforms, data
-            )
+            trf = Stream.optimize_transforms_stack(self.affine_transforms.transforms, data)
             if len(trf) == 0:
                 trf = None
             else:
@@ -603,9 +575,7 @@ class Pad(BaseTransform, PaddingPropertyHolder):
         if settings["padding"][1] == "strict":
             padding = ALLOWED_PADDINGS[settings["padding"][0]]
 
-        return cv2.copyMakeBorder(
-            img, pad_h_top, pad_h_bottom, pad_w_left, pad_w_right, padding, value=0
-        )
+        return cv2.copyMakeBorder(img, pad_h_top, pad_h_bottom, pad_w_left, pad_w_right, padding, value=0)
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
@@ -630,11 +600,7 @@ class Pad(BaseTransform, PaddingPropertyHolder):
         pts_data[:, 0] += pad_w_left
         pts_data[:, 1] += pad_h_top
 
-        return Keypoints(
-            pts_data,
-            pad_h_top + pts.height + pad_h_bottom,
-            pad_w_left + pts.width + pad_w_right,
-        )
+        return Keypoints(pts_data, pad_h_top + pts.height + pad_h_bottom, pad_w_left + pts.width + pad_w_right,)
 
 
 class Resize(BaseTransform, InterpolationPropertyHolder):
@@ -815,9 +781,7 @@ class Noise(BaseTransform):
         if isinstance(gain_range, float):
             gain_range = (0, gain_range)
 
-        self.gain_range = validate_numeric_range_parameter(
-            gain_range, self._default_range, min_val=0, max_val=1
-        )
+        self.gain_range = validate_numeric_range_parameter(gain_range, self._default_range, min_val=0, max_val=1)
 
     def sample_transform(self, data: DataContainer):
         super(Noise, self).sample_transform(data)
@@ -849,11 +813,7 @@ class Noise(BaseTransform):
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
         return cv2.addWeighted(
-            img,
-            (1 - self.state_dict["gain"]),
-            self.state_dict["noise"],
-            self.state_dict["gain"],
-            0,
+            img, (1 - self.state_dict["gain"]), self.state_dict["noise"], self.state_dict["gain"], 0,
         )
 
     def _apply_mask(self, mask: np.ndarray, settings: dict):
@@ -892,9 +852,7 @@ class CutOut(ImageTransform):
             raise TypeError
 
         if isinstance(cutout_size, tuple):
-            if not isinstance(cutout_size[0], int) or not isinstance(
-                cutout_size[1], int
-            ):
+            if not isinstance(cutout_size[0], int) or not isinstance(cutout_size[1], int):
                 raise TypeError
 
         if isinstance(cutout_size, int):
@@ -961,12 +919,8 @@ class SaltAndPepper(ImageTransform):
         if isinstance(salt_p, float):
             salt_p = (salt_p, salt_p)
 
-        self.gain_range = validate_numeric_range_parameter(
-            gain_range, self._default_range, 0, 1
-        )
-        self.salt_p = validate_numeric_range_parameter(
-            salt_p, self._default_range, 0, 1
-        )
+        self.gain_range = validate_numeric_range_parameter(gain_range, self._default_range, 0, 1)
+        self.salt_p = validate_numeric_range_parameter(salt_p, self._default_range, 0, 1)
 
     def sample_transform(self, data: DataContainer):
         h, w = super(SaltAndPepper, self).sample_transform(data)
@@ -1023,16 +977,12 @@ class GammaCorrection(ImageTransform):
         if isinstance(gamma_range, float):
             gamma_range = (1 - gamma_range, 1 + gamma_range)
 
-        self.gamma_range = validate_numeric_range_parameter(
-            gamma_range, self._default_range, 0
-        )
+        self.gamma_range = validate_numeric_range_parameter(gamma_range, self._default_range, 0)
 
     def sample_transform(self, data):
         gamma = random.uniform(self.gamma_range[0], self.gamma_range[1])
         inv_gamma = 1.0 / gamma
-        lut = np.array(
-            [((i / 255.0) ** inv_gamma) * 255 for i in np.arange(0, 256)]
-        ).astype("uint8")
+        lut = np.array([((i / 255.0) ** inv_gamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
 
         self.state_dict = {"gamma": gamma, "LUT": lut}
 
@@ -1065,17 +1015,13 @@ class Contrast(ImageTransform):
     def __init__(self, p=0.5, contrast_range=0.1, data_indices=None):
         super(Contrast, self).__init__(p=p, data_indices=data_indices)
 
-        if not isinstance(contrast_range, float) and not isinstance(
-            contrast_range, tuple
-        ):
+        if not isinstance(contrast_range, float) and not isinstance(contrast_range, tuple):
             raise TypeError
 
         if isinstance(contrast_range, float):
             contrast_range = (1 - contrast_range, 1 + contrast_range)
 
-        self.contrast_range = validate_numeric_range_parameter(
-            contrast_range, self._default_range, 0
-        )
+        self.contrast_range = validate_numeric_range_parameter(contrast_range, self._default_range, 0)
 
     def sample_transform(self, data):
         contrast_mul = random.uniform(self.contrast_range[0], self.contrast_range[1])
@@ -1118,9 +1064,7 @@ class Blur(ImageTransform):
     serializable_name = "blur"
     """How the class should be stored in the registry"""
 
-    def __init__(
-        self, p=0.5, blur_type="g", k_size=3, gaussian_sigma=None, data_indices=None
-    ):
+    def __init__(self, p=0.5, blur_type="g", k_size=3, gaussian_sigma=None, data_indices=None):
         super(Blur, self).__init__(p=p, data_indices=data_indices)
         if not isinstance(k_size, (int, tuple)):
             raise TypeError
@@ -1135,13 +1079,9 @@ class Blur(ImageTransform):
         if isinstance(gaussian_sigma, (int, float)):
             gaussian_sigma = (gaussian_sigma, gaussian_sigma)
 
-        self.blur = validate_parameter(
-            blur_type, ALLOWED_BLURS, "g", basic_type=str, heritable=False
-        )
+        self.blur = validate_parameter(blur_type, ALLOWED_BLURS, "g", basic_type=str, heritable=False)
         self.k_size = k_size
-        self.gaussian_sigma = validate_numeric_range_parameter(
-            gaussian_sigma, self._default_range, 0
-        )
+        self.gaussian_sigma = validate_numeric_range_parameter(gaussian_sigma, self._default_range, 0)
 
     def sample_transform(self, data):
         k = random.choice(self.k_size)
@@ -1150,9 +1090,7 @@ class Blur(ImageTransform):
 
         if self.blur == "mo":
             if self.k_size[0] <= 2:
-                raise ValueError(
-                    "Lower bound for blur kernel size cannot be less than 2 for motion blur"
-                )
+                raise ValueError("Lower bound for blur kernel size cannot be less than 2 for motion blur")
 
             kernel = np.zeros((k, k), dtype=np.uint8)
             xs, xe = random.randint(0, k - 1), random.randint(0, k - 1)
@@ -1169,9 +1107,7 @@ class Blur(ImageTransform):
     def _apply_img(self, img: np.ndarray, settings: dict):
         if self.blur == "g":
             return cv2.GaussianBlur(
-                img,
-                ksize=(self.state_dict["k_size"], self.state_dict["k_size"]),
-                sigmaX=self.state_dict["sigma"],
+                img, ksize=(self.state_dict["k_size"], self.state_dict["k_size"]), sigmaX=self.state_dict["sigma"],
             )
         if self.blur == "m":
             return cv2.medianBlur(img, ksize=self.state_dict["k_size"])
@@ -1205,9 +1141,7 @@ class HSV(ImageTransform):
     serializable_name = "hsv"
     """How the class should be stored in the registry"""
 
-    def __init__(
-        self, h_range=None, s_range=None, v_range=None, data_indices=None, p=0.5
-    ):
+    def __init__(self, h_range=None, s_range=None, v_range=None, data_indices=None, p=0.5):
         super(HSV, self).__init__(p=p, data_indices=data_indices)
         self.h_range = validate_numeric_range_parameter(h_range, self._default_range)
         self.s_range = validate_numeric_range_parameter(s_range, self._default_range)
@@ -1265,14 +1199,10 @@ class Brightness(ImageTransform):
 
     def __init__(self, brightness_range=None, data_indices=None, p=0.5):
         super(Brightness, self).__init__(p=p, data_indices=data_indices)
-        self.brightness_range = validate_numeric_range_parameter(
-            brightness_range, self._default_range
-        )
+        self.brightness_range = validate_numeric_range_parameter(brightness_range, self._default_range)
 
     def sample_transform(self, data):
-        brightness_fact = random.uniform(
-            self.brightness_range[0], self.brightness_range[1]
-        )
+        brightness_fact = random.uniform(self.brightness_range[0], self.brightness_range[1])
         lut = np.arange(0, 256) + brightness_fact
         lut = np.clip(lut, 0, 255).astype("uint8")
         self.state_dict = {"brightness_fact": brightness_fact, "LUT": lut}
@@ -1311,9 +1241,7 @@ class CvtColor(ImageTransform):
 
     def __init__(self, mode=None, data_indices=None):
         super(CvtColor, self).__init__(p=1, data_indices=data_indices)
-        self.mode = validate_parameter(
-            mode, ALLOWED_COLOR_CONVERSIONS, "none", heritable=False
-        )
+        self.mode = validate_parameter(mode, ALLOWED_COLOR_CONVERSIONS, "none", heritable=False)
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
@@ -1425,36 +1353,26 @@ class JPEGCompression(ImageTransform):
             quality_range = (int(quality_range * 100), 100)
 
         if isinstance(quality_range, tuple):
-            if isinstance(quality_range[0], float) and isinstance(
-                quality_range[1], float
-            ):
+            if isinstance(quality_range[0], float) and isinstance(quality_range[1], float):
                 quality_range = (
                     int(quality_range[0] * 100),
                     int(quality_range[1] * 100),
                 )
-            elif isinstance(quality_range[0], int) and isinstance(
-                quality_range[1], int
-            ):
+            elif isinstance(quality_range[0], int) and isinstance(quality_range[1], int):
                 pass
             else:
                 raise TypeError("Wrong type of quality range!")
         else:
             raise TypeError("Wrong type of quality range!")
 
-        self.quality_range = validate_numeric_range_parameter(
-            quality_range, (100, 100), 0, 100
-        )
+        self.quality_range = validate_numeric_range_parameter(quality_range, (100, 100), 0, 100)
 
     def sample_transform(self, data):
-        self.state_dict["quality"] = random.randint(
-            self.quality_range[0], self.quality_range[0]
-        )
+        self.state_dict["quality"] = random.randint(self.quality_range[0], self.quality_range[0])
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
         if self.state_dict["quality"] == 100:
             return img
-        _, encoded_img = cv2.imencode(
-            ".jpg", img, (cv2.IMWRITE_JPEG_QUALITY, self.state_dict["quality"])
-        )
+        _, encoded_img = cv2.imencode(".jpg", img, (cv2.IMWRITE_JPEG_QUALITY, self.state_dict["quality"]))
         return cv2.imdecode(encoded_img, cv2.IMREAD_UNCHANGED)

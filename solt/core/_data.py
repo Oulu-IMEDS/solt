@@ -66,22 +66,13 @@ class DataContainer(object):
                     )
 
                 if "padding" not in transform_settings[idx]:
-                    transform_settings[idx]["padding"] = validate_parameter(
-                        None, ALLOWED_PADDINGS, "z", str, True
-                    )
+                    transform_settings[idx]["padding"] = validate_parameter(None, ALLOWED_PADDINGS, "z", str, True)
                 else:
                     transform_settings[idx]["padding"] = validate_parameter(
-                        (transform_settings[idx]["padding"], "strict"),
-                        ALLOWED_PADDINGS,
-                        "z",
-                        str,
-                        True,
+                        (transform_settings[idx]["padding"], "strict"), ALLOWED_PADDINGS, "z", str, True,
                     )
             else:
-                if (
-                    "interpolation" in transform_settings[idx]
-                    or "padding" in transform_settings[idx]
-                ):
+                if "interpolation" in transform_settings[idx] or "padding" in transform_settings[idx]:
                     raise TypeError
 
         if len(data) != len(transform_settings):
@@ -183,9 +174,7 @@ class DataContainer(object):
 
         return DataContainer(tuple(dc_content), "".join(dc_format))
 
-    def to_torch(
-        self, as_dict=False, scale_keypoints=True, normalize=False, mean=None, std=None
-    ):
+    def to_torch(self, as_dict=False, scale_keypoints=True, normalize=False, mean=None, std=None):
         """This method converts the DataContainer Content into a dict or a list PyTorch objects
 
         Parameters
@@ -215,37 +204,27 @@ class DataContainer(object):
                 scale = 255.0
                 if el.dtype == np.uint16:
                     scale = 65535.0
-                img = torch.from_numpy(el.transpose((2, 0, 1)).astype(np.float32)).div(
-                    scale
-                )
+                img = torch.from_numpy(el.transpose((2, 0, 1)).astype(np.float32)).div(scale)
                 if normalize:
                     if mean is None or std is None:
                         mean = torch.tensor(self.__imagenet_mean).view(3, 1, 1)
                         std = torch.tensor(self.__imagenet_std).view(3, 1, 1)
 
-                    if not isinstance(
-                        mean, (tuple, list, np.ndarray, torch.FloatTensor)
-                    ):
+                    if not isinstance(mean, (tuple, list, np.ndarray, torch.FloatTensor)):
                         raise TypeError(
                             f"Unknown type ({type(mean)}) of mean vector! "
                             f"Expected tuple, list, np.ndarray or torch.FloatTensor"
                         )
 
-                    if not isinstance(
-                        std, (tuple, list, np.ndarray, torch.FloatTensor)
-                    ):
+                    if not isinstance(std, (tuple, list, np.ndarray, torch.FloatTensor)):
                         raise TypeError(
                             f"Unknown type ({type(mean)}) of mean vector! "
                             f"Expected tuple, list, np.ndarray or torch.FloatTensor"
                         )
                     if len(mean) != img.size(0):
-                        raise ValueError(
-                            "Size of the mean vector does not match the number of channels"
-                        )
+                        raise ValueError("Size of the mean vector does not match the number of channels")
                     if len(std) != img.size(0):
-                        raise ValueError(
-                            "Size of the std vector does not match the number of channels"
-                        )
+                        raise ValueError("Size of the std vector does not match the number of channels")
 
                     if isinstance(mean, (list, tuple)):
                         mean = torch.tensor(mean).view(img.size(0), 1, 1)

@@ -148,14 +148,7 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
         return DataContainer(data=tuple(result), fmt="".join(types))
 
     def __call__(
-        self,
-        data,
-        return_torch=False,
-        as_dict=True,
-        scale_keypoints=True,
-        normalize=True,
-        mean=None,
-        std=None,
+        self, data, return_torch=False, as_dict=True, scale_keypoints=True, normalize=True, mean=None, std=None,
     ):
         """Applies the transform to a DataContainer
 
@@ -198,11 +191,7 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
 
         if return_torch:
             return res.to_torch(
-                as_dict=as_dict,
-                scale_keypoints=scale_keypoints,
-                normalize=normalize,
-                mean=mean,
-                std=std,
+                as_dict=as_dict, scale_keypoints=scale_keypoints, normalize=normalize, mean=mean, std=std,
             )
         return res
 
@@ -334,14 +323,10 @@ class InterpolationPropertyHolder(object):
 
     def __init__(self, interpolation=None):
         super(InterpolationPropertyHolder, self).__init__()
-        self.interpolation = validate_parameter(
-            interpolation, ALLOWED_INTERPOLATIONS, "bilinear"
-        )
+        self.interpolation = validate_parameter(interpolation, ALLOWED_INTERPOLATIONS, "bilinear")
 
 
-class MatrixTransform(
-    BaseTransform, InterpolationPropertyHolder, PaddingPropertyHolder
-):
+class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropertyHolder):
     """Matrix Transform abstract class. (Affine and Homography).
     Does all the transforms around the image /  center.
 
@@ -362,13 +347,7 @@ class MatrixTransform(
     """
 
     def __init__(
-        self,
-        interpolation="bilinear",
-        padding="z",
-        p=0.5,
-        ignore_state=True,
-        affine=True,
-        ignore_fast_mode=False,
+        self, interpolation="bilinear", padding="z", p=0.5, ignore_state=True, affine=True, ignore_fast_mode=False,
     ):
         BaseTransform.__init__(self, p=p, data_indices=None)
         InterpolationPropertyHolder.__init__(self, interpolation=interpolation)
@@ -398,9 +377,7 @@ class MatrixTransform(
             self.padding = trf.padding
         self.interpolation = trf.interpolation
 
-        self.state_dict["transform_matrix"] = (
-            trf.state_dict["transform_matrix"] @ self.state_dict["transform_matrix"]
-        )
+        self.state_dict["transform_matrix"] = trf.state_dict["transform_matrix"] @ self.state_dict["transform_matrix"]
 
     def sample_transform(self, data):
         """Samples the transform and corrects for frame change.
@@ -435,22 +412,16 @@ class MatrixTransform(
     def move_transform_to_origin(transform_matrix, origin):
         # First we correct the transformation so that it is performed around the origin
         transform_matrix = transform_matrix.copy()
-        t_origin = np.array([1, 0, -origin[0], 0, 1, -origin[1], 0, 0, 1]).reshape(
-            (3, 3)
-        )
+        t_origin = np.array([1, 0, -origin[0], 0, 1, -origin[1], 0, 0, 1]).reshape((3, 3))
 
-        t_origin_back = np.array([1, 0, origin[0], 0, 1, origin[1], 0, 0, 1]).reshape(
-            (3, 3)
-        )
+        t_origin_back = np.array([1, 0, origin[0], 0, 1, origin[1], 0, 0, 1]).reshape((3, 3))
         transform_matrix = t_origin_back @ transform_matrix @ t_origin
 
         return transform_matrix
 
     @staticmethod
     def recompute_coordinate_frame(transform_matrix, width, height):
-        coord_frame = np.array(
-            [[0, 0, 1], [0, height, 1], [width, height, 1], [width, 0, 1]]
-        )
+        coord_frame = np.array([[0, 0, 1], [0, height, 1], [width, height, 1], [width, 0, 1]])
         new_frame = np.dot(transform_matrix, coord_frame.T).T
         new_frame[:, 0] /= new_frame[:, -1]
         new_frame[:, 1] /= new_frame[:, -1]
@@ -490,9 +461,7 @@ class MatrixTransform(
         """
         origin = [(width - 1) // 2, (height - 1) // 2]
         # First, let's make sure that our transformation matrix is applied at the origin
-        transform_matrix = MatrixTransform.move_transform_to_origin(
-            transform_matrix, origin
-        )
+        transform_matrix = MatrixTransform.move_transform_to_origin(transform_matrix, origin)
         # Now, if we think of scaling, rotation and translation, the image size gets increased
         # when we apply any geometric transform. Default behaviour in OpenCV is designed to crop the
         # image edges, however it is not desired when we want to deal with Keypoints (don't want them
@@ -500,9 +469,7 @@ class MatrixTransform(
 
         # If we imagine that the image edges are a rectangle, we can rotate it around the origin
         # to obtain the new coordinate frame
-        h_new, w_new = MatrixTransform.recompute_coordinate_frame(
-            transform_matrix, width, height
-        )
+        h_new, w_new = MatrixTransform.recompute_coordinate_frame(transform_matrix, width, height)
         transform_matrix[0, -1] += w_new // 2 - origin[0]
         transform_matrix[1, -1] += h_new // 2 - origin[1]
 
@@ -558,17 +525,13 @@ class MatrixTransform(
         h_new, w_new = self.state_dict["h_new"], self.state_dict["w_new"]
         interp, padding = self.parse_settings(settings)
         transf_m = self.state_dict["transform_matrix_corrected"]
-        return cv2.warpPerspective(
-            img, transf_m, (w_new, h_new), flags=interp, borderMode=padding
-        )
+        return cv2.warpPerspective(img, transf_m, (w_new, h_new), flags=interp, borderMode=padding)
 
     def _apply_img_or_mask_affine(self, img: np.ndarray, settings: dict):
         h_new, w_new = self.state_dict["h_new"], self.state_dict["w_new"]
         interp, padding = self.parse_settings(settings)
         transf_m = self.state_dict["transform_matrix_corrected"]
-        return cv2.warpAffine(
-            img, transf_m[:2, :], (w_new, h_new), flags=interp, borderMode=padding
-        )
+        return cv2.warpAffine(img, transf_m[:2, :], (w_new, h_new), flags=interp, borderMode=padding)
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
@@ -646,9 +609,7 @@ class MatrixTransform(
 
         """
         if self.padding[0] == "r":
-            raise ValueError(
-                "Cannot apply transform to keypoints with reflective padding!"
-            )
+            raise ValueError("Cannot apply transform to keypoints with reflective padding!")
 
         pts_data = pts.data.copy()
 
