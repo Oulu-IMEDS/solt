@@ -124,21 +124,23 @@ class Rotate(MatrixTransform):
             angle_range, self._default_range
         )
 
+    def sample_angle(self):
+        rot = np.deg2rad(random.uniform(self.angle_range[0], self.angle_range[1]))
+        self.state_dict["rot"] = rot
+
     def sample_transform_matrix(self, data):
         """
         Samples random rotation within specified range and saves it as an object state.
 
         """
-        rot = np.deg2rad(random.uniform(self.angle_range[0], self.angle_range[1]))
+        self.sample_angle()
 
-        self.state_dict["rot"] = rot
-
-        self.state_dict["transform_matrix"][0, 0] = np.cos(rot)
-        self.state_dict["transform_matrix"][0, 1] = -np.sin(rot)
+        self.state_dict["transform_matrix"][0, 0] = np.cos(self.state_dict["rot"])
+        self.state_dict["transform_matrix"][0, 1] = -np.sin(self.state_dict["rot"])
         self.state_dict["transform_matrix"][0, 2] = 0
 
-        self.state_dict["transform_matrix"][1, 0] = np.sin(rot)
-        self.state_dict["transform_matrix"][1, 1] = np.cos(rot)
+        self.state_dict["transform_matrix"][1, 0] = np.sin(self.state_dict["rot"])
+        self.state_dict["transform_matrix"][1, 1] = np.cos(self.state_dict["rot"])
         self.state_dict["transform_matrix"][1, 2] = 0
 
         self.state_dict["transform_matrix"][2, 0] = 0
