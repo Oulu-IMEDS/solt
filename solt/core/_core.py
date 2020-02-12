@@ -59,7 +59,7 @@ class Stream(Serializable):
         Parameters
         ----------
         value : str or None
-            A value from `solt.constants.ALLOWED_INTERPOLATIONS`
+            A value from ``solt.constants.ALLOWED_INTERPOLATIONS``
 
         See also
         --------
