@@ -6,9 +6,9 @@ from ._base_transforms import (
 )
 import copy
 import random
-import solt.core as slc
 
 from solt.utils import Serializable
+from ._data import DataContainer
 
 
 class Stream(Serializable):
@@ -140,7 +140,7 @@ class Stream(Serializable):
 
         """
 
-        res: slc.DataContainer = Stream.exec_stream(
+        res: DataContainer = Stream.exec_stream(
             self.transforms, data, self.optimize_stack
         )
 
@@ -214,7 +214,7 @@ class Stream(Serializable):
         """
 
         if isinstance(data, dict):
-            data = slc.DataContainer.from_dict(data)
+            data = DataContainer.from_dict(data)
 
         # Performing the transforms using the optimized stack
         if optimize_stack:
