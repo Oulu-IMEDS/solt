@@ -113,9 +113,15 @@ class Rotate(MatrixTransform):
         padding="z",
         p=0.5,
         ignore_state=True,
+        ignore_fast_mode=False,
     ):
         super(Rotate, self).__init__(
-            interpolation=interpolation, padding=padding, p=p, ignore_state=ignore_state, affine=True
+            interpolation=interpolation,
+            padding=padding,
+            p=p,
+            ignore_state=ignore_state,
+            affine=True,
+            ignore_fast_mode=ignore_fast_mode,
         )
         if isinstance(angle_range, (int, float)):
             angle_range = (-angle_range, angle_range)
@@ -125,7 +131,9 @@ class Rotate(MatrixTransform):
         )
 
     def sample_angle(self):
-        self.state_dict["rot"] = np.deg2rad(random.uniform(self.angle_range[0], self.angle_range[1]))
+        self.state_dict["rot"] = np.deg2rad(
+            random.uniform(self.angle_range[0], self.angle_range[1])
+        )
         return self.state_dict["rot"]
 
     def sample_transform_matrix(self, data):
@@ -164,10 +172,12 @@ class Rotate90(Rotate):
     serializable_name = "rotate_90"
     """How the class should be stored in the registry"""
 
-    def __init__(self, k=0, p=0.5):
+    def __init__(self, k=0, p=0.5, ignore_fast_mode=False):
         if not isinstance(k, int):
             raise TypeError("Argument `k` must be an integer!")
-        super(Rotate90, self).__init__(p=p, angle_range=(k * 90, k * 90))
+        super(Rotate90, self).__init__(
+            p=p, angle_range=(k * 90, k * 90), ignore_fast_mode=ignore_fast_mode
+        )
         self.k = -k
 
     @img_shape_checker
@@ -214,9 +224,15 @@ class Shear(MatrixTransform):
         padding="z",
         p=0.5,
         ignore_state=True,
+        ignore_fast_mode=False,
     ):
         super(Shear, self).__init__(
-            p=p, padding=padding, interpolation=interpolation, ignore_state=ignore_state, affine=True
+            p=p,
+            padding=padding,
+            interpolation=interpolation,
+            ignore_state=ignore_state,
+            affine=True,
+            ignore_fast_mode=ignore_fast_mode,
         )
         if isinstance(range_x, (int, float)):
             range_x = (-range_x, range_x)
@@ -286,10 +302,16 @@ class Scale(MatrixTransform):
         interpolation="bilinear",
         p=0.5,
         ignore_state=True,
+        ignore_fast_mode=False,
     ):
 
         super(Scale, self).__init__(
-            interpolation=interpolation, padding=None, p=p, ignore_state=ignore_state, affine=True
+            interpolation=interpolation,
+            padding=None,
+            p=p,
+            ignore_state=ignore_state,
+            affine=True,
+            ignore_fast_mode=ignore_fast_mode,
         )
 
         if isinstance(range_x, (int, float)):
@@ -384,9 +406,15 @@ class Translate(MatrixTransform):
         padding="z",
         p=0.5,
         ignore_state=True,
+        ignore_fast_mode=False,
     ):
         super(Translate, self).__init__(
-            interpolation=interpolation, padding=padding, p=p, ignore_state=ignore_state, affine=True
+            interpolation=interpolation,
+            padding=padding,
+            p=p,
+            ignore_state=ignore_state,
+            affine=True,
+            ignore_fast_mode=ignore_fast_mode,
         )
         if isinstance(range_x, (int, float)):
             range_x = (min(range_x, -range_x), max(range_x, -range_x))
@@ -398,8 +426,12 @@ class Translate(MatrixTransform):
         self.range_y = validate_numeric_range_parameter(range_y, self._default_range)
 
     def sample_translate(self):
-        self.state_dict["translate_x"] = random.uniform(self.range_x[0], self.range_x[1])
-        self.state_dict["translate_y"] = random.uniform(self.range_y[0], self.range_y[1])
+        self.state_dict["translate_x"] = random.uniform(
+            self.range_x[0], self.range_x[1]
+        )
+        self.state_dict["translate_y"] = random.uniform(
+            self.range_y[0], self.range_y[1]
+        )
         return self.state_dict["translate_x"], self.state_dict["translate_y"]
 
     def sample_transform_matrix(self, data):
@@ -447,10 +479,16 @@ class Projection(MatrixTransform):
         padding="z",
         p=0.5,
         ignore_state=True,
+        ignore_fast_mode=True,
     ):
 
         super(Projection, self).__init__(
-            interpolation=interpolation, padding=padding, p=p, ignore_state=ignore_state, affine=False
+            interpolation=interpolation,
+            padding=padding,
+            p=p,
+            ignore_state=ignore_state,
+            affine=False,
+            ignore_fast_mode=True,
         )
 
         if affine_transforms is None:

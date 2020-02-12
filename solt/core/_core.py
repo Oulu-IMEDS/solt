@@ -35,7 +35,12 @@ class Stream(Serializable):
     serializable_name = "stream"
 
     def __init__(
-        self, transforms=None, interpolation=None, padding=None, optimize_stack=False
+        self,
+        transforms=None,
+        interpolation=None,
+        padding=None,
+        optimize_stack=False,
+        ignore_fast_mode=False,
     ):
         super(Stream, self).__init__()
 
@@ -48,10 +53,19 @@ class Stream(Serializable):
         self.optimize_stack = optimize_stack
         self.interpolation = interpolation
         self.padding = padding
+        self.ignore_fast_mode = ignore_fast_mode
         self.transforms = transforms
 
+        self.reset_ignore_fast_mode(ignore_fast_mode)
         self.reset_padding(padding)
         self.reset_interpolation(interpolation)
+
+    def reset_ignore_fast_mode(self, value):
+        if not isinstance(value, bool):
+            raise TypeError("Ignore fast mode must be bool!")
+        for trf in self.transforms:
+            if isinstance(trf, MatrixTransform):
+                trf.ignore_fast_mode = value
 
     def reset_interpolation(self, value):
         """Resets the interpolation for the whole pipeline of transforms.
@@ -176,6 +190,7 @@ class Stream(Serializable):
         transforms_stack = []
         for trf in transforms:
             if isinstance(trf, MatrixTransform):
+                trf.ignore_fast_mode = True
                 trf.reset_state()
                 if trf.use_transform():
                     trf.sample_transform(data)
@@ -237,7 +252,14 @@ class SelectiveStream(Stream):
 
     """
 
-    def __init__(self, transforms=None, n=1, probs=None, optimize_stack=False):
+    def __init__(
+        self,
+        transforms=None,
+        n=1,
+        probs=None,
+        optimize_stack=False,
+        ignore_fast_mode=False,
+    ):
         """
         Constructor.
 
@@ -251,7 +273,9 @@ class SelectiveStream(Stream):
             Whether to execute stack optimization for augmentations.
         """
         super(SelectiveStream, self).__init__(
-            transforms=transforms, optimize_stack=optimize_stack
+            transforms=transforms,
+            optimize_stack=optimize_stack,
+            ignore_fast_mode=ignore_fast_mode,
         )
         if transforms is None:
             transforms = []

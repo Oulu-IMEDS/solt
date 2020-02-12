@@ -10,9 +10,7 @@ import solt.core as slc
 import solt.transforms as slt
 from solt.constants import ALLOWED_INTERPOLATIONS, ALLOWED_PADDINGS
 
-from .fixtures import (img_2x2, img_3x3, img_3x4, img_5x5, img_6x6, img_6x6_lc,
-                       img_6x6_rgb, img_7x7, mask_2x2, mask_3x3, mask_3x4,
-                       mask_5x5, mask_6x6)
+from .fixtures import *
 
 
 def test_img_mask_vertical_flip(img_3x4, mask_3x4):
@@ -277,7 +275,7 @@ def test_rotate_90_transforms_have_same_behaviour(k, img_6x6_rgb):
 
 
 def test_zoom_x_axis_odd(img_5x5):
-    stream = slt.Scale(range_x=(0.5, 0.5), range_y=(1, 1), same=False, p=1)
+    stream = slt.Scale(range_x=(0.5, 0.5), range_y=(1, 1), same=False, p=1, ignore_fast_mode=True)
     dc = slc.DataContainer((img_5x5,), "I")
     H, W = img_5x5.shape[0], img_5x5.shape[1]
     img_res = stream(dc)[0][0]
@@ -286,7 +284,7 @@ def test_zoom_x_axis_odd(img_5x5):
 
 
 def test_scale_x_axis_even(img_6x6):
-    stream = slt.Scale((0.5, 0.5), (1, 1), same=False, p=1)
+    stream = slt.Scale((0.5, 0.5), (1, 1), same=False, p=1, ignore_fast_mode=True)
     dc = slc.DataContainer((img_6x6,), "I")
     H, W = img_6x6.shape[0], img_6x6.shape[1]
     img_res = stream(dc)[0][0]
@@ -295,7 +293,7 @@ def test_scale_x_axis_even(img_6x6):
 
 
 def test_scale_xy_axis_odd(img_5x5):
-    stream = slt.Scale((0.5, 0.5), (3, 3), same=False, p=1)
+    stream = slt.Scale((0.5, 0.5), (3, 3), same=False, p=1, ignore_fast_mode=True)
     dc = slc.DataContainer((img_5x5,), "I")
     H, W = img_5x5.shape[0], img_5x5.shape[1]
     img_res = stream(dc)[0][0]
@@ -304,7 +302,7 @@ def test_scale_xy_axis_odd(img_5x5):
 
 
 def test_scale_xy_axis_even(img_6x6):
-    stream = slt.Scale((0.5, 0.5), (2, 2), same=False, p=1)
+    stream = slt.Scale((0.5, 0.5), (2, 2), same=False, p=1, ignore_fast_mode=True)
     dc = slc.DataContainer((img_6x6,), "I")
     H, W = img_6x6.shape[0], img_6x6.shape[1]
     img_res = stream(dc)[0][0]
@@ -314,7 +312,7 @@ def test_scale_xy_axis_even(img_6x6):
 
 def test_scale_img_mask(img_3x4, mask_3x4):
     img_mask_3x4 = img_3x4, mask_3x4
-    stream = slt.Scale((0.5, 0.5), (2, 2), same=False, p=1)
+    stream = slt.Scale((0.5, 0.5), (2, 2), same=False, p=1, ignore_fast_mode=True)
     dc = slc.DataContainer(img_mask_3x4, "IM")
     H, W = img_mask_3x4[0].shape[0], img_mask_3x4[0].shape[1]
     img_res = stream(dc)[0][0]

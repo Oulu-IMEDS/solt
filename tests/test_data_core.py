@@ -1,14 +1,16 @@
+import itertools
+import random
+
+import cv2
+import numpy as np
+import pytest
+import torch
+
 import solt.core as slc
 import solt.transforms as slt
 import solt.utils as slu
-import numpy as np
-import pytest
-import cv2
-import random
-import itertools
-import torch
 
-from .fixtures import img_2x2, img_3x4, mask_2x2, mask_3x4, img_5x5, mask_5x5, img_3x3_rgb, mask_3x3
+from .fixtures import *
 
 
 def assert_data_containers_equal(dc, dc_new):
@@ -379,7 +381,6 @@ def test_stream_raises_assertion_error_when_not_basetransform_or_stream_in_the_t
         slc.Stream([1, 2, 3])
 
 
-
 def test_selective_pipeline_selects_transforms_and_does_the_fusion():
     ppl = slc.SelectiveStream([
         slt.Rotate(angle_range=(90, 90), p=1),
@@ -431,7 +432,7 @@ def test_wrong_transform_type_in_a_stream(img_2x2):
     with pytest.raises(TypeError):
         slc.Stream.exec_stream([
             slt.Pad(4),
-            lambda x: x**2
+            lambda x: x ** 2
         ], dc, False)
 
 
@@ -653,6 +654,21 @@ def test_image_mask_pipeline_to_torch_uint16(img_3x4, mask_3x4):
     assert isinstance(mask, torch.FloatTensor)
 
 
+@pytest.mark.parametrize('stream_ignore_fast', [True, False])
+@pytest.mark.parametrize('r1_ignore_fast', [True, False])
+@pytest.mark.parametrize('r2_ignore_fast', [True, False])
+def test_ignore_fast_mode_for_a_stream(stream_ignore_fast, r1_ignore_fast, r2_ignore_fast):
+    ppl = slc.Stream(
+        [
+            slt.Rotate(angle_range=(90, 90), p=1, ignore_fast_mode=r1_ignore_fast),
+            slt.Rotate(angle_range=(70, 75), p=1, ignore_fast_mode=r2_ignore_fast),
+        ],
+        ignore_fast_mode=stream_ignore_fast)
+
+    for trf in ppl.transforms:
+        assert stream_ignore_fast == trf.ignore_fast_mode
+
+
 @pytest.mark.parametrize('mean,std', [[None, None], [(0.5, 0.5, 0.5), (0.5, 0.5, 0.5)],
                                       [np.array((0.5, 0.5, 0.5)), (0.5, 0.5, 0.5)],
                                       [(0.5, 0.5, 0.5), np.array((0.5, 0.5, 0.5))],
@@ -711,6 +727,12 @@ def test_data_container_keypoints_rescale_to_torch():
     np.testing.assert_almost_equal(k.max().item() * 1023, 1023)
     np.testing.assert_almost_equal(k.min().item() * 1023, 20)
     assert label == 1
+
+
+def test_reset_ignore_fast_mode_raises_error_for_streams_for_not_bool():
+    ppl = slc.Stream()
+    with pytest.raises(TypeError):
+        ppl.reset_ignore_fast_mode('123')
 
 
 def test_selective_stream_returns_torch_when_asked(img_5x5):

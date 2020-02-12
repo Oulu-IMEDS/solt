@@ -361,10 +361,21 @@ class MatrixTransform(
 
     """
 
-    def __init__(self, interpolation="bilinear", padding="z", p=0.5, ignore_state=True, affine=True):
+    def __init__(
+        self,
+        interpolation="bilinear",
+        padding="z",
+        p=0.5,
+        ignore_state=True,
+        affine=True,
+        ignore_fast_mode=False,
+    ):
         BaseTransform.__init__(self, p=p, data_indices=None)
         InterpolationPropertyHolder.__init__(self, interpolation=interpolation)
         PaddingPropertyHolder.__init__(self, padding=padding)
+
+        self.ignore_fast_mode = ignore_fast_mode
+        self.fast_mode = False
         self.affine = affine
         self.ignore_state = ignore_state
         self.reset_state()
@@ -401,7 +412,24 @@ class MatrixTransform(
         """
         super(MatrixTransform, self).sample_transform(data)
         self.sample_transform_matrix(data)  # Only this method needs to be implemented!
-        self.correct_transform()
+
+        # If we are in fast mode, we do not have to recompute the the new coordinate frame!
+        if "P" not in data.data_format and not self.ignore_fast_mode:
+            width = self.state_dict["w"]
+            height = self.state_dict["h"]
+            origin = [(width - 1) // 2, (height - 1) // 2]
+            # First, let's make sure that our transformation matrix is applied at the origin
+            transform_matrix_corr = MatrixTransform.move_transform_to_origin(
+                self.state_dict["transform_matrix"], origin
+            )
+            self.state_dict["h_new"], self.state_dict["w_new"] = (
+                self.state_dict["h"],
+                self.state_dict["w"],
+            )
+            self.state_dict["transform_matrix_corrected"] = transform_matrix_corr
+        else:
+            # If we have the keypoints or the transform is a homographic one, we can't use the fast mode at all.
+            self.correct_transform()
 
     @staticmethod
     def move_transform_to_origin(transform_matrix, origin):
@@ -541,7 +569,6 @@ class MatrixTransform(
         return cv2.warpAffine(
             img, transf_m[:2, :], (w_new, h_new), flags=interp, borderMode=padding
         )
-
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):

@@ -205,12 +205,12 @@ def test_stream_serializes_all_args_are_set():
     assert 'padding' in serialized
     assert 'optimize_stack' in serialized
     assert 'transforms' in serialized
-    assert len(serialized) == 4
+    assert len(serialized) == 5
 
     trfs = serialized['transforms']
     for i, el in enumerate(trfs):
         t = list(el.keys())[0]
-        if i < len(serialized) - 1:
+        if i < len(trfs) - 1:
             assert list(el.keys())[0] == 'rotate'
             assert trfs[i][t]['p'] == 0.7
             assert trfs[i][t]['interpolation'] == ('nearest', 'inherit')

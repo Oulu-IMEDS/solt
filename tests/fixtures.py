@@ -1,6 +1,9 @@
 import pytest
 import numpy as np
 
+__all__ = ['img_2x2', 'mask_2x2', 'img_3x3_rgb', 'img_3x3',
+           'img_3x4', 'img_5x5', 'img_6x6',
+           'img_6x6_lc', 'img_6x6_rgb', 'img_7x7', 'mask_3x3', 'mask_3x4', 'mask_5x5', 'mask_6x6']
 
 @pytest.fixture
 def img_2x2():

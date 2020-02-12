@@ -4,7 +4,8 @@ import numpy as np
 import pytest
 import sys, inspect
 import torch
-from .fixtures import img_2x2, img_3x3, img_3x4, img_6x6, img_5x5, img_3x3_rgb
+
+from .fixtures import *
 
 
 def get_transforms_solt():
