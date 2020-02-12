@@ -234,21 +234,20 @@ def test_create_4_keypoints_change_grid_and_frame():
     assert np.array_equal(kpts_data_new, kpts.pts)
 
 
-def test_fusion_happens():
+def test_fusion_happens(img_5x5):
     ppl = slc.Stream([
         slt.Scale((0.5, 1.5), (0.5, 1.5), p=1),
         slt.Rotate((-50, 50), padding='z', p=1),
         slt.Shear((-0.5, 0.5), (-0.5, 0.5), padding='z', p=1),
-        slt.Flip(p=1, axis=1),
     ])
-
-    st = ppl.optimize_transforms_stack(ppl.transforms)
-    assert len(st) == 2
+    dc = slc.DataContainer(img_5x5, 'I')
+    st = ppl.optimize_transforms_stack(ppl.transforms, dc)
+    assert len(st) == 1
 
 
 def test_fusion_rotate_360(img_5x5):
     img = img_5x5
-    dc = slc.DataContainer((img,), 'I')
+    dc = slc.DataContainer(img, 'I')
 
     ppl = slc.Stream([
         slt.Rotate((45, 45), padding='z', p=1),
@@ -271,14 +270,16 @@ def test_fusion_rotate_360_flip_rotate_360(img_5x5):
     dc = slc.DataContainer((img,), 'I')
 
     ppl = slc.Stream([
-        slt.Rotate((45, 45), padding='z', p=1),
-        slt.Rotate((45, 45), padding='z', p=1),
-        slt.Rotate((45, 45), padding='z', p=1),
-        slt.Rotate((45, 45), padding='z', p=1),
-        slt.Rotate((45, 45), padding='z', p=1),
-        slt.Rotate((45, 45), padding='z', p=1),
-        slt.Rotate((45, 45), padding='z', p=1),
-        slt.Rotate((45, 45), padding='z', p=1),
+        slc.Stream([
+            slt.Rotate((45, 45), padding='z', p=1),
+            slt.Rotate((45, 45), padding='z', p=1),
+            slt.Rotate((45, 45), padding='z', p=1),
+            slt.Rotate((45, 45), padding='z', p=1),
+            slt.Rotate((45, 45), padding='z', p=1),
+            slt.Rotate((45, 45), padding='z', p=1),
+            slt.Rotate((45, 45), padding='z', p=1),
+            slt.Rotate((45, 45), padding='z', p=1),
+        ], optimize_stack=True),
         slt.Flip(p=1, axis=1),
         slc.Stream([
             slt.Rotate((45, 45), padding='z', p=1),
@@ -290,7 +291,7 @@ def test_fusion_rotate_360_flip_rotate_360(img_5x5):
             slt.Rotate((45, 45), padding='z', p=1),
             slt.Rotate((45, 45), padding='z', p=1),
         ], optimize_stack=True)
-    ], optimize_stack=True)
+    ])
 
     img_res = ppl(dc, return_torch=False)[0][0]
 
@@ -404,7 +405,9 @@ def test_value_error_when_optimizeing_wrong_elements_transforms_list():
         slc.Stream.optimize_transforms_stack(trfs)
 
 
-def test_nested_streams_are_not_fused_with_matrix_trf():
+def test_nested_streams_are_not_fused_with_matrix_trf(img_3x3_rgb):
+    dc = slc.DataContainer(img_3x3_rgb, 'I')
+
     trfs = [
         slt.Rotate(angle_range=(90, 90), p=1),
         slt.Rotate(angle_range=(-90, -90), p=1),
@@ -414,13 +417,22 @@ def test_nested_streams_are_not_fused_with_matrix_trf():
         slt.Rotate(angle_range=(-90, -90), p=1),
     ]
 
-    trfs_optimized = slc.Stream.optimize_transforms_stack(trfs)
-    assert trfs_optimized[-2] == trfs[-2]
+    with pytest.raises(TypeError):
+        slc.Stream.optimize_transforms_stack(trfs, dc)
 
 
 def test_putting_wrong_format_in_data_container(img_2x2):
     with pytest.raises(TypeError):
         slc.DataContainer(img_2x2, 'Q')
+
+
+def test_wrong_transform_type_in_a_stream(img_2x2):
+    dc = slc.DataContainer(img_2x2, 'I')
+    with pytest.raises(TypeError):
+        slc.Stream.exec_stream([
+            slt.Pad(4),
+            lambda x: x**2
+        ], dc, False)
 
 
 def test_selective_stream_too_many_probs():

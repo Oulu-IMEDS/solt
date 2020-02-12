@@ -263,12 +263,13 @@ def test_rotate_nondestructive_does_not_accept_non_int_k(k):
 
 
 @pytest.mark.parametrize("k", list(range(-4, 5)))
-def test_rotate_90_transforms_have_same_bahavior(k):
+def test_rotate_90_transforms_have_same_behaviour(k, img_6x6_rgb):
+    dc = slc.DataContainer(img_6x6_rgb, 'I')
     trf_1 = slt.Rotate(angle_range=(k * 90, k * 90), p=1)
-    trf_1.sample_transform()
+    trf_1.sample_transform(dc)
 
     trf_2 = slt.Rotate90(k=k, p=1)
-    trf_2.sample_transform()
+    trf_2.sample_transform(dc)
 
     assert np.array_equal(
         trf_1.state_dict["transform_matrix"], trf_2.state_dict["transform_matrix"]
@@ -614,14 +615,15 @@ def test_6x6_pad_to_20x20_center_crop_6x6_kpts_img(img_6x6):
     assert np.array_equal(res[0][0].data, kpts_data)
 
 
-def test_translate_forward_backward_sampling():
+def test_translate_forward_backward_sampling(img_6x6_rgb):
     stream = slc.Stream(
         [
             slt.Translate(range_x=(1, 1), range_y=(1, 1), p=1),
             slt.Translate(range_x=(-1, -1), range_y=(-1, -1), p=1),
         ]
     )
-    trf = stream.optimize_transforms_stack(stream.transforms)[0]
+    dc = slc.DataContainer(img_6x6_rgb, 'I')
+    trf = stream.optimize_transforms_stack(stream.transforms, dc)[0]
     assert (
         1 == trf.state_dict["translate_x"]
     )  # The settings will be overrided by the first transform
@@ -631,32 +633,39 @@ def test_translate_forward_backward_sampling():
     assert np.array_equal(trf.state_dict["transform_matrix"], np.eye(3))
 
 
-def test_projection_empty_sampling_no_trf():
+def test_projection_empty_sampling_no_trf(img_6x6_rgb):
+    dc = slc.DataContainer(img_6x6_rgb, 'I')
     trf = slt.Projection(affine_transforms=slc.Stream(), p=1)
-    trf.sample_transform()
+    trf.sample_transform(dc)
     assert np.array_equal(trf.state_dict["transform_matrix"], np.eye(3))
 
 
-def test_projection_empty_sampling_low_prob_trf():
+def test_projection_empty_sampling_low_prob_trf(img_6x6_rgb):
+    dc = slc.DataContainer(img_6x6_rgb, 'I')
     trf = slt.Projection(
         affine_transforms=slc.Stream([slt.Rotate(p=0)]), p=1
     )
-    trf.sample_transform()
+
+    trf.sample_transform(dc)
     assert np.array_equal(trf.state_dict["transform_matrix"], np.eye(3))
 
 
-def test_projection_empty_sampling_from_many_low_prob_trf():
+def test_projection_empty_sampling_from_many_low_prob_trf(img_6x6_rgb):
+    dc = slc.DataContainer(img_6x6_rgb, 'I')
     trf = slt.Projection(
         affine_transforms=slc.Stream(
-            [slt.Rotate(p=0), slt.Rotate(p=0), slt.Rotate(p=0)]
+            [slt.Rotate(angle_range=(70, 70), p=0),
+             slt.Rotate(angle_range=(10, 10), p=0),
+             slt.Rotate(angle_range=(-2, -2), p=0)]
         ),
         p=1,
     )
-    trf.sample_transform()
+    trf.sample_transform(dc)
     assert np.array_equal(trf.state_dict["transform_matrix"], np.eye(3))
 
 
-def test_projection_translate_plus_minus_1():
+def test_projection_translate_plus_minus_1(img_6x6_rgb):
+    dc = slc.DataContainer(img_6x6_rgb, 'I')
     trf = slt.Projection(
         affine_transforms=slc.Stream(
             [
@@ -667,7 +676,7 @@ def test_projection_translate_plus_minus_1():
         p=1,
     )
 
-    trf.sample_transform()
+    trf.sample_transform(dc)
     assert np.array_equal(trf.state_dict["transform_matrix"], np.eye(3))
 
 
@@ -744,9 +753,10 @@ def test_scale_range_from_number(scale, expected):
         (False, None, (2, 2), (1, 2)),
     ],
 )
-def test_scale_sampling_scale(same, scale_x, scale_y, expected):
+def test_scale_sampling_scale(same, scale_x, scale_y, expected, img_6x6_rgb):
+    dc = slc.DataContainer(img_6x6_rgb, 'I')
     trf = slt.Scale(range_x=scale_x, range_y=scale_y, same=same)
-    trf.sample_transform()
+    trf.sample_transform(dc)
     assert expected == (trf.state_dict["scale_x"], trf.state_dict["scale_y"])
 
 
@@ -902,9 +912,10 @@ def test_wrong_types_in_gain_and_salt_p_salt_and_peper():
         (None, None, False, (1, 1)),
     ],
 )
-def test_scale_when_range_x_is_none(scale_x, scale_y, same, expected):
+def test_scale_when_range_x_is_none(scale_x, scale_y, same, expected, img_6x6_rgb):
+    dc = slc.DataContainer(img_6x6_rgb, 'I')
     trf = slt.Scale(range_x=scale_x, range_y=scale_y, same=same, p=1)
-    trf.sample_transform()
+    trf.sample_transform(dc)
     assert (trf.state_dict["scale_x"], trf.state_dict["scale_y"]) == expected
 
 
@@ -912,9 +923,10 @@ def test_scale_when_range_x_is_none(scale_x, scale_y, same, expected):
     "translate_x, translate_y, expected",
     [(None, (2, 2), (0, 2)), ((2, 2), None, (2, 0)), (None, None, (0, 0)),],
 )
-def test_translate_when_range_x_is_none(translate_x, translate_y, expected):
+def test_translate_when_range_x_is_none(translate_x, translate_y, expected, img_6x6_rgb):
+    dc = slc.DataContainer(img_6x6_rgb, 'I')
     trf = slt.Translate(range_x=translate_x, range_y=translate_y, p=1)
-    trf.sample_transform()
+    trf.sample_transform(dc)
     assert (trf.state_dict["translate_x"], trf.state_dict["translate_y"]) == expected
 
 
@@ -973,10 +985,11 @@ def test_lut_transforms_raise_errors(value_range, to_catch):
         ("mo", (1, 1), 1, ValueError),
     ],
 )
-def test_blur_arguments(blur_t, k_size, sigma, to_catch):
+def test_blur_arguments(blur_t, k_size, sigma, to_catch, img_6x6_rgb):
+    dc = slc.DataContainer(img_6x6_rgb, 'I')
     with pytest.raises(to_catch):
         b = slt.Blur(blur_type=blur_t, k_size=k_size, gaussian_sigma=sigma)
-        b.sample_transform()
+        b.sample_transform(dc)
 
 
 @pytest.mark.parametrize(
@@ -996,9 +1009,10 @@ def test_blur_arguments(blur_t, k_size, sigma, to_catch):
         ("m", (1, 3, 5,), 1),
     ],
 )
-def test_blur_samples_correctly(blur_t, k_size, sigma):
+def test_blur_samples_correctly(blur_t, k_size, sigma, img_6x6_rgb):
+    dc = slc.DataContainer(img_6x6_rgb, 'I')
     trf = slt.Blur(blur_type=blur_t, k_size=k_size, gaussian_sigma=sigma)
-    trf.sample_transform()
+    trf.sample_transform(dc)
 
     if isinstance(k_size, int):
         k_size = (k_size,)
@@ -1186,11 +1200,12 @@ def test_keypoint_jitter_does_not_change_img_mask_or_target(img_3x3, mask_3x3):
 
 
 @pytest.mark.parametrize("ks", [3, (3, 3), 5, (5, 5)])
-def test_motion_blur_samples_transform(ks):
+def test_motion_blur_samples_transform(ks, img_6x6_rgb):
     blur = slt.Blur(p=1, blur_type="mo", k_size=ks)
     random.seed(42)
+    dc = slc.DataContainer(img_6x6_rgb, 'I')
     for i in range(100):
-        blur.sample_transform()
+        blur.sample_transform(dc)
         if isinstance(ks, int):
             assert blur.state_dict["motion_kernel"].shape[0] == ks
         else:

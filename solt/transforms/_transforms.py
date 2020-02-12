@@ -5,7 +5,6 @@ import numpy as np
 
 from ..core import (
     BaseTransform,
-    DataDependentSamplingTransform,
     ImageTransform,
     InterpolationPropertyHolder,
     MatrixTransform,
@@ -49,9 +48,6 @@ class Flip(BaseTransform):
             raise ValueError("Incorrect Value of axis!")
 
         self.axis = axis
-
-    def sample_transform(self):
-        pass
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
@@ -128,7 +124,7 @@ class Rotate(MatrixTransform):
             angle_range, self._default_range
         )
 
-    def sample_transform(self):
+    def sample_transform_matrix(self, data):
         """
         Samples random rotation within specified range and saves it as an object state.
 
@@ -229,7 +225,7 @@ class Shear(MatrixTransform):
         self.range_x = validate_numeric_range_parameter(range_x, self._default_range)
         self.range_y = validate_numeric_range_parameter(range_y, self._default_range)
 
-    def sample_transform(self):
+    def sample_transform_matrix(self, data):
         shear_x = random.uniform(self.range_x[0], self.range_x[1])
         shear_y = random.uniform(self.range_y[0], self.range_y[1])
 
@@ -315,7 +311,7 @@ class Scale(MatrixTransform):
             )
         )
 
-    def sample_transform(self):
+    def sample_transform_matrix(self, data):
         if self.range_x is None:
             scale_x = 1
         else:
@@ -393,7 +389,7 @@ class Translate(MatrixTransform):
         self.range_x = validate_numeric_range_parameter(range_x, self._default_range)
         self.range_y = validate_numeric_range_parameter(range_y, self._default_range)
 
-    def sample_transform(self):
+    def sample_transform_matrix(self, data):
         tx = random.uniform(self.range_x[0], self.range_x[1])
         ty = random.uniform(self.range_y[0], self.range_y[1])
 
@@ -462,9 +458,11 @@ class Projection(MatrixTransform):
             v_range, self._default_range
         )  # projection components.
 
-    def sample_transform(self):
+    def sample_transform_matrix(self, data):
         if len(self.affine_transforms.transforms) > 1:
-            trf = Stream.optimize_transforms_stack(self.affine_transforms.transforms)
+            trf = Stream.optimize_transforms_stack(
+                self.affine_transforms.transforms, data
+            )
             if len(trf) == 0:
                 trf = None
             else:
@@ -473,7 +471,7 @@ class Projection(MatrixTransform):
             trf = None
         else:
             trf = self.affine_transforms.transforms[0]
-            trf.sample_transform()
+            trf.sample_transform(data)
 
         if trf is None:
             transform_matrix = np.eye(3)
@@ -485,7 +483,7 @@ class Projection(MatrixTransform):
         self.state_dict["transform_matrix"] = transform_matrix
 
 
-class Pad(DataDependentSamplingTransform, PaddingPropertyHolder):
+class Pad(BaseTransform, PaddingPropertyHolder):
     """Transformation, which pads the input to a given size
 
     Parameters
@@ -512,7 +510,7 @@ class Pad(DataDependentSamplingTransform, PaddingPropertyHolder):
     """How the class should be stored in the registry"""
 
     def __init__(self, pad_to=None, padding=None):
-        DataDependentSamplingTransform.__init__(self, p=1)
+        BaseTransform.__init__(self, p=1)
         PaddingPropertyHolder.__init__(self, padding)
 
         if not isinstance(pad_to, (tuple, list, int)) and (pad_to is not None):
@@ -522,12 +520,9 @@ class Pad(DataDependentSamplingTransform, PaddingPropertyHolder):
 
         self.pad_to = pad_to
 
-    def sample_transform(self):
-        DataDependentSamplingTransform.sample_transform(self)
-
-    def sample_transform_from_data(self, data: DataContainer):
+    def sample_transform(self, data: DataContainer):
         if self.pad_to is not None:
-            h, w = DataDependentSamplingTransform.sample_transform_from_data(self, data)
+            h, w = super(Pad, self).sample_transform(data)
 
             pad_w = (self.pad_to[0] - w) // 2
             pad_h = (self.pad_to[1] - h) // 2
@@ -625,9 +620,6 @@ class Resize(BaseTransform, InterpolationPropertyHolder):
 
         self.resize_to = resize_to
 
-    def sample_transform(self):
-        pass
-
     def _apply_img_or_mask(self, img: np.ndarray, settings: dict):
         if self.resize_to is None:
             return img
@@ -665,7 +657,7 @@ class Resize(BaseTransform, InterpolationPropertyHolder):
         return Keypoints(pts_data, resize_y, resize_x)
 
 
-class Crop(DataDependentSamplingTransform):
+class Crop(BaseTransform):
     """Center / Random crop transform.
 
     Object performs center or random cropping depending on the parameters.
@@ -705,11 +697,8 @@ class Crop(DataDependentSamplingTransform):
         self.crop_size = crop_to
         self.crop_mode = crop_mode
 
-    def sample_transform(self):
-        raise NotImplementedError
-
-    def sample_transform_from_data(self, data: DataContainer):
-        h, w = DataDependentSamplingTransform.sample_transform_from_data(self, data)
+    def sample_transform(self, data: DataContainer):
+        h, w = super(Crop, self).sample_transform(data)
         if self.crop_size is not None:
             if self.crop_size[0] > w or self.crop_size[1] > h:
                 raise ValueError
@@ -752,7 +741,7 @@ class Crop(DataDependentSamplingTransform):
         return Keypoints(pts_data, self.crop_size[1], self.crop_size[0])
 
 
-class Noise(DataDependentSamplingTransform):
+class Noise(BaseTransform):
     """Adds noise to an image. Other types of data than the image are ignored.
 
     Parameters
@@ -783,11 +772,8 @@ class Noise(DataDependentSamplingTransform):
             gain_range, self._default_range, min_val=0, max_val=1
         )
 
-    def sample_transform(self):
-        raise NotImplementedError
-
-    def sample_transform_from_data(self, data: DataContainer):
-        DataDependentSamplingTransform.sample_transform_from_data(self, data)
+    def sample_transform(self, data: DataContainer):
+        super(Noise, self).sample_transform(data)
         gain = random.uniform(self.gain_range[0], self.gain_range[1])
         h = None
         w = None
@@ -833,7 +819,7 @@ class Noise(DataDependentSamplingTransform):
         return pts
 
 
-class CutOut(ImageTransform, DataDependentSamplingTransform):
+class CutOut(ImageTransform):
     """Does cutout augmentation.
 
     https://arxiv.org/abs/1708.04552
@@ -869,11 +855,8 @@ class CutOut(ImageTransform, DataDependentSamplingTransform):
 
         self.cutout_size = cutout_size
 
-    def sample_transform(self):
-        raise NotImplementedError
-
-    def sample_transform_from_data(self, data: DataContainer):
-        h, w = DataDependentSamplingTransform.sample_transform_from_data(self, data)
+    def sample_transform(self, data: DataContainer):
+        h, w = super(CutOut, self).sample_transform(data)
 
         if self.cutout_size[0] > w or self.cutout_size[1] > h:
             raise ValueError("Cutout size is too large!")
@@ -893,7 +876,7 @@ class CutOut(ImageTransform, DataDependentSamplingTransform):
         return self.__cutout_img(img)
 
 
-class SaltAndPepper(ImageTransform, DataDependentSamplingTransform):
+class SaltAndPepper(ImageTransform):
     """Adds salt and pepper noise to an image. Other types of data than the image are ignored.
 
     Parameters
@@ -938,11 +921,8 @@ class SaltAndPepper(ImageTransform, DataDependentSamplingTransform):
             salt_p, self._default_range, 0, 1
         )
 
-    def sample_transform(self):
-        raise NotImplementedError
-
-    def sample_transform_from_data(self, data: DataContainer):
-        h, w = DataDependentSamplingTransform.sample_transform_from_data(self, data)
+    def sample_transform(self, data: DataContainer):
+        h, w = super(SaltAndPepper, self).sample_transform(data)
         gain = random.uniform(self.gain_range[0], self.gain_range[1])
         salt_p = random.uniform(self.salt_p[0], self.salt_p[1])
 
@@ -1000,7 +980,7 @@ class GammaCorrection(ImageTransform):
             gamma_range, self._default_range, 0
         )
 
-    def sample_transform(self):
+    def sample_transform(self, data):
         gamma = random.uniform(self.gamma_range[0], self.gamma_range[1])
         inv_gamma = 1.0 / gamma
         lut = np.array(
@@ -1050,7 +1030,7 @@ class Contrast(ImageTransform):
             contrast_range, self._default_range, 0
         )
 
-    def sample_transform(self):
+    def sample_transform(self, data):
         contrast_mul = random.uniform(self.contrast_range[0], self.contrast_range[1])
         lut = np.arange(0, 256) * contrast_mul
         lut = np.clip(lut, 0, 255).astype("uint8")
@@ -1116,7 +1096,7 @@ class Blur(ImageTransform):
             gaussian_sigma, self._default_range, 0
         )
 
-    def sample_transform(self):
+    def sample_transform(self, data):
         k = random.choice(self.k_size)
         s = random.uniform(self.gaussian_sigma[0], self.gaussian_sigma[1])
         self.state_dict = {"k_size": k, "sigma": s}
@@ -1186,7 +1166,7 @@ class HSV(ImageTransform):
         self.s_range = validate_numeric_range_parameter(s_range, self._default_range)
         self.v_range = validate_numeric_range_parameter(v_range, self._default_range)
 
-    def sample_transform(self):
+    def sample_transform(self, data):
         h = random.uniform(self.h_range[0], self.h_range[1])
         s = random.uniform(self.s_range[0], self.s_range[1])
         v = random.uniform(self.v_range[0], self.v_range[1])
@@ -1242,7 +1222,7 @@ class Brightness(ImageTransform):
             brightness_range, self._default_range
         )
 
-    def sample_transform(self):
+    def sample_transform(self, data):
         brightness_fact = random.uniform(
             self.brightness_range[0], self.brightness_range[1]
         )
@@ -1288,9 +1268,6 @@ class CvtColor(ImageTransform):
             mode, allowed_color_conversions, "none", heritable=False
         )
 
-    def sample_transform(self):
-        pass
-
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
         if self.mode == "none":
@@ -1311,7 +1288,7 @@ class CvtColor(ImageTransform):
                 return cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
 
-class KeypointsJitter(DataDependentSamplingTransform):
+class KeypointsJitter(BaseTransform):
     """
     Applies the jittering to the keypoints in X- and Y-durections
 
@@ -1335,10 +1312,7 @@ class KeypointsJitter(DataDependentSamplingTransform):
         self.dx_range = validate_numeric_range_parameter(dx_range, (0, 0), -1, 1)
         self.dy_range = validate_numeric_range_parameter(dy_range, (0, 0), -1, 1)
 
-    def sample_transform(self):
-        raise NotImplementedError
-
-    def sample_transform_from_data(self, data: DataContainer):
+    def sample_transform(self, data: DataContainer):
         pass
 
     @img_shape_checker
@@ -1424,7 +1398,7 @@ class JPEGCompression(ImageTransform):
             quality_range, (100, 100), 0, 100
         )
 
-    def sample_transform(self):
+    def sample_transform(self, data):
         self.state_dict["quality"] = random.randint(
             self.quality_range[0], self.quality_range[0]
         )

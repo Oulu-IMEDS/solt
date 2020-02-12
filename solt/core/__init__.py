@@ -2,7 +2,6 @@ from ._core import Stream, SelectiveStream
 from ._base_transforms import (
     BaseTransform,
     MatrixTransform,
-    DataDependentSamplingTransform,
 )
 from ._base_transforms import (
     PaddingPropertyHolder,
@@ -19,7 +18,6 @@ __all__ = [
     "Keypoints",
     "BaseTransform",
     "MatrixTransform",
-    "DataDependentSamplingTransform",
     "PaddingPropertyHolder",
     "InterpolationPropertyHolder",
     "ImageTransform",

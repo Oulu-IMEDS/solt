@@ -95,18 +95,6 @@ def test_transform_returns_original_data_if_not_in_specified_indices(trf, img_3x
     np.testing.assert_array_equal(res.data[5].data, kpts_data)
 
 
-@pytest.mark.parametrize('trf_cls', filter_trfs_subclass(all_trfs_solt, slc.DataDependentSamplingTransform))
-def test_data_dependent_samplers_raise_nie_when_sample_transform_is_called(trf_cls):
-    with pytest.raises(NotImplementedError):
-        if issubclass(trf_cls, slt.Crop):
-            trf = trf_cls(crop_to=10)
-        elif issubclass(trf_cls, slt.Pad):
-            trf = trf_cls(pad_to=10)
-        else:
-            trf = trf_cls()
-        trf.sample_transform()
-
-
 @pytest.mark.parametrize('img_1,img_2', [
     (img_2x2, img_6x6),
     (img_3x3, img_3x4),

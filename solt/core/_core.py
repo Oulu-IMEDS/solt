@@ -3,7 +3,6 @@ import numpy as np
 from ._base_transforms import (
     BaseTransform,
     MatrixTransform,
-    DataDependentSamplingTransform,
 )
 import copy
 import random
@@ -156,7 +155,7 @@ class Stream(Serializable):
         return res
 
     @staticmethod
-    def optimize_transforms_stack(transforms):
+    def optimize_transforms_stack(transforms, data):
         """
         Static method which fuses the transformations
 
@@ -164,6 +163,8 @@ class Stream(Serializable):
         ----------
         transforms : list
             A list of transforms
+        data : DataContainer
+            Data container to be used to sample the transforms
 
         Returns
         -------
@@ -174,29 +175,21 @@ class Stream(Serializable):
         # First we should create a stack
         transforms_stack = []
         for trf in transforms:
-            if not isinstance(trf, Stream) and not isinstance(trf, BaseTransform):
-                raise TypeError
-            if isinstance(trf, BaseTransform) and not isinstance(
-                trf, DataDependentSamplingTransform
-            ):
+            if isinstance(trf, MatrixTransform):
                 trf.reset_state()
                 if trf.use_transform():
-                    trf.sample_transform()
-                    if isinstance(trf, MatrixTransform):
-                        if len(transforms_stack) == 0:
-                            transforms_stack.append(trf)
-                        else:
-                            if isinstance(transforms_stack[-1], MatrixTransform):
-                                transforms_stack[-1].fuse_with(trf)
-                            else:
-                                transforms_stack.append(trf)
-                    else:
+                    trf.sample_transform(data)
+                    if len(transforms_stack) == 0:
                         transforms_stack.append(trf)
+                    else:
+                        transforms_stack[-1].fuse_with(trf)
             else:
-                transforms_stack.append(
-                    trf
-                )  # It means that the transform is actually a nested Stream
+                raise TypeError(
+                    "Nested streams or other transforms but the `Matrix` ones are not supported!"
+                )
 
+        if len(transforms_stack) > 0:
+            transforms_stack[-1].correct_transform()
         return transforms_stack
 
     @staticmethod
@@ -225,20 +218,17 @@ class Stream(Serializable):
 
         # Performing the transforms using the optimized stack
         if optimize_stack:
-            transforms = Stream.optimize_transforms_stack(transforms)
+            transforms = Stream.optimize_transforms_stack(transforms, data)
         for trf in transforms:
-            if isinstance(trf, BaseTransform) and not isinstance(
-                trf, DataDependentSamplingTransform
-            ):
+            if isinstance(trf, BaseTransform):
                 if not optimize_stack:
                     data = trf(data, return_torch=False)
                 else:
                     data = trf.apply(data)
             elif isinstance(trf, Stream):
                 data = trf(data, return_torch=False)
-            elif isinstance(trf, DataDependentSamplingTransform):
-                data = trf(data, return_torch=False)
-
+            else:
+                raise TypeError("Unknown transform type found in the Stream!")
         return data
 
 
@@ -316,7 +306,7 @@ class SelectiveStream(Stream):
             )
             if self.optimize_stack:
                 trfs = [copy.deepcopy(x) for x in trfs]
-                trfs = Stream.optimize_transforms_stack(trfs)
+                trfs = Stream.optimize_transforms_stack(trfs, data)
             data = Stream.exec_stream(trfs, data, self.optimize_stack)
 
         if return_torch:

@@ -63,17 +63,47 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
         self.state_dict["use"] = False
         return False
 
-    @abstractmethod
-    def sample_transform(self):
-        """Abstract method. Must be implemented in the child classes
+    def sample_transform(self, data: DataContainer):
+        """Samples transform parameters based on data.
+
+        Parameters
+        ----------
+        data : DataContainer
+            Data container to be used for sampling.
 
         Returns
         -------
-        None
-
+        out : tuple
+            Coordinate frame (h, w).
         """
+        prev_h = None
+        prev_w = None
+        # Let's make sure that all the objects have the same coordinate frame
+        for obj, t, settings in data:
+            if t == "M" or t == "I":
+                h = obj.shape[0]
+                w = obj.shape[1]
+            elif t == "P":
+                h = obj.height
+                w = obj.width
+            elif t == "L":
+                continue
 
-    def apply(self, data):
+            if prev_h is None:
+                prev_h = h
+            else:
+                if prev_h != h:
+                    raise ValueError
+
+            if prev_w is None:
+                prev_w = w
+            else:
+                if prev_w != w:
+                    raise ValueError
+        self.state_dict["h"], self.state_dict["w"] = prev_h, prev_w
+        return prev_h, prev_w
+
+    def apply(self, data: DataContainer):
         """Applies transformation to a DataContainer items depending on the type.
 
         Parameters
@@ -161,7 +191,7 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
 
         self.reset_state()
         if self.use_transform():
-            self.sample_transform()
+            self.sample_transform(data)
             res = self.apply(data)
         else:
             res = data
@@ -273,181 +303,6 @@ class ImageTransform(BaseTransform):
         """
 
 
-class DataDependentSamplingTransform(BaseTransform):
-    def __init__(self, p=0.5, data_indices=None):
-        """A class, which indicates that we sample its parameters based on data.
-
-        Such transforms are Crops, Elastic deformations etc, where the data is needed to make sampling.
-
-        """
-        super(DataDependentSamplingTransform, self).__init__(
-            p=p, data_indices=data_indices
-        )
-
-    def sample_transform(self):
-        raise NotImplementedError
-
-    def sample_transform_from_data(self, data: DataContainer):
-        """Samples transform parameters based on data.
-
-        Parameters
-        ----------
-        data : DataContainer
-            Data container to be used for sampling.
-
-        Returns
-        -------
-        out : tuple
-            Coordinate frame (h, w).
-        """
-        prev_h = None
-        prev_w = None
-        # Let's make sure that all the objects have the same coordinate frame
-        for obj, t, settings in data:
-            if t == "M" or t == "I":
-                h = obj.shape[0]
-                w = obj.shape[1]
-            elif t == "P":
-                h = obj.height
-                w = obj.width
-            elif t == "L":
-                continue
-
-            if prev_h is None:
-                prev_h = h
-            else:
-                if prev_h != h:
-                    raise ValueError
-
-            if prev_w is None:
-                prev_w = w
-            else:
-                if prev_w != w:
-                    raise ValueError
-        return prev_h, prev_w
-
-    def __call__(
-        self,
-        data,
-        return_torch=False,
-        as_dict=True,
-        scale_keypoints=True,
-        normalize=True,
-        mean=None,
-        std=None,
-    ):
-        """Applies the transform to a DataContainer
-
-        Parameters
-        ----------
-        data : DataContainer or dict
-            Data to be augmented. See `solt.core.DataContainer.from_dict` for details.
-        return_torch : bool
-            Whether to convert the result into a torch tensors. By default, it is false for transforms and
-            true for the streams.
-        as_dict : bool
-            Whether to pool the results into a dict. See `solt.core.DataContainer.to_dict` for details
-        scale_keypoints : bool
-            Whether to scale the keypoints into 0-1 range
-        normalize : bool
-            Whether to normalize the resulting tensor. If mean or std args are None,
-            ImageNet statistics will be used
-        mean : None or tuple of float or np.ndarray or torch.FloatTensor
-            Mean to subtract for the converted tensor
-        std : None or tuple of float or np.ndarray or torch.FloatTensor
-            Mean to subtract for the converted tensor
-
-        Returns
-        -------
-        out : DataContainer or dict or list
-            Result
-
-        """
-
-        if isinstance(data, dict):
-            data = DataContainer.from_dict(data)
-
-        self.reset_state()
-        if self.use_transform():
-            self.sample_transform_from_data(data)
-            res = self.apply(data)
-        else:
-            res = data
-
-        if return_torch:
-            return res.to_torch(
-                as_dict=as_dict,
-                scale_keypoints=scale_keypoints,
-                normalize=normalize,
-                mean=mean,
-                std=std,
-            )
-        return res
-
-    @abstractmethod
-    def _apply_img(self, img: np.ndarray, settings: dict):
-        """Abstract method, which determines the transform's behaviour when it is applied to images HxWxC.
-
-        Parameters
-        ----------
-        img : numpy.ndarray
-            Image to be augmented
-
-        Returns
-        -------
-        out : numpy.ndarray
-
-        """
-
-    @abstractmethod
-    def _apply_mask(self, mask: np.ndarray, settings: dict):
-        """Abstract method, which determines the transform's behaviour when it is applied to masks HxW.
-
-        Parameters
-        ----------
-        mask : numpy.ndarray
-            Mask to be augmented
-
-        Returns
-        -------
-        out : ndarray
-            Result
-
-        """
-
-    @abstractmethod
-    def _apply_labels(self, labels, settings: dict):
-        """Abstract method, which determines the transform's behaviour when it is applied to labels (e.g. label smoothing)
-
-        Parameters
-        ----------
-        labels : numpy.ndarray
-            Array of labels.
-
-        Returns
-        -------
-        out : numpy.ndarray
-            Result
-
-        """
-
-    @abstractmethod
-    def _apply_pts(self, pts: Keypoints, settings: dict):
-        """Abstract method, which determines the transform's behaviour when it is applied to keypoints.
-
-        Parameters
-        ----------
-        pts : Keypoints
-            Keypoints object
-
-        Returns
-        -------
-        out : Keypoints
-            Result
-
-        """
-
-
 class PaddingPropertyHolder(object):
     """PaddingPropertyHolder
 
@@ -535,15 +390,56 @@ class MatrixTransform(
             trf.state_dict["transform_matrix"] @ self.state_dict["transform_matrix"]
         )
 
-    @abstractmethod
-    def sample_transform(self):
-        """Abstract method. Must be implemented in the child classes
+    def sample_transform(self, data):
+        """Samples the transform and corrects for frame change.
 
         Returns
         -------
         None
 
         """
+        super(MatrixTransform, self).sample_transform(data)
+        self.sample_transform_matrix(data)  # Only this method needs to be implemented!
+        self.correct_transform()
+
+    @staticmethod
+    def move_transform_to_origin(transform_matrix, origin):
+        # First we correct the transformation so that it is performed around the origin
+        transform_matrix = transform_matrix.copy()
+        t_origin = np.array([1, 0, -origin[0], 0, 1, -origin[1], 0, 0, 1]).reshape(
+            (3, 3)
+        )
+
+        t_origin_back = np.array([1, 0, origin[0], 0, 1, origin[1], 0, 0, 1]).reshape(
+            (3, 3)
+        )
+        transform_matrix = t_origin_back @ transform_matrix @ t_origin
+
+        return transform_matrix
+
+    @staticmethod
+    def recompute_coordinate_frame(transform_matrix, width, height):
+        coord_frame = np.array(
+            [[0, 0, 1], [0, height, 1], [width, height, 1], [width, 0, 1]]
+        )
+        new_frame = np.dot(transform_matrix, coord_frame.T).T
+        new_frame[:, 0] /= new_frame[:, -1]
+        new_frame[:, 1] /= new_frame[:, -1]
+        new_frame = new_frame[:, :-1]
+        # Computing the new coordinates
+
+        # If during the transform, we obtained negative coordinates, we have to move to the origin
+        if np.any(new_frame[:, 0] < 0):
+            new_frame[:, 0] += abs(new_frame[:, 0].min())
+        if np.any(new_frame[:, 1] < 0):
+            new_frame[:, 1] += abs(new_frame[:, 1].min())
+
+        new_frame[:, 0] -= new_frame[:, 0].min()
+        new_frame[:, 1] -= new_frame[:, 1].min()
+        w_new = int(np.round(new_frame[:, 0].max()))
+        h_new = int(np.round(new_frame[:, 1].max()))
+
+        return h_new, w_new
 
     @staticmethod
     def correct_for_frame_change(transform_matrix: np.ndarray, width: int, height: int):
@@ -563,48 +459,49 @@ class MatrixTransform(
             Modified Transform matrix
 
         """
-        # First we correct the transformation so that it is performed around the origin
-        transform_matrix = transform_matrix.copy()
         origin = [(width - 1) // 2, (height - 1) // 2]
-        t_origin = np.array([1, 0, -origin[0], 0, 1, -origin[1], 0, 0, 1]).reshape(
-            (3, 3)
+        # First, let's make sure that our transformation matrix is applied at the origin
+        transform_matrix = MatrixTransform.move_transform_to_origin(
+            transform_matrix, origin
         )
+        # Now, if we think of scaling, rotation and translation, the image size gets increased
+        # when we apply any geometric transform. Default behaviour in OpenCV is designed to crop the
+        # image edges, however it is not desired when we want to deal with Keypoints (don't want them
+        # to exceed teh image size).
 
-        t_origin_back = np.array([1, 0, origin[0], 0, 1, origin[1], 0, 0, 1]).reshape(
-            (3, 3)
+        # If we imagine that the image edges are a rectangle, we can rotate it around the origin
+        # to obtain the new coordinate frame
+        h_new, w_new = MatrixTransform.recompute_coordinate_frame(
+            transform_matrix, width, height
         )
-        transform_matrix = t_origin_back @ transform_matrix @ t_origin
-
-        # Now, if we think of scaling, rotation and translation, the image gets increased when we
-        # apply any transform.
-
-        # This is needed to recalculate the size of the image after the transformation.
-        # The core idea is to transform the coordinate grid
-        # left top, left bottom, right bottom, right top
-        coord_frame = np.array(
-            [[0, 0, 1], [0, height, 1], [width, height, 1], [width, 0, 1]]
-        )
-        new_frame = np.dot(transform_matrix, coord_frame.T).T
-        new_frame[:, 0] /= new_frame[:, -1]
-        new_frame[:, 1] /= new_frame[:, -1]
-        new_frame = new_frame[:, :-1]
-        # Computing the new coordinates
-
-        # If during the transform, we obtained negative coordinates, we have to move to the origin
-        if np.any(new_frame[:, 0] < 0):
-            new_frame[:, 0] += abs(new_frame[:, 0].min())
-        if np.any(new_frame[:, 1] < 0):
-            new_frame[:, 1] += abs(new_frame[:, 1].min())
-        # In case of scaling the coordinate_frame, we need to move back to the origin
-        new_frame[:, 0] -= new_frame[:, 0].min()
-        new_frame[:, 1] -= new_frame[:, 1].min()
-        w_new = int(np.round(new_frame[:, 0].max()))
-        h_new = int(np.round(new_frame[:, 1].max()))
-
         transform_matrix[0, -1] += w_new // 2 - origin[0]
         transform_matrix[1, -1] += h_new // 2 - origin[1]
 
         return transform_matrix, w_new, h_new
+
+    @abstractmethod
+    def sample_transform_matrix(self, data):
+        """Method that is called to sample the transform matrix
+
+        """
+
+    def correct_transform(self):
+        h, w = self.state_dict["h"], self.state_dict["w"]
+        tm = self.state_dict["transform_matrix"]
+        tm_corr, w_new, h_new = MatrixTransform.correct_for_frame_change(tm, w, h)
+        self.state_dict["h_new"], self.state_dict["w_new"] = h_new, w_new
+        self.state_dict["transform_matrix_corrected"] = tm_corr
+
+    def parse_settings(self, settings):
+        interp = allowed_interpolations[self.interpolation[0]]
+        if settings["interpolation"][1] == "strict":
+            interp = allowed_interpolations[settings["interpolation"][0]]
+
+        padding = allowed_paddings[self.padding[0]]
+        if settings["padding"][1] == "strict":
+            padding = allowed_paddings[settings["padding"][0]]
+
+        return interp, padding
 
     def _apply_img_or_mask(self, img: np.ndarray, settings: dict):
         """Applies a transform to an image or mask without controlling the shapes.
@@ -622,47 +519,12 @@ class MatrixTransform(
             Warped image
 
         """
-        if "w_new" in self.state_dict and not self.ignore_state:
-            w_new = self.state_dict["w_new"]
-            h_new = self.state_dict["h_new"]
 
-            w = self.state_dict["w"]
-            h = self.state_dict["h"]
-
-            if w != img.shape[1] or h != img.shape[0]:
-                raise ValueError(
-                    "Ignore state is False, but the items in DataContainer are of different sizes!!!"
-                )
-
-            transform_m_corrected = self.state_dict["transform_matrix_corrected"]
-        else:
-            transform_m = self.state_dict["transform_matrix"]
-            (
-                transform_m_corrected,
-                w_new,
-                h_new,
-            ) = MatrixTransform.correct_for_frame_change(
-                transform_m, img.shape[1], img.shape[0]
-            )
-
-            self.state_dict["transform_matrix_corrected"] = transform_m_corrected
-
-            self.state_dict["w"] = img.shape[1]
-            self.state_dict["h"] = img.shape[0]
-
-            self.state_dict["w_new"] = w_new
-            self.state_dict["h_new"] = h_new
-
-        interp = allowed_interpolations[self.interpolation[0]]
-        if settings["interpolation"][1] == "strict":
-            interp = allowed_interpolations[settings["interpolation"][0]]
-
-        padding = allowed_paddings[self.padding[0]]
-        if settings["padding"][1] == "strict":
-            padding = allowed_paddings[settings["padding"][0]]
-
+        h_new, w_new = self.state_dict["h_new"], self.state_dict["w_new"]
+        interp, padding = self.parse_settings(settings)
+        transf_m = self.state_dict["transform_matrix_corrected"]
         return cv2.warpPerspective(
-            img, transform_m_corrected, (w_new, h_new), flags=interp, borderMode=padding
+            img, transf_m, (w_new, h_new), flags=interp, borderMode=padding
         )
 
     @img_shape_checker
@@ -746,27 +608,13 @@ class MatrixTransform(
             )
 
         pts_data = pts.data.copy()
-        if "w_new" in self.state_dict and not self.ignore_state:
-            w_new = self.state_dict["w_new"]
-            h_new = self.state_dict["w_new"]
-            transform_m_corrected = self.state_dict["transform_matrix_corrected"]
-        else:
-            transform_matrix = self.state_dict["transform_matrix"]
-            (
-                transform_m_corrected,
-                w_new,
-                h_new,
-            ) = MatrixTransform.correct_for_frame_change(
-                transform_matrix, pts.width, pts.height
-            )
-            self.state_dict["w"] = pts.width
-            self.state_dict["h"] = pts.height
 
-            self.state_dict["w_new"] = w_new
-            self.state_dict["h_new"] = h_new
+        w_new = self.state_dict["w_new"]
+        h_new = self.state_dict["h_new"]
+        tm_corr = self.state_dict["transform_matrix_corrected"]
 
         pts_data = np.hstack((pts_data, np.ones((pts_data.shape[0], 1))))
-        pts_data = np.dot(transform_m_corrected, pts_data.T).T
+        pts_data = np.dot(tm_corr, pts_data.T).T
 
         pts_data[:, 0] /= pts_data[:, 2]
         pts_data[:, 1] /= pts_data[:, 2]
