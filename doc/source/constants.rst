@@ -1,4 +1,4 @@
-constants module
+solt.constants
 ================
 
 .. automodule:: solt.constants

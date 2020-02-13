@@ -1,15 +1,47 @@
-from ._transforms import RandomFlip, RandomRotate, \
-    RandomShear, RandomScale, RandomTranslate, RandomProjection, \
-    PadTransform, CropTransform, ImageAdditiveGaussianNoise, \
-    ImageGammaCorrection, ImageSaltAndPepper, ImageBlur, \
-    ImageRandomHSV, ImageColorTransform, ResizeTransform, \
-    ImageRandomContrast, ImageRandomBrightness, RandomRotate90, ImageCutOut, KeypointsJitter, \
-    ImageJPEGCompression
+from ._transforms import (
+    Flip,
+    Rotate,
+    Shear,
+    Scale,
+    Translate,
+    Projection,
+    Pad,
+    Crop,
+    Noise,
+    GammaCorrection,
+    SaltAndPepper,
+    Blur,
+    HSV,
+    CvtColor,
+    Resize,
+    Contrast,
+    Brightness,
+    Rotate90,
+    CutOut,
+    KeypointsJitter,
+    JPEGCompression,
+)
 
-__all__ = ['RandomFlip', 'RandomRotate', 'RandomShear',
-           'RandomScale', 'RandomTranslate', 'RandomProjection',
-           'PadTransform', 'CropTransform', 'ImageAdditiveGaussianNoise',
-           'ImageGammaCorrection', 'ImageSaltAndPepper', 'ImageBlur',
-           'ImageRandomHSV', 'ImageColorTransform', 'ResizeTransform',
-           'ImageRandomContrast', 'ImageRandomBrightness', 'RandomRotate90',
-           'ImageCutOut', 'KeypointsJitter', 'ImageJPEGCompression']
+__all__ = [
+    "Flip",
+    "Rotate",
+    "Shear",
+    "Scale",
+    "Translate",
+    "Projection",
+    "Pad",
+    "Crop",
+    "Noise",
+    "GammaCorrection",
+    "SaltAndPepper",
+    "Blur",
+    "HSV",
+    "CvtColor",
+    "Resize",
+    "Contrast",
+    "Brightness",
+    "Rotate90",
+    "CutOut",
+    "KeypointsJitter",
+    "JPEGCompression",
+]

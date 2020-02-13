@@ -14,7 +14,13 @@ matrix:
       sudo: true
       python: 3.7
 
-    - name: "OSX/ Python 3.6"
+    - name: "Linux / Python 3.8"
+      os: linux
+      dist: xenial
+      sudo: true
+      python: 3.8
+
+    - name: "OSX / Python 3.6"
       os: osx
       language: generic
       env: TRAVIS_PYTHON_VERSION=3.6
@@ -24,17 +30,24 @@ matrix:
       language: generic
       env: TRAVIS_PYTHON_VERSION=3.7
 
+    - name: "OSX / Python 3.8"
+      os: osx
+      language: generic
+      env: TRAVIS_PYTHON_VERSION=3.8
+
 install:
   - sh ci/conda_setup.sh
   - bash $HOME/miniconda.sh -b -p $HOME/miniconda
   - export OPATH="$PATH" && export PATH="$HOME/miniconda/bin:$PATH"
   - conda create -q -y -n solt_test_env python=$TRAVIS_PYTHON_VERSION
   - conda install -y -n solt_test_env pandoc
+  - conda install -y -n solt_test_env pytorch torchvision cpuonly -c pytorch
   - source activate solt_test_env
   - pip install -r ci/requirements.txt
   - pip install .
 script:
   - py.test tests --cov solt --cov-report term-missing -v
+  - black --config=black.toml --check .
   - flake8
 after_success:
   - codecov

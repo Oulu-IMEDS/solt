@@ -1,4 +1,4 @@
-transforms module
+solt.transforms
 =================
 
 .. automodule:: solt.transforms
