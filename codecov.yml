@@ -2,3 +2,4 @@ ignore:
   - "solt/__init__.py"
   - "solt/constants/*"
   - "tests/*"
+  - "benchmark/*"

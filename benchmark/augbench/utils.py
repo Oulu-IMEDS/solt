@@ -11,17 +11,17 @@ from pytablewriter import MarkdownTableWriter
 from pytablewriter.style import Style
 
 
-def read_img_pillow(path):
+def read_img_pillow(path, imsize):
     with open(path, "rb") as f:
         img = Image.open(f)
-        img = img.resize((256, 256))
+        img = img.resize((imsize, imsize))
         return img.convert("RGB")
 
 
-def read_img_cv2(filepath):
+def read_img_cv2(filepath, imsize):
     img = cv2.imread(filepath)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    img = cv2.resize(img, (256, 256))
+    img = cv2.resize(img, (imsize, imsize))
     return img
 
 
@@ -33,6 +33,7 @@ def parse_args():
     parser.add_argument(
         "-i", "--images", default=2000, type=int, metavar="N", help="number of images for benchmarking (default: 2000)"
     )
+    parser.add_argument("--imsize", default=256, type=int, help="ImageSize")
     parser.add_argument(
         "-l", "--libraries", default=DEFAULT_BENCHMARKING_LIBRARIES, nargs="+", help="list of libraries to augbench"
     )

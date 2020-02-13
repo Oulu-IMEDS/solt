@@ -28,18 +28,20 @@ if __name__ == "__main__":
     data_dir = args.data_dir
     paths = list(sorted(os.listdir(data_dir)))
     paths = paths[: args.images]
-    imgs_cv2 = [utils.read_img_cv2(os.path.join(data_dir, path)) for path in paths]
-    imgs_pillow = [utils.read_img_pillow(os.path.join(data_dir, path)) for path in paths]
+    imgs_cv2 = [utils.read_img_cv2(os.path.join(data_dir, path), args.imsize) for path in paths]
+    imgs_pillow = [utils.read_img_pillow(os.path.join(data_dir, path), args.imsize) for path in paths]
 
     benchmarks = [
-        transforms.HorizontalFlip(),
-        transforms.VerticalFlip(),
-        transforms.RotateAny(),
-        transforms.Crop(224),
-        transforms.Crop(128),
-        transforms.Crop(64),
-        transforms.Crop(32),
-        transforms.VHFlipRotateCrop(),
+        transforms.HorizontalFlip(args.imsize),
+        transforms.VerticalFlip(args.imsize),
+        transforms.RotateAny(args.imsize),
+        transforms.Crop(224, args.imsize),
+        transforms.Crop(128, args.imsize),
+        transforms.Crop(64, args.imsize),
+        transforms.Crop(32, args.imsize),
+        transforms.Pad(300, args.imsize),
+        transforms.VHFlipRotateCrop(args.imsize),
+        transforms.HFlipCrop(args.imsize),
     ]
 
     for library in libraries:
