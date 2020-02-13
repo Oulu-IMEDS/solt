@@ -39,7 +39,7 @@ if __name__ == "__main__":
         transforms.Crop(128),
         transforms.Crop(64),
         transforms.Crop(32),
-        transforms.VHFlipRotateCrop()
+        transforms.VHFlipRotateCrop(),
     ]
 
     for library in libraries:

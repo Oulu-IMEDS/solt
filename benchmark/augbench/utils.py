@@ -78,6 +78,7 @@ def format_results(images_per_second_for_aug, show_std=False):
         result += " ± {}".format(math.ceil(np.std(images_per_second_for_aug)))
     return result
 
+
 class MarkdownGenerator:
     def __init__(self, df, package_versions):
         self._df = df

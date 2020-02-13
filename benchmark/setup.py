@@ -5,7 +5,7 @@
 
 from setuptools import find_packages, setup
 
-with open('requirements.txt') as f:
+with open("requirements.txt") as f:
     reqs = f.read().splitlines()
 
 description = """Benchmark of the data augmentation libraries"""
