@@ -5,7 +5,7 @@
 
 from setuptools import find_packages, setup
 
-requirements = ("numpy", "opencv-python", "torch", "torchvision", "pyyaml")
+requirements = ("numpy", "opencv-python-headless", "torch", "torchvision", "pyyaml")
 
 setup_requirements = ()
 

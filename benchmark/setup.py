@@ -5,7 +5,8 @@
 
 from setuptools import find_packages, setup
 
-setup_requirements = ()
+with open('requirements.txt') as f:
+    reqs = f.read().splitlines()
 
 description = """Benchmark of the data augmentation libraries"""
 
@@ -25,14 +26,14 @@ setup(
         "Operating System :: POSIX :: Linux",
     ],
     description="Benchmark of different data augmentation libraries",
-    install_requires=open("requirements.txt").read(),
+    install_requires=reqs,
     license="MIT license",
     long_description=description,
     include_package_data=True,
     keywords="data augmentations, deeep learning",
     name="augbench",
     packages=find_packages(include=["augbench"]),
-    setup_requires=setup_requirements,
+    setup_requires=(),
     url="https://github.com/mipt-oulu/solt/benchmark",
     version="0.1.9",
     zip_safe=False,

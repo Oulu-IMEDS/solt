@@ -1,7 +1,7 @@
 albumentations==0.4.3
 augmentor==0.2.8
-git+git://github.com/MIPT-Oulu/solt@master#egg=solt
-pillow-simd==7.0.0
+pillow-simd==7.0.0.post3
 pytablewriter
-torch
-torchvision
+torch==1.4.0
+torchvision===0.5.0
+#solt==1.9.0
