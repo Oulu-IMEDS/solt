@@ -88,6 +88,35 @@ class DataContainer(object):
         self.__imagenet_mean = (0.485, 0.456, 0.406)
         self.__imagenet_std = (0.229, 0.224, 0.225)
 
+    def validate(self):
+        prev_h = None
+        prev_w = None
+        # Let's make sure that all the objects have the same coordinate frame
+        data = self
+        for obj, t, settings in data:
+            if t == "M" or t == "I":
+                h = obj.shape[0]
+                w = obj.shape[1]
+            elif t == "P":
+                h = obj.height
+                w = obj.width
+            elif t == "L":
+                continue
+
+            if prev_h is None:
+                prev_h = h
+            else:
+                if prev_h != h:
+                    raise ValueError
+
+            if prev_w is None:
+                prev_w = w
+            else:
+                if prev_w != w:
+                    raise ValueError
+
+        return prev_h, prev_w
+
     @property
     def data_format(self):
         return self.__fmt
