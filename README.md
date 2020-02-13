@@ -32,6 +32,26 @@ The aim of building SOLT was to create a tool for reproducible research. At MIPT
 
 If you use SOLT and cite it in your research, please, don't hesitate to sent an email to Aleksei Tiulpin. It will be added here.
 
+## Benchmark
+We have conducted a fair benchmark of several augmentation libraries by 
+comparing how many images they process per second. In this benchmark, we measured
+the transform itself, as well as the conversion to torch.Tensor and also
+a subtraction of the ImageNet mean. 
+
+Here is how you can run the benchmark yourself:
+
+```
+export DATA_DIR="<PATH to ImageNet val>"
+conda env create -f benchmark/augbench.yaml
+conda activate augbench
+pip install git+https://github.com/MIPT-Oulu/solt@master#egg-name=solt
+pip install -e benchmark
+python -u -m augbench.benchmark -i 500
+```
+
+Benchmark results:
+
+
 ## Author
 Aleksei Tiulpin, 
 Research Unit of Medical Imaging, 
