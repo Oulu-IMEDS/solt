@@ -147,6 +147,16 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
 
         return DataContainer(data=tuple(result), fmt="".join(types))
 
+    @staticmethod
+    def wrap_data(data):
+        if isinstance(data, np.ndarray):
+            data = DataContainer((data,), "I")
+        elif isinstance(data, dict):
+            data = DataContainer.from_dict(data)
+        elif not isinstance(data, DataContainer):
+            raise TypeError("Unknown data type!")
+        return data
+
     def __call__(
         self, data, return_torch=False, as_dict=True, scale_keypoints=True, normalize=True, mean=None, std=None,
     ):
@@ -154,8 +164,10 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
 
         Parameters
         ----------
-        data : DataContainer or dict
+        data : DataContainer or dict or np.ndarray.
             Data to be augmented. See ``solt.core.DataContainer.from_dict`` for details.
+            If np.ndarray, then the data will be wrapped as a data container with format
+            ``I``.
         return_torch : bool
             Whether to convert the result into a torch tensors.
             By default, it is `False` for transforms and ``True`` for the streams.
@@ -179,8 +191,7 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
 
         """
 
-        if isinstance(data, dict):
-            data = DataContainer.from_dict(data)
+        data = BaseTransform.wrap_data(data)
 
         self.reset_state()
         if self.use_transform():

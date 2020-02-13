@@ -208,9 +208,7 @@ class Stream(Serializable):
             Result
         """
 
-        if isinstance(data, dict):
-            data = DataContainer.from_dict(data)
-
+        data = BaseTransform.wrap_data(data)
         # Performing the transforms using the optimized stack
         if optimize_stack:
             transforms = Stream.optimize_transforms_stack(transforms, data)
@@ -289,6 +287,8 @@ class SelectiveStream(Stream):
         out : DataContainer
             Result
         """
+        data = BaseTransform.wrap_data(data)
+
         if len(self.transforms) > 0:
             random_state = np.random.RandomState(random.randint(0, 2 ** 32 - 1))
             trfs = random_state.choice(self.transforms, self.n, replace=False, p=self.probs)
