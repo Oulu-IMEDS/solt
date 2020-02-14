@@ -22,34 +22,8 @@ You can fetch the most fresh changes from this repository:
 ```
 pip install git+https://github.com/MIPT-Oulu/solt
 ```
-## Papers that use SOLT
-The aim of building SOLT was to create a tool for reproducible research. At MIPT, we use SOLT in our projects:
-
-1. https://arxiv.org/abs/1907.05089
-2. https://arxiv.org/abs/1904.06236
-3. https://arxiv.org/abs/1907.08020
-4. https://arxiv.org/abs/1907.12237
-
-If you use SOLT and cite it in your research, please, don't hesitate to sent an email to Aleksei Tiulpin. It will be added here.
 
 ## Benchmark
-We have conducted a fair benchmark of several augmentation libraries by 
-comparing how many images they process per second. In this benchmark, we measured
-the transform itself, as well as the conversion to torch.Tensor and also
-a subtraction of the ImageNet mean. 
-
-Here is how you can run the benchmark yourself:
-
-```
-export DATA_DIR="<PATH to ImageNet val>"
-conda env create -f benchmark/augbench.yaml
-conda activate augbench
-pip install git+https://github.com/MIPT-Oulu/solt@master#egg-name=solt
-pip install -e benchmark
-python -u -m augbench.benchmark -i 500
-```
-
-Benchmark results:
 
 |                |albumentations<br><small>0.4.3</small>|torchvision (Pillow-SIMD backend)<br><small>0.5.0</small>|augmentor<br><small>0.2.8</small>|solt<br><small>0.1.9</small>|
 |----------------|:------------------------------------:|:-------------------------------------------------------:|:-------------------------------:|:--------------------------:|
@@ -65,7 +39,20 @@ Benchmark results:
 |HFlipCrop       |                 2460                 |                          2902                           |              2862               |          **3514**          |
 
 Python and library versions: Python 3.7.0 (default, Oct  9 2018, 10:31:47) [GCC 7.3.0], numpy 1.18.1, pillow-simd 7.0.0.post3, opencv-python 4.2.0.32, scikit-image 0.16.2, scipy 1.4.1.
+Please find the details about the benchmark [here](BENCHMARK.md)
 
+## Papers that use SOLT
+The aim of building SOLT was to create a tool for reproducible research. At MIPT, we use SOLT in our projects:
+
+1. https://arxiv.org/abs/1907.05089
+2. https://arxiv.org/abs/1904.06236
+3. https://arxiv.org/abs/1907.08020
+4. https://arxiv.org/abs/1907.12237
+
+If you use SOLT and cite it in your research, please, don't hesitate to sent an email to Aleksei Tiulpin. It will be added here.
+
+## How to contribute
+Follow the guidelines described [here](CONTRIBUTING.md). 
 
 ## Author
 Aleksei Tiulpin, 
