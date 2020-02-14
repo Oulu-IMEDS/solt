@@ -1,4 +1,4 @@
-# Who is the fastest on teh market?
+# Who is the fastest on the market?
 We have conducted a fair benchmark of several augmentation libraries by 
 comparing how many images they process per second. In this benchmark, we measured
 the transform itself, as well as the conversion to `torch.Tensor`, and 

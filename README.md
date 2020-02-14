@@ -39,7 +39,7 @@ pip install git+https://github.com/MIPT-Oulu/solt
 |HFlipCrop       |                 2460                 |                          2902                           |              2862               |          **3514**          |
 
 Python and library versions: Python 3.7.0 (default, Oct  9 2018, 10:31:47) [GCC 7.3.0], numpy 1.18.1, pillow-simd 7.0.0.post3, opencv-python 4.2.0.32, scikit-image 0.16.2, scipy 1.4.1.
-Please find the details about the benchmark [here](BENCHMARK.md)
+Please find the details about the benchmark [here](BENCHMARK.md).
 
 ## Papers that use SOLT
 The aim of building SOLT was to create a tool for reproducible research. At MIPT, we use SOLT in our projects:
