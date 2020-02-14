@@ -13,6 +13,15 @@ Furthermore, SOLT is fast and has OpenCV in its backend.
 Full auto-generated docs and 
 examples are available here: [https://mipt-oulu.github.io/solt/](https://mipt-oulu.github.io/solt/).
 
+## Features
+
+- Support of Images, masks and keypoints for all the transforms (including multiple items at the time)
+- Fast and PyTorch-integrated
+- Convenient and flexible serialization API
+- Excellent documentation
+- Easy to extend
+- 100% Code coverage
+
 ## Installation
 The most recent version is available in pip:
 ```
@@ -24,6 +33,9 @@ pip install git+https://github.com/MIPT-Oulu/solt
 ```
 
 ## Benchmark
+
+We propose a fair benchmark based on the refactored version of the one proposed by albumentations 
+team (number of images per second):
 
 |                |albumentations<br><small>0.4.3</small>|torchvision (Pillow-SIMD backend)<br><small>0.5.0</small>|augmentor<br><small>0.2.8</small>|solt<br><small>0.1.9</small>|
 |----------------|:------------------------------------:|:-------------------------------------------------------:|:-------------------------------:|:--------------------------:|
