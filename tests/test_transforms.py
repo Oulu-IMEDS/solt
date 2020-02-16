@@ -1,5 +1,6 @@
 import copy
 import random
+from contextlib import ExitStack as does_not_raise
 
 import cv2
 import numpy as np
@@ -1054,6 +1055,49 @@ def test_hsv_doesnt_work_for_1_channel(img_6x6):
     dc = slc.DataContainer(img_6x6.astype(np.uint8), "I")
 
     with pytest.raises(ValueError):
+        trf(dc)
+
+
+def test_intensity_remap_values():
+    trf = slt.IntensityRemap(p=1)
+    img = np.arange(0, 256, 1, dtype=np.uint8).reshape((16, 16, 1))
+    dc = slc.DataContainer(img, "I")
+    dc_res = trf(dc)
+
+    img_expected = trf.state_dict["LUT"].reshape((16, 16, 1))
+    np.testing.assert_array_equal(dc_res.data[0], img_expected)
+
+
+@pytest.mark.parametrize(
+    "img, expected",
+    [
+        (img_3x3(), does_not_raise()),
+        (img_3x3_rgb(), pytest.raises(ValueError)),
+    ],
+)
+def test_intensity_remap_channels(img, expected):
+    trf = slt.IntensityRemap(p=1)
+    dc = slc.DataContainer(img.astype(np.uint8), "I")
+
+    with expected:
+        trf(dc)
+
+
+@pytest.mark.parametrize(
+    "dtype, expected",
+    [
+        (np.uint8, does_not_raise()),
+        (np.int8, pytest.raises(ValueError)),
+        (np.uint16, pytest.raises(ValueError)),
+        (np.float, pytest.raises(ValueError)),
+        (np.bool_, pytest.raises(ValueError)),
+    ],
+)
+def test_intensity_remap_dtypes(dtype, expected):
+    trf = slt.IntensityRemap(p=1)
+    dc = slc.DataContainer(img_3x3().astype(dtype), "I")
+
+    with expected:
         trf(dc)
 
 

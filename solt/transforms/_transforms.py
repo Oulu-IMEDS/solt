@@ -2,6 +2,8 @@ import random
 
 import cv2
 import numpy as np
+import scipy
+import scipy.signal
 
 from ..core import (
     BaseTransform,
@@ -1209,6 +1211,55 @@ class Brightness(ImageTransform):
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
+        return cv2.LUT(img, self.state_dict["LUT"])
+
+
+class IntensityRemap(ImageTransform):
+    """Performs random intensity remapping.
+
+    Parameters
+    ----------
+    p : float
+        Probability of applying this transform,
+    kernel_size: int
+        Size of medial filter kernel used during the generation of intensity mapping.
+        Higher value yield more monotonic mapping.
+    data_indices : tuple or None
+        Indices of the images within the data container to which this transform needs to be applied.
+        Every element within the tuple must be integer numbers.
+        If None, then the transform will be applied to all the images withing the DataContainer.
+
+    References
+    ----------
+    .. [1] Hesse, L. S., Kuling, G., Veta, M., & Martel, A. L. (2019).
+       Intensity augmentation for domain transfer of whole breast
+       segmentation in MRI. https://arxiv.org/abs/1909.02642
+    """
+
+    serializable_name = "intensity_remap"
+    """How the class should be stored in the registry"""
+
+    def __init__(self, kernel_size=9, data_indices=None, p=0.5):
+        super(IntensityRemap, self).__init__(p=p, data_indices=data_indices)
+        self.kernel_size = kernel_size
+
+    def sample_transform(self, data):
+        m = random.sample(range(256), k=256)
+        m = scipy.signal.medfilt(m, kernel_size=self.kernel_size)
+        m = m + np.linspace(0, 255, 256)
+
+        m = m - min(m)
+        m = m / max(m) * 255
+        m = np.floor(m).astype(np.uint8)
+
+        self.state_dict = {"LUT": m}
+
+    @img_shape_checker
+    def _apply_img(self, img: np.ndarray, settings: dict):
+        if img.dtype != np.uint8:
+            raise ValueError("IntensityRemap supports uint8 ndarrays only")
+        if img.ndim == 3 and img.shape[-1] != 1:
+            raise ValueError("Only grayscale 2D images are supported")
         return cv2.LUT(img, self.state_dict["LUT"])
 
 
