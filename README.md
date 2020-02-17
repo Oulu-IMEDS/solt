@@ -13,6 +13,15 @@ Furthermore, SOLT is fast and has OpenCV in its backend.
 Full auto-generated docs and 
 examples are available here: [https://mipt-oulu.github.io/solt/](https://mipt-oulu.github.io/solt/).
 
+## Features
+
+- Support of Images, masks and keypoints for all the transforms (including multiple items at the time)
+- Fast and PyTorch-integrated
+- Convenient and flexible serialization API
+- Excellent documentation
+- Easy to extend
+- 100% Code coverage
+
 ## Installation
 The most recent version is available in pip:
 ```
@@ -22,6 +31,28 @@ You can fetch the most fresh changes from this repository:
 ```
 pip install git+https://github.com/MIPT-Oulu/solt
 ```
+
+## Benchmark
+
+We propose a fair benchmark based on the refactored version of the one proposed by albumentations 
+team (number of images per second):
+
+|                |albumentations<br><small>0.4.3</small>|torchvision (Pillow-SIMD backend)<br><small>0.5.0</small>|augmentor<br><small>0.2.8</small>|solt<br><small>0.1.9</small>|
+|----------------|:------------------------------------:|:-------------------------------------------------------:|:-------------------------------:|:--------------------------:|
+|HorizontalFlip  |                 2251                 |                          2622                           |              2582               |         **16544**          |
+|VerticalFlip    |                 2455                 |                          2607                           |              2571               |         **25958**          |
+|RotateAny       |                 1532                 |                          1432                           |               666               |          **3885**          |
+|Crop224         |                 2693                 |                          3091                           |              3006               |         **24998**          |
+|Crop128         |                 5613                 |                          5958                           |              5748               |         **24801**          |
+|Crop64          |                 9622                 |                          9524                           |              9024               |         **25036**          |
+|Crop32          |                12407                 |                          11303                          |              10671              |         **25048**          |
+|Pad300          |                 1715                 |                           103                           |                -                |         **16007**          |
+|VHFlipRotateCrop|                 1598                 |                          1683                           |               659               |          **1866**          |
+|HFlipCrop       |                 2460                 |                          2902                           |              2862               |          **3514**          |
+
+Python and library versions: Python 3.7.0 (default, Oct  9 2018, 10:31:47) [GCC 7.3.0], numpy 1.18.1, pillow-simd 7.0.0.post3, opencv-python 4.2.0.32, scikit-image 0.16.2, scipy 1.4.1.
+Please find the details about the benchmark [here](BENCHMARK.md).
+
 ## Papers that use SOLT
 The aim of building SOLT was to create a tool for reproducible research. At MIPT, we use SOLT in our projects:
 
@@ -31,6 +62,9 @@ The aim of building SOLT was to create a tool for reproducible research. At MIPT
 4. https://arxiv.org/abs/1907.12237
 
 If you use SOLT and cite it in your research, please, don't hesitate to sent an email to Aleksei Tiulpin. It will be added here.
+
+## How to contribute
+Follow the guidelines described [here](CONTRIBUTING.md). 
 
 ## Author
 Aleksei Tiulpin, 

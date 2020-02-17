@@ -30,3 +30,7 @@ solt/core/__pycache__/*
 solt/data/__pycache__/*
 solt/transforms/__pycache__/*
 .coverage
+
+
+benchmark/augbench.egg-info/
+benchmark/augbench/__pycache__/

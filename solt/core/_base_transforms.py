@@ -76,32 +76,9 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
         out : tuple
             Coordinate frame (h, w).
         """
-        prev_h = None
-        prev_w = None
-        # Let's make sure that all the objects have the same coordinate frame
-        for obj, t, settings in data:
-            if t == "M" or t == "I":
-                h = obj.shape[0]
-                w = obj.shape[1]
-            elif t == "P":
-                h = obj.height
-                w = obj.width
-            elif t == "L":
-                continue
 
-            if prev_h is None:
-                prev_h = h
-            else:
-                if prev_h != h:
-                    raise ValueError
-
-            if prev_w is None:
-                prev_w = w
-            else:
-                if prev_w != w:
-                    raise ValueError
-        self.state_dict["h"], self.state_dict["w"] = prev_h, prev_w
-        return prev_h, prev_w
+        self.state_dict["h"], self.state_dict["w"] = data.validate()
+        return self.state_dict["h"], self.state_dict["w"]
 
     def apply(self, data: DataContainer):
         """Applies transformation to a DataContainer items depending on the type.
@@ -426,7 +403,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         t_origin = np.array([1, 0, -origin[0], 0, 1, -origin[1], 0, 0, 1]).reshape((3, 3))
 
         t_origin_back = np.array([1, 0, origin[0], 0, 1, origin[1], 0, 0, 1]).reshape((3, 3))
-        transform_matrix = t_origin_back @ transform_matrix @ t_origin
+        transform_matrix = np.dot(t_origin_back, np.dot(transform_matrix, t_origin))
 
         return transform_matrix
 

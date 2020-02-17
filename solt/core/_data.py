@@ -85,8 +85,38 @@ class DataContainer(object):
         self.__data = data
         self.__fmt = fmt
         self.__transform_settings = transform_settings
-        self.__imagenet_mean = (0.485, 0.456, 0.406)
-        self.__imagenet_std = (0.229, 0.224, 0.225)
+
+        self.__imagenet_mean = torch.tensor((0.485, 0.456, 0.406)).view(3, 1, 1)
+        self.__imagenet_std = torch.tensor((0.229, 0.224, 0.225)).view(3, 1, 1)
+
+    def validate(self):
+        prev_h = None
+        prev_w = None
+        # Let's make sure that all the objects have the same coordinate frame
+        data = self
+        for obj, t, settings in data:
+            if t == "M" or t == "I":
+                h = obj.shape[0]
+                w = obj.shape[1]
+            elif t == "P":
+                h = obj.height
+                w = obj.width
+            elif t == "L":
+                continue
+
+            if prev_h is None:
+                prev_h = h
+            else:
+                if prev_h != h:
+                    raise ValueError
+
+            if prev_w is None:
+                prev_w = w
+            else:
+                if prev_w != w:
+                    raise ValueError
+
+        return prev_h, prev_w
 
     @property
     def data_format(self):
@@ -174,6 +204,33 @@ class DataContainer(object):
 
         return DataContainer(tuple(dc_content), "".join(dc_format))
 
+    def wrap_mean_std(self, img, mean, std):
+        if not isinstance(mean, (tuple, list, np.ndarray, torch.FloatTensor)):
+            raise TypeError(
+                f"Unknown type ({type(mean)}) of mean vector! " f"Expected tuple, list, np.ndarray or torch.FloatTensor"
+            )
+
+        if not isinstance(std, (tuple, list, np.ndarray, torch.FloatTensor)):
+            raise TypeError(
+                f"Unknown type ({type(mean)}) of mean vector! " f"Expected tuple, list, np.ndarray or torch.FloatTensor"
+            )
+        if len(mean) != img.size(0):
+            raise ValueError("Size of the mean vector does not match the number of channels")
+        if len(std) != img.size(0):
+            raise ValueError("Size of the std vector does not match the number of channels")
+
+        if isinstance(mean, (list, tuple)):
+            mean = torch.tensor(mean).view(img.size(0), 1, 1)
+        if isinstance(std, (list, tuple)):
+            std = torch.tensor(std).view(img.size(0), 1, 1)
+
+        if isinstance(mean, np.ndarray):
+            mean = torch.from_numpy(mean).view(img.size(0), 1, 1).float()
+        if isinstance(std, np.ndarray):
+            std = torch.from_numpy(std).view(img.size(0), 1, 1).float()
+
+        return mean, std
+
     def to_torch(self, as_dict=False, scale_keypoints=True, normalize=False, mean=None, std=None):
         """This method converts the DataContainer Content into a dict or a list PyTorch objects
 
@@ -199,65 +256,43 @@ class DataContainer(object):
             "keypoints_array": list(),
             "labels": list(),
         }
+        not_as_dict = []
         for el, f in zip(self.__data, self.__fmt):
             if f == "I":
                 scale = 255.0
                 if el.dtype == np.uint16:
                     scale = 65535.0
-                img = torch.from_numpy(el.transpose((2, 0, 1)).astype(np.float32)).div(scale)
+                    el = el.astype(np.float32)
+                img = torch.from_numpy(el.transpose((2, 0, 1))).div(scale)
                 if normalize:
                     if mean is None or std is None:
-                        mean = torch.tensor(self.__imagenet_mean).view(3, 1, 1)
-                        std = torch.tensor(self.__imagenet_std).view(3, 1, 1)
-
-                    if not isinstance(mean, (tuple, list, np.ndarray, torch.FloatTensor)):
-                        raise TypeError(
-                            f"Unknown type ({type(mean)}) of mean vector! "
-                            f"Expected tuple, list, np.ndarray or torch.FloatTensor"
-                        )
-
-                    if not isinstance(std, (tuple, list, np.ndarray, torch.FloatTensor)):
-                        raise TypeError(
-                            f"Unknown type ({type(mean)}) of mean vector! "
-                            f"Expected tuple, list, np.ndarray or torch.FloatTensor"
-                        )
-                    if len(mean) != img.size(0):
-                        raise ValueError("Size of the mean vector does not match the number of channels")
-                    if len(std) != img.size(0):
-                        raise ValueError("Size of the std vector does not match the number of channels")
-
-                    if isinstance(mean, (list, tuple)):
-                        mean = torch.tensor(mean).view(img.size(0), 1, 1)
-                    if isinstance(std, (list, tuple)):
-                        std = torch.tensor(std).view(img.size(0), 1, 1)
-
-                    if isinstance(mean, np.ndarray):
-                        mean = torch.from_numpy(mean).view(img.size(0), 1, 1).float()
-                    if isinstance(std, np.ndarray):
-                        std = torch.from_numpy(std).view(img.size(0), 1, 1).float()
+                        mean, std = self.__imagenet_mean, self.__imagenet_std
+                    else:
+                        mean, std = self.wrap_mean_std(img, mean, std)
 
                     img.sub_(mean)
                     img.div_(std)
                 res_dict["images"].append(img)
+                not_as_dict.append(img)
+
             elif f == "M":
                 mask = torch.from_numpy(el).squeeze().unsqueeze(0).float()
                 res_dict["masks"].append(mask)
+                not_as_dict.append(mask)
             elif f == "P":
                 landmarks = torch.from_numpy(el.data).float()
                 if scale_keypoints:
                     landmarks[:, 0] /= el.width - 1
                     landmarks[:, 1] /= el.height - 1
                 res_dict["keypoints_array"].append(landmarks)
+                not_as_dict.append(landmarks)
             elif f == "L":
                 res_dict["labels"].append(el)
-
+                not_as_dict.append(el)
         if not as_dict:
-            res = []
-            for k in ["images", "masks", "keypoints_array", "labels"]:
-                res.extend(res_dict[k])
-            if len(res) == 1:
-                res = res[0]
-            return res
+            if len(not_as_dict) == 1:
+                return not_as_dict[0]
+            return not_as_dict
 
         return self.remap_results_dict(res_dict)
 
