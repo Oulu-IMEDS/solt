@@ -22,6 +22,10 @@ examples are available here: [https://mipt-oulu.github.io/solt/](https://mipt-ou
 - Easy to extend
 - 100% Code coverage
 
+## Examples
+
+![Knee MRI](examples/results/mri.png)
+
 ## Installation
 The most recent version is available in pip:
 ```

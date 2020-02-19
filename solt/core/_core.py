@@ -33,6 +33,7 @@ class Stream(Serializable):
     """
 
     serializable_name = "stream"
+    """How the class should be stored in the registry"""
 
     def __init__(
         self, transforms=None, interpolation=None, padding=None, optimize_stack=False, ignore_fast_mode=False,
@@ -229,6 +230,9 @@ class SelectiveStream(Stream):
     """Stream that uniformly selects n out of k given transforms.
 
     """
+
+    serializable_name = "selective_stream"
+    """How the class should be stored in the registry"""
 
     def __init__(
         self, transforms=None, n=1, probs=None, optimize_stack=False, ignore_fast_mode=False,
