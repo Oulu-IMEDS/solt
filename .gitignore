@@ -6,6 +6,7 @@ doc/build/
 docs/build/
 solt/__pycache__/
 .idea/*
+.ipynb_checkpoints
 .DS_Strore
 notebooks/Affine_testing.ipynb
 notebooks/annotation/

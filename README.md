@@ -23,7 +23,7 @@ examples are available here: [https://mipt-oulu.github.io/solt/](https://mipt-ou
 - 100% Code coverage
 
 ## Examples
-
+![Cats](examples/results/cats.png)
 ![Knee MRI](examples/results/mri.png)
 
 ## Installation

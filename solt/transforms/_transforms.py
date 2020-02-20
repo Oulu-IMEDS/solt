@@ -166,14 +166,14 @@ class Rotate90(Rotate):
         if not isinstance(k, int):
             raise TypeError("Argument `k` must be an integer!")
         super(Rotate90, self).__init__(p=p, angle_range=(k * 90, k * 90), ignore_fast_mode=ignore_fast_mode)
-        self.k = -k
+        self.k = k
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
-        return np.ascontiguousarray(np.rot90(img, self.k))
+        return np.ascontiguousarray(np.rot90(img, -self.k))
 
     def _apply_mask(self, mask: np.ndarray, settings: dict):
-        return np.ascontiguousarray(np.rot90(mask, self.k))
+        return np.ascontiguousarray(np.rot90(mask, -self.k))
 
 
 class Shear(MatrixTransform):
@@ -848,8 +848,11 @@ class CutOut(ImageTransform):
 
     def __init__(self, cutout_size=2, data_indices=None, p=0.5):
         super(CutOut, self).__init__(p=p, data_indices=data_indices)
-        if not isinstance(cutout_size, int) and not isinstance(cutout_size, tuple):
-            raise TypeError
+        if not isinstance(cutout_size, (int, tuple, list)):
+            raise TypeError("Cutout size is of an incorrect type!")
+
+        if isinstance(cutout_size, list):
+            cutout_size = tuple(cutout_size)
 
         if isinstance(cutout_size, tuple):
             if not isinstance(cutout_size[0], int) or not isinstance(cutout_size[1], int):
@@ -908,11 +911,6 @@ class SaltAndPepper(ImageTransform):
 
     def __init__(self, p=0.5, gain_range=0.1, salt_p=0.5, data_indices=None):
         super(SaltAndPepper, self).__init__(p=p, data_indices=data_indices)
-        if not isinstance(gain_range, float) and not isinstance(gain_range, tuple):
-            raise TypeError
-        if not isinstance(salt_p, float) and not isinstance(salt_p, tuple):
-            raise TypeError
-
         if isinstance(gain_range, float):
             gain_range = (0, gain_range)
 
@@ -971,9 +969,6 @@ class GammaCorrection(ImageTransform):
     def __init__(self, p=0.5, gamma_range=0.1, data_indices=None):
         super(GammaCorrection, self).__init__(p=p, data_indices=data_indices)
 
-        if not isinstance(gamma_range, float) and not isinstance(gamma_range, tuple):
-            raise TypeError
-
         if isinstance(gamma_range, float):
             gamma_range = (1 - gamma_range, 1 + gamma_range)
 
@@ -1014,9 +1009,6 @@ class Contrast(ImageTransform):
 
     def __init__(self, p=0.5, contrast_range=0.1, data_indices=None):
         super(Contrast, self).__init__(p=p, data_indices=data_indices)
-
-        if not isinstance(contrast_range, float) and not isinstance(contrast_range, tuple):
-            raise TypeError
 
         if isinstance(contrast_range, float):
             contrast_range = (1 - contrast_range, 1 + contrast_range)
@@ -1066,8 +1058,11 @@ class Blur(ImageTransform):
 
     def __init__(self, p=0.5, blur_type="g", k_size=3, gaussian_sigma=None, data_indices=None):
         super(Blur, self).__init__(p=p, data_indices=data_indices)
-        if not isinstance(k_size, (int, tuple)):
-            raise TypeError
+        if not isinstance(k_size, (int, tuple, list)):
+            raise TypeError("Incorrect kernel size")
+
+        if isinstance(k_size, list):
+            k_size = tuple(k_size)
 
         if isinstance(k_size, int):
             k_size = (k_size, k_size)

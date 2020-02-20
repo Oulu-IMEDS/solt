@@ -291,7 +291,7 @@ def validate_numeric_range_parameter(parameter, default_val, min_val=None, max_v
         raise ValueError
 
     if not (isinstance(parameter[0], (int, float)) and isinstance(parameter[1], (int, float))):
-        raise TypeError
+        raise TypeError("Incorrect type of the parameter!")
 
     if min_val is not None:
         if parameter[0] < min_val or parameter[1] < min_val:
