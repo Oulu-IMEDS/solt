@@ -23,9 +23,12 @@ examples are available here: [https://mipt-oulu.github.io/solt/](https://mipt-ou
 - 100% Code coverage
 
 ## Examples
+Keypoints:
 ![Cats](examples/results/cats.png)
-![Knee MRI](examples/results/knee_mri.png)
+Binary segmentation:
 ![Brain MRI](examples/results/brain_mri.png)
+Multi-class segmentation:
+![Knee MRI](examples/results/knee_mri.png)
 
 ## Installation
 The most recent version is available in pip:
