@@ -1016,9 +1016,18 @@ def test_hsv_doesnt_work_for_1_channel(img_6x6):
     ],
 )
 def test_hsv_returns_expected_results(mode, img, expected):
-    trf = slt.CvtColor(mode=mode)
+    trf = slt.CvtColor(mode=mode, keep_dim=False)
     dc = slc.DataContainer(img, "I")
     dc_res = trf(dc)
+    np.testing.assert_array_equal(expected, dc_res.data[0])
+
+
+@pytest.mark.parametrize(
+    "img, expected", [(img_6x6_rgb(), img_6x6_rgb()), (img_6x6(), img_6x6()),],
+)
+def test_cvtcolor_keeps_dimensions(img, expected):
+    trf = slt.CvtColor(mode="rgb2gs")
+    dc_res = trf({"image": img})
     np.testing.assert_array_equal(expected, dc_res.data[0])
 
 
@@ -1028,6 +1037,12 @@ def test_image_color_conversion_raises_error(mode, mask_3x4):
     dc = slc.DataContainer(mask_3x4.squeeze(), "I")
     with pytest.raises(ValueError):
         trf(dc)
+
+
+@pytest.mark.parametrize("keep_dim", [1, 1.1, "s"])
+def test_image_color_conversion_keepdim_type(keep_dim):
+    with pytest.raises(TypeError):
+        slt.CvtColor(keep_dim=keep_dim)
 
 
 def test_random_proj_and_selective_stream(img_5x5):

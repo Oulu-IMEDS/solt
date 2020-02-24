@@ -269,7 +269,9 @@ class Scale(MatrixTransform):
         Indicates whether to use the same scaling factor for width and height.
     interpolation : str or tuple or None
         Interpolation type. Check the allowed interpolation types.
-        one indicates default behavior - bilinear mode.
+        one indicates default behavior - the ``bilinear`` mode.
+    padding : str
+        ``z`` (zero pad) or ``r`` - reflective pad.
     p : float
         Probability of using this transform
     ignore_state : bool
@@ -290,12 +292,13 @@ class Scale(MatrixTransform):
         interpolation="bilinear",
         p=0.5,
         ignore_state=True,
+        padding=None,
         ignore_fast_mode=False,
     ):
 
         super(Scale, self).__init__(
             interpolation=interpolation,
-            padding=None,
+            padding=padding,
             p=p,
             ignore_state=ignore_state,
             affine=True,
@@ -1220,11 +1223,14 @@ class CvtColor(ImageTransform):
         If ``mode == 'rgb2gs'`` and the image is already grayscale,
         then nothing happens. If ``mode == 'gs2rgb'`` and the image is already RGB,
         then also nothing happens.
+    keep_dim : bool
+        Whether to enforce having three channels when performing rgb to grayscale conversion
     data_indices : tuple or None
         Indices of the images within the data container to which this transform needs to be applied.
         Every element within the tuple must be integer numbers.
         If None, then the transform will be applied to all the images withing the DataContainer.
-
+    p : float
+        Probability of the transform's use. 1 by default
     See also
     --------
     solt.constants.ALLOWED_COLOR_CONVERSIONS
@@ -1234,9 +1240,12 @@ class CvtColor(ImageTransform):
     serializable_name = "cvt_color"
     """How the class should be stored in the registry"""
 
-    def __init__(self, mode=None, data_indices=None):
-        super(CvtColor, self).__init__(p=1, data_indices=data_indices)
+    def __init__(self, mode=None, keep_dim=True, data_indices=None, p=1):
+        super(CvtColor, self).__init__(p=p, data_indices=data_indices)
         self.mode = validate_parameter(mode, ALLOWED_COLOR_CONVERSIONS, "none", heritable=False)
+        if not isinstance(keep_dim, bool):
+            raise TypeError("Incorrect type of keepdim")
+        self.keepdim = keep_dim
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
@@ -1255,7 +1264,10 @@ class CvtColor(ImageTransform):
             if img.shape[-1] == 1:
                 return img
             elif img.shape[-1] == 3:
-                return cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+                res = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+                if not self.keepdim:
+                    return res
+                return np.dstack((res, res, res))
 
 
 class KeypointsJitter(BaseTransform):

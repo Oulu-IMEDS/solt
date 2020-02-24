@@ -29,6 +29,8 @@ class Stream(Serializable):
     optimize_stack : bool
         Whether to run transforms stack optimization. It can only be useful if many matrix transformations are
         in a row.
+    ignore_fast_mode : bool
+        Whether to ignore the fast mode. This option enables full geometric transforms.
 
     """
 

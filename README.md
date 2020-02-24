@@ -23,11 +23,13 @@ examples are available here: [https://mipt-oulu.github.io/solt/](https://mipt-ou
 - 100% Code coverage
 
 ## Examples
-Keypoints:
+Images:
+![Cats](examples/results/img_aug.png)
+Images + Keypoints:
 ![Cats](examples/results/cats.png)
-Binary segmentation:
+Medical Images + Binary Masks:
 ![Brain MRI](examples/results/brain_mri.png)
-Multi-class segmentation:
+Medical Images + Multiclass Masks
 ![Knee MRI](examples/results/knee_mri.png)
 
 ## Installation
