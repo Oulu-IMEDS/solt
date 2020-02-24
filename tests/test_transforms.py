@@ -1062,10 +1062,23 @@ def test_intensity_remap_values():
     trf = slt.IntensityRemap(p=1)
     img = np.arange(0, 256, 1, dtype=np.uint8).reshape((16, 16, 1))
     dc = slc.DataContainer(img, "I")
-    dc_res = trf(dc)
+    out = trf(dc).dc_res.data[0]
 
+    # Mapping is applied correctly
     img_expected = trf.state_dict["LUT"].reshape((16, 16, 1))
-    np.testing.assert_array_equal(dc_res.data[0], img_expected)
+    np.testing.assert_array_equal(out, img_expected)
+
+    # Mapping has a positive trendline
+    assert np.diff(out.astype(np.float).ravel()) > 0
+
+    # Higher kernel size yields more monotonic mapping
+    trf_noisy = slt.IntensityRemap(p=1, kernel_size=1)
+    trf_low_pass = slt.IntensityRemap(p=1, kernel_size=5)
+    out_noisy = trf_noisy(dc).data[0].astype(np.float)
+    out_low_pass = trf_low_pass(dc).data[0].astype(np.float)
+    std_noisy = np.std(np.diff(out_noisy.ravel()))
+    std_low_pass = np.std(np.diff(out_low_pass.ravel()))
+    assert std_low_pass < std_noisy
 
 
 @pytest.mark.parametrize(
@@ -1077,7 +1090,7 @@ def test_intensity_remap_values():
 )
 def test_intensity_remap_channels(img, expected):
     trf = slt.IntensityRemap(p=1)
-    dc = slc.DataContainer(img.astype(np.uint8), "I")
+    dc = slc.DataContainer(img, "I")
 
     with expected:
         trf(dc)
@@ -1086,7 +1099,6 @@ def test_intensity_remap_channels(img, expected):
 @pytest.mark.parametrize(
     "dtype, expected",
     [
-        (np.uint8, does_not_raise()),
         (np.int8, pytest.raises(ValueError)),
         (np.uint16, pytest.raises(ValueError)),
         (np.float, pytest.raises(ValueError)),
