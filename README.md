@@ -22,6 +22,16 @@ examples are available here: [https://mipt-oulu.github.io/solt/](https://mipt-ou
 - Easy to extend
 - 100% Code coverage
 
+## Examples
+Images:
+![Cats](examples/results/img_aug.png)
+Images + Keypoints:
+![Cats](examples/results/cats.png)
+Medical Images + Binary Masks:
+![Brain MRI](examples/results/brain_mri.png)
+Medical Images + Multiclass Masks
+![Knee MRI](examples/results/knee_mri.png)
+
 ## Installation
 The most recent version is available in pip:
 ```
