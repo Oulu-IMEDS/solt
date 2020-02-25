@@ -1062,7 +1062,7 @@ def test_intensity_remap_values():
     trf = slt.IntensityRemap(p=1)
     img = np.arange(0, 256, 1, dtype=np.uint8).reshape((16, 16, 1))
     dc = slc.DataContainer(img, "I")
-    out = trf(dc).dc_res.data[0]
+    out = trf(dc).data[0]
 
     # Mapping is applied correctly
     img_expected = trf.state_dict["LUT"].reshape((16, 16, 1))
