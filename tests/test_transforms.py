@@ -1069,7 +1069,7 @@ def test_intensity_remap_values():
     np.testing.assert_array_equal(out, img_expected)
 
     # Mapping has a positive trendline
-    assert np.diff(out.astype(np.float).ravel()) > 0
+    assert np.sum(np.diff(out.astype(np.float).ravel())) > 0
 
     # Higher kernel size yields more monotonic mapping
     trf_noisy = slt.IntensityRemap(p=1, kernel_size=1)
