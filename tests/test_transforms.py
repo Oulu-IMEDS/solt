@@ -1,5 +1,6 @@
 import copy
 import random
+from contextlib import ExitStack as does_not_raise
 
 import cv2
 import numpy as np
@@ -1001,6 +1002,61 @@ def test_hsv_doesnt_work_for_1_channel(img_6x6):
     dc = slc.DataContainer(img_6x6.astype(np.uint8), "I")
 
     with pytest.raises(ValueError):
+        trf(dc)
+
+
+def test_intensity_remap_values():
+    trf = slt.IntensityRemap(p=1)
+    img = np.arange(0, 256, 1, dtype=np.uint8).reshape((16, 16, 1))
+    dc = slc.DataContainer(img, "I")
+    out = trf(dc).data[0]
+
+    # Mapping is applied correctly
+    img_expected = trf.state_dict["LUT"].reshape((16, 16, 1))
+    np.testing.assert_array_equal(out, img_expected)
+
+    # Mapping has a positive trendline
+    assert np.sum(np.diff(out.astype(np.float).ravel())) > 0
+
+    # Higher kernel size yields more monotonic mapping
+    trf_noisy = slt.IntensityRemap(p=1, kernel_size=1)
+    trf_low_pass = slt.IntensityRemap(p=1, kernel_size=5)
+    out_noisy = trf_noisy(dc).data[0].astype(np.float)
+    out_low_pass = trf_low_pass(dc).data[0].astype(np.float)
+    std_noisy = np.std(np.diff(out_noisy.ravel()))
+    std_low_pass = np.std(np.diff(out_low_pass.ravel()))
+    assert std_low_pass < std_noisy
+
+
+@pytest.mark.parametrize(
+    "img, expected",
+    [
+        (img_3x3(), does_not_raise()),
+        (img_3x3_rgb(), pytest.raises(ValueError)),
+    ],
+)
+def test_intensity_remap_channels(img, expected):
+    trf = slt.IntensityRemap(p=1)
+    dc = slc.DataContainer(img, "I")
+
+    with expected:
+        trf(dc)
+
+
+@pytest.mark.parametrize(
+    "dtype, expected",
+    [
+        (np.int8, pytest.raises(ValueError)),
+        (np.uint16, pytest.raises(ValueError)),
+        (np.float, pytest.raises(ValueError)),
+        (np.bool_, pytest.raises(ValueError)),
+    ],
+)
+def test_intensity_remap_dtypes(dtype, expected):
+    trf = slt.IntensityRemap(p=1)
+    dc = slc.DataContainer(img_3x3().astype(dtype), "I")
+
+    with expected:
         trf(dc)
 
 
