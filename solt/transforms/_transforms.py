@@ -1426,7 +1426,7 @@ class JPEGCompression(ImageTransform):
         self.quality_range = validate_numeric_range_parameter(quality_range, (100, 100), 0, 100)
 
     def sample_transform(self, data):
-        self.state_dict["quality"] = random.randint(self.quality_range[0], self.quality_range[0])
+        self.state_dict["quality"] = random.randint(self.quality_range[0], self.quality_range[1])
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
