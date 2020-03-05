@@ -1215,7 +1215,7 @@ class Brightness(ImageTransform):
 
 
 class IntensityRemap(ImageTransform):
-    """Performs random intensity remapping.
+    """Performs random intensity remapping [1]_.
 
     Parameters
     ----------
