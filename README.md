@@ -89,5 +89,4 @@ All the papers that use SOLT are listed [here](PAPERS.md).
   doi          = {10.5281/zenodo.3702819},
   url          = {https://doi.org/10.5281/zenodo.3702819}
 }
-
 ```
