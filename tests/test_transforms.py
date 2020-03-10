@@ -792,7 +792,7 @@ def test_crop_or_cutout_size_are_too_big(img_2x2, cutout_crop_size):
         trf(dc)
 
 
-@pytest.mark.parametrize("cutout_crop_size", ["123", 2.5, (2.5, 2), (2, 2.2)])
+@pytest.mark.parametrize("cutout_crop_size", ["123", ("23", 2), (2.5, 2), (2, 2.2)])
 def test_wrong_crop_size_types(cutout_crop_size):
     with pytest.raises(TypeError):
         slt.Crop(crop_to=cutout_crop_size)
@@ -1029,11 +1029,7 @@ def test_intensity_remap_values():
 
 
 @pytest.mark.parametrize(
-    "img, expected",
-    [
-        (img_3x3(), does_not_raise()),
-        (img_3x3_rgb(), pytest.raises(ValueError)),
-    ],
+    "img, expected", [(img_3x3(), does_not_raise()), (img_3x3_rgb(), pytest.raises(ValueError)),],
 )
 def test_intensity_remap_channels(img, expected):
     trf = slt.IntensityRemap(p=1)
@@ -1146,25 +1142,29 @@ def test_different_interpolations_per_item_per_transform(img_6x6, transform_sett
 
 
 @pytest.mark.parametrize(
-    "img, expected",
+    "img, expected, cut_size",
     [
-        (img_7x7(), np.zeros((7, 7, 1), dtype=np.uint8)),
-        (img_6x6(), np.zeros((6, 6, 1), dtype=np.uint8)),
-        (img_6x6_rgb(), np.zeros((6, 6, 3), dtype=np.uint8)),
+        (img_7x7(), np.zeros((7, 7, 1), dtype=np.uint8), 7),
+        (img_6x6(), np.zeros((6, 6, 1), dtype=np.uint8), 6),
+        (img_6x6_rgb(), np.zeros((6, 6, 3), dtype=np.uint8), 6),
+        (img_7x7(), np.zeros((7, 7, 1), dtype=np.uint8), 1.0),
+        (img_6x6(), np.zeros((6, 6, 1), dtype=np.uint8), 1.0),
+        (img_6x6_rgb(), np.zeros((6, 6, 3), dtype=np.uint8), 1.0),
     ],
 )
-def test_cutout_blacks_out_image(img, expected):
+def test_cutout_blacks_out_image(img, expected, cut_size):
     dc = slc.DataContainer((img,), "I")
-    trf = slc.Stream([slt.CutOut(p=1, cutout_size=6)])
+    trf = slc.Stream([slt.CutOut(p=1, cutout_size=cut_size)])
 
     dc_res = trf(dc, return_torch=False)
 
     assert np.array_equal(expected, dc_res.data[0])
 
 
-def test_cutout_1x1_blacks_corner_pixels_2x2_img(img_2x2):
+@pytest.mark.parametrize("cut_size", [1, (1, 1), 0.5, (0.5, 0.5)])
+def test_cutout_1x1_blacks_corner_pixels_2x2_img(img_2x2, cut_size):
     dc = slc.DataContainer((img_2x2.copy(),), "I")
-    trf = slc.Stream([slt.CutOut(p=1, cutout_size=1)])
+    trf = slc.Stream([slt.CutOut(p=1, cutout_size=cut_size)])
     dc_res = trf(dc, return_torch=False)
 
     equal = 0

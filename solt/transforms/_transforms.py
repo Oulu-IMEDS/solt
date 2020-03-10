@@ -838,7 +838,7 @@ class CutOut(ImageTransform):
 
     Parameters
     ----------
-    cutout_size : tuple or int or None
+    cutout_size : tuple or int or float or None
         The size of the cutout. If None, then it is equal to 2.
     data_indices : tuple or None
         Indices of the images within the data container to which this transform needs to be applied.
@@ -853,34 +853,47 @@ class CutOut(ImageTransform):
 
     def __init__(self, cutout_size=2, data_indices=None, p=0.5):
         super(CutOut, self).__init__(p=p, data_indices=data_indices)
-        if not isinstance(cutout_size, (int, tuple, list)):
+        if not isinstance(cutout_size, (int, tuple, list, float)):
             raise TypeError("Cutout size is of an incorrect type!")
 
         if isinstance(cutout_size, list):
             cutout_size = tuple(cutout_size)
 
         if isinstance(cutout_size, tuple):
-            if not isinstance(cutout_size[0], int) or not isinstance(cutout_size[1], int):
+            if not isinstance(cutout_size[0], (int, float)) or not isinstance(cutout_size[1], (int, float)):
                 raise TypeError
 
-        if isinstance(cutout_size, int):
+        if isinstance(cutout_size, (int, float)):
             cutout_size = (cutout_size, cutout_size)
+        if not isinstance(cutout_size[0], type(cutout_size[1])):
+            raise TypeError("CutOut sizes must be of the same type")
 
         self.cutout_size = cutout_size
 
     def sample_transform(self, data: DataContainer):
         h, w = super(CutOut, self).sample_transform(data)
+        if isinstance(self.cutout_size[0], float):
+            cut_size_x = int(self.cutout_size[0] * w)
+        else:
+            cut_size_x = self.cutout_size[0]
 
-        if self.cutout_size[0] > w or self.cutout_size[1] > h:
+        if isinstance(self.cutout_size[1], float):
+            cut_size_y = int(self.cutout_size[1] * h)
+        else:
+            cut_size_y = self.cutout_size[1]
+
+        if cut_size_x > w or cut_size_y > h:
             raise ValueError("Cutout size is too large!")
 
-        self.state_dict["x"] = int(random.random() * (w - self.cutout_size[0]))
-        self.state_dict["y"] = int(random.random() * (h - self.cutout_size[1]))
+        self.state_dict["x"] = int(random.random() * (w - cut_size_x))
+        self.state_dict["y"] = int(random.random() * (h - cut_size_y))
+        self.state_dict["cut_size_x"] = cut_size_x
+        self.state_dict["cut_size_y"] = cut_size_y
 
     def __cutout_img(self, img):
         img[
-            self.state_dict["y"] : self.state_dict["y"] + self.cutout_size[1],
-            self.state_dict["x"] : self.state_dict["x"] + self.cutout_size[0],
+            self.state_dict["y"] : self.state_dict["y"] + self.state_dict["cut_size_y"],
+            self.state_dict["x"] : self.state_dict["x"] + self.state_dict["cut_size_x"],
         ] = 0
         return img
 
