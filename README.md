@@ -80,12 +80,15 @@ don't hesitate to sent an email to Aleksei Tiulpin.
 All the papers that use SOLT are listed [here](PAPERS.md). 
 
 ```
-@misc{aleksei_tiulpin_2019_3351977,
+@misc{solt2019,
   author       = {Aleksei Tiulpin},
   title        = {SOLT: Streaming over Lightweight Transformations},
   month        = jul,
   year         = 2019,
-  doi          = {10.5281/zenodo.3351977},
-  url          = {https://doi.org/10.5281/zenodo.3351977},
+  version      = {v0.1.9},
+  doi          = {10.5281/zenodo.3702819},
+  url          = {https://doi.org/10.5281/zenodo.3702819}
 }
+
+
 ```
