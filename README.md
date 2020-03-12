@@ -32,6 +32,28 @@ Medical Images + Binary Masks:
 Medical Images + Multiclass Masks
 ![Knee MRI](examples/results/knee_mri.png)
 
+E.g. the last row is generated using the following transforms stream.
+
+```
+stream = solt.Stream([
+    slt.Rotate(angle_range=(-20, 20), p=1, padding='r'),
+    slt.Crop((256, 256)),
+    solt.SelectiveStream([
+        slt.GammaCorrection(gamma_range=0.5, p=1),
+        slt.Noise(gain_range=0.1, p=1),
+        slt.Blur()    
+    ], n=3)
+])
+
+img_aug, mask_aug = stream({'image': img, 'mask': mask})
+```
+
+If you want to visualize the results, you need to modify the execution of the transforms:
+
+```
+img_aug, mask_aug = stream({'image': img, 'mask': mask}, return_torch=False).data
+```
+
 ## Installation
 The most recent version is available in pip:
 ```
