@@ -140,7 +140,7 @@ class Crop(BenchmarkTest):
 
         self.crop_size = crop_size
 
-        self.solt_pipeline = slt.Crop(224, crop_mode="r")
+        self.solt_pipeline = slt.Crop(crop_size, crop_mode="r")
 
         self.albumentations_pipeline = albu.Compose(
             [
