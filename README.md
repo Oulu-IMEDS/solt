@@ -73,16 +73,16 @@ the libraries (number of images per second, the higher - the better):
 
 |                |albumentations<br><small>0.4.3</small>|torchvision (Pillow-SIMD backend)<br><small>0.5.0</small>|augmentor<br><small>0.2.8</small>|solt<br><small>0.1.9</small>|
 |----------------|:------------------------------------:|:-------------------------------------------------------:|:-------------------------------:|:--------------------------:|
-|HorizontalFlip  |                 2187                 |                          2564                           |              2550               |          **3539**          |
-|VerticalFlip    |                 2343                 |                          2572                           |              2553               |          **3806**          |
-|RotateAny       |                 1461                 |                          1384                           |               659               |          **2010**          |
-|Crop224         |                 2567                 |                          2973                           |              2864               |          **4276**          |
-|Crop128         |                 5360                 |                        **5663**                         |              5633               |            4262            |
-|Crop64          |               **9123**               |                          9057                           |              8900               |            4270            |
-|Crop32          |              **11676**               |                          10660                          |              10512              |            4249            |
-|Pad300          |                 1634                 |                           109                           |                -                |          **3499**          |
-|VHFlipRotateCrop|                 1535                 |                          1694                           |               661               |          **1891**          |
-|HFlipCrop       |                 2357                 |                          2860                           |              2783               |          **3510**          |
+|HorizontalFlip  |                 2201                 |                          2567                           |              2547               |          **3483**          |
+|VerticalFlip    |                 2366                 |                          2565                           |              2589               |          **3830**          |
+|RotateAny       |                 1462                 |                          1402                           |               668               |          **2003**          |
+|Crop224         |                 2588                 |                          2911                           |              2948               |          **4168**          |
+|Crop128         |                 5269                 |                          5629                           |              5545               |          **7128**          |
+|Crop64          |                 9211                 |                          9009                           |              8740               |         **10126**          |
+|Crop32          |                11804                 |                          10663                          |              10255              |         **12113**          |
+|Pad300          |                 1603                 |                           103                           |                -                |          **3407**          |
+|VHFlipRotateCrop|                 1563                 |                          1683                           |               652               |          **1852**          |
+|HFlipCrop       |                 2346                 |                          2862                           |              2756               |          **3456**          |
 
 Python and library versions: Python 3.7.0 (default, Oct  9 2018, 10:31:47) [GCC 7.3.0], numpy 1.18.1, pillow-simd 7.0.0.post3, opencv-python 4.2.0.32, scikit-image 0.16.2, scipy 1.4.1.
 
