@@ -29,6 +29,8 @@ class BenchmarkTest:
         for img in imgs:
             if library == "albumentations":
                 transform(image=img)
+            elif library == "solt":
+                transform(img, return_torch=True)
             else:
                 transform(img)
 
