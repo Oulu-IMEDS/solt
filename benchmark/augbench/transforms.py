@@ -14,6 +14,7 @@ class BenchmarkTest:
         self.solt_pipeline: solt.Stream or None = None
         self.torchvision_pipeline: tv_transforms.Compose or None = None
         self.augmentor_pipeline: tv_transforms.Compose or None = None
+        self.probablity = 0.5
 
     def __str__(self):
         return self.__class__.__name__
@@ -24,11 +25,19 @@ class BenchmarkTest:
         else:
             return False
 
+    def set_deterministic(self, val=True):
+        if val:
+            self.probablity = 1
+        else:
+            self.probablity = 0.5
+
     def run(self, library, imgs):
         transform = getattr(self, f"{library}_pipeline")
         for img in imgs:
             if library == "albumentations":
                 transform(image=img)
+            elif library == "solt":
+                transform(img, return_torch=True, normalize=True)
             else:
                 transform(img)
 
@@ -37,25 +46,25 @@ class HorizontalFlip(BenchmarkTest):
     def __init__(self, img_size=256):
         super(HorizontalFlip, self).__init__(img_size)
 
-        self.solt_pipeline = slt.Flip(p=0.5, axis=1)
+        self.solt_pipeline = slt.Flip(p=self.probablity, axis=1)
 
         self.albumentations_pipeline = albu.Compose(
             [
-                albu.HorizontalFlip(p=0.5),
+                albu.HorizontalFlip(p=self.probablity),
                 ToTensor(normalize={"mean": [0.485, 0.456, 0.406], "std": [0.229, 0.224, 0.225]}),
             ]
         )
 
         self.torchvision_pipeline = tv_transforms.Compose(
             [
-                tv_transforms.RandomHorizontalFlip(p=0.5),
+                tv_transforms.RandomHorizontalFlip(p=self.probablity),
                 tv_transforms.ToTensor(),
                 tv_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ]
         )
 
         _augm_ppl = augmentor.Pipeline()
-        _augm_ppl.flip_left_right(probability=0.5)
+        _augm_ppl.flip_left_right(probability=self.probablity)
         self.augmentor_pipeline = tv_transforms.Compose(
             [
                 _augm_ppl.torch_transform(),
@@ -69,25 +78,25 @@ class VerticalFlip(BenchmarkTest):
     def __init__(self, img_size=256):
         super(VerticalFlip, self).__init__(img_size)
 
-        self.solt_pipeline = slt.Flip(p=0.5, axis=0)
+        self.solt_pipeline = slt.Flip(p=self.probablity, axis=0)
 
         self.albumentations_pipeline = albu.Compose(
             [
-                albu.VerticalFlip(p=0.5),
+                albu.VerticalFlip(p=self.probablity),
                 ToTensor(normalize={"mean": [0.485, 0.456, 0.406], "std": [0.229, 0.224, 0.225]}),
             ]
         )
 
         self.torchvision_pipeline = tv_transforms.Compose(
             [
-                tv_transforms.RandomVerticalFlip(p=0.5),
+                tv_transforms.RandomVerticalFlip(p=self.probablity),
                 tv_transforms.ToTensor(),
                 tv_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ]
         )
 
         _augm_ppl = augmentor.Pipeline()
-        _augm_ppl.flip_top_bottom(probability=0.5)
+        _augm_ppl.flip_top_bottom(probability=self.probablity)
         self.augmentor_pipeline = tv_transforms.Compose(
             [
                 _augm_ppl.torch_transform(),
@@ -101,11 +110,11 @@ class RotateAny(BenchmarkTest):
     def __init__(self, img_size=256):
         super(RotateAny, self).__init__(img_size)
 
-        self.solt_pipeline = slt.Rotate(angle_range=(0, 20), p=0.5, padding="z")
+        self.solt_pipeline = slt.Rotate(angle_range=(0, 20), p=self.probablity, padding="z")
 
         self.albumentations_pipeline = albu.Compose(
             [
-                albu.Rotate(limit=(0, 20), p=0.5, border_mode=cv2.BORDER_CONSTANT, value=0),
+                albu.Rotate(limit=(0, 20), p=self.probablity, border_mode=cv2.BORDER_CONSTANT, value=0),
                 ToTensor(normalize={"mean": [0.485, 0.456, 0.406], "std": [0.229, 0.224, 0.225]}),
             ]
         )
@@ -119,7 +128,7 @@ class RotateAny(BenchmarkTest):
         )
 
         _augm_ppl = augmentor.Pipeline()
-        _augm_ppl.rotate(probability=0.5, max_left_rotation=0, max_right_rotation=20)
+        _augm_ppl.rotate(probability=self.probablity, max_left_rotation=0, max_right_rotation=20)
         self.augmentor_pipeline = tv_transforms.Compose(
             [
                 _augm_ppl.torch_transform(),
@@ -138,7 +147,7 @@ class Crop(BenchmarkTest):
 
         self.crop_size = crop_size
 
-        self.solt_pipeline = slt.Crop(224, crop_mode="r")
+        self.solt_pipeline = slt.Crop(crop_size, crop_mode="r")
 
         self.albumentations_pipeline = albu.Compose(
             [
@@ -176,7 +185,7 @@ class Pad(BenchmarkTest):
 
         self.pad = pad
 
-        self.solt_pipeline = slt.Pad(224)
+        self.solt_pipeline = slt.Pad(pad)
 
         self.albumentations_pipeline = albu.Compose(
             [
@@ -200,8 +209,8 @@ class VHFlipRotateCrop(BenchmarkTest):
 
         self.solt_pipeline = solt.Stream(
             [
-                slt.Flip(p=0.5, axis=0),
-                slt.Flip(p=0.5, axis=1),
+                slt.Flip(p=self.probablity, axis=0),
+                slt.Flip(p=self.probablity, axis=1),
                 slt.Rotate(angle_range=(0, 20)),
                 slt.Crop(224, crop_mode="r"),
             ]
@@ -209,9 +218,9 @@ class VHFlipRotateCrop(BenchmarkTest):
 
         self.albumentations_pipeline = albu.Compose(
             [
-                albu.VerticalFlip(p=0.5),
-                albu.HorizontalFlip(p=0.5),
-                albu.Rotate(limit=(0, 20), p=0.5, border_mode=cv2.BORDER_CONSTANT, value=0),
+                albu.VerticalFlip(p=self.probablity),
+                albu.HorizontalFlip(p=self.probablity),
+                albu.Rotate(limit=(0, 20), p=self.probablity, border_mode=cv2.BORDER_CONSTANT, value=0),
                 albu.RandomCrop(height=224, width=224),
                 ToTensor(normalize={"mean": [0.485, 0.456, 0.406], "std": [0.229, 0.224, 0.225]}),
             ]
@@ -219,7 +228,7 @@ class VHFlipRotateCrop(BenchmarkTest):
 
         self.torchvision_pipeline = tv_transforms.Compose(
             [
-                tv_transforms.RandomHorizontalFlip(p=0.5),
+                tv_transforms.RandomHorizontalFlip(p=self.probablity),
                 tv_transforms.RandomRotation(degrees=(0, 20)),
                 tv_transforms.RandomCrop(224),
                 tv_transforms.ToTensor(),
@@ -228,9 +237,9 @@ class VHFlipRotateCrop(BenchmarkTest):
         )
 
         _augm_ppl = augmentor.Pipeline()
-        _augm_ppl.flip_top_bottom(probability=0.5)
-        _augm_ppl.flip_left_right(probability=0.5)
-        _augm_ppl.rotate(probability=0.5, max_left_rotation=0, max_right_rotation=20)
+        _augm_ppl.flip_top_bottom(probability=self.probablity)
+        _augm_ppl.flip_left_right(probability=self.probablity)
+        _augm_ppl.rotate(probability=self.probablity, max_left_rotation=0, max_right_rotation=20)
         _augm_ppl.crop_random(probability=1, percentage_area=224 / float(self.img_size))
 
         self.augmentor_pipeline = tv_transforms.Compose(
@@ -246,11 +255,11 @@ class HFlipCrop(BenchmarkTest):
     def __init__(self, img_size=256):
         super(HFlipCrop, self).__init__(img_size)
 
-        self.solt_pipeline = solt.Stream([slt.Flip(p=0.5, axis=1), slt.Crop(224, crop_mode="r")])
+        self.solt_pipeline = solt.Stream([slt.Flip(p=self.probablity, axis=1), slt.Crop(224, crop_mode="r")])
 
         self.albumentations_pipeline = albu.Compose(
             [
-                albu.HorizontalFlip(p=0.5),
+                albu.HorizontalFlip(p=self.probablity),
                 albu.RandomCrop(height=224, width=224),
                 ToTensor(normalize={"mean": [0.485, 0.456, 0.406], "std": [0.229, 0.224, 0.225]}),
             ]
@@ -258,7 +267,7 @@ class HFlipCrop(BenchmarkTest):
 
         self.torchvision_pipeline = tv_transforms.Compose(
             [
-                tv_transforms.RandomHorizontalFlip(p=0.5),
+                tv_transforms.RandomHorizontalFlip(p=self.probablity),
                 tv_transforms.RandomCrop(224),
                 tv_transforms.ToTensor(),
                 tv_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
@@ -266,7 +275,7 @@ class HFlipCrop(BenchmarkTest):
         )
 
         _augm_ppl = augmentor.Pipeline()
-        _augm_ppl.flip_left_right(probability=0.5)
+        _augm_ppl.flip_left_right(probability=self.probablity)
         _augm_ppl.crop_random(probability=1, percentage_area=224 / float(self.img_size))
 
         self.augmentor_pipeline = tv_transforms.Compose(

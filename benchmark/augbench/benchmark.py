@@ -10,6 +10,8 @@ from tqdm import tqdm
 from timeit import Timer
 import pandas as pd
 import cv2
+import random
+import numpy as np
 
 cv2.setNumThreads(0)  # noqa E402
 cv2.ocl.setUseOpenCL(False)  # noqa E402
@@ -20,6 +22,9 @@ from augbench import transforms
 
 if __name__ == "__main__":
     args = utils.parse_args()
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+
     package_versions = utils.get_package_versions()
     if args.print_package_versions:
         print(package_versions)
@@ -43,6 +48,9 @@ if __name__ == "__main__":
         transforms.VHFlipRotateCrop(args.imsize),
         transforms.HFlipCrop(args.imsize),
     ]
+    print(f"==> Setting deterministic to be {args.deterministic}")
+    for b in benchmarks:
+        b.set_deterministic(args.deterministic)
 
     for library in libraries:
         imgs = imgs_pillow if library in ("torchvision", "augmentor", "pillow") else imgs_cv2

@@ -6,6 +6,7 @@ import pkg_resources
 import sys
 import math
 import numpy as np
+
 from augbench.constants import DEFAULT_BENCHMARKING_LIBRARIES
 from pytablewriter import MarkdownTableWriter
 from pytablewriter.style import Style
@@ -38,10 +39,17 @@ def parse_args():
         "-l", "--libraries", default=DEFAULT_BENCHMARKING_LIBRARIES, nargs="+", help="list of libraries to augbench"
     )
     parser.add_argument(
-        "-r", "--runs", default=5, type=int, metavar="N", help="number of runs for each augbench (default: 5)"
+        "-r", "--runs", default=5, type=int, metavar="N", help="number of runs for each aug (default: 5)"
     )
+    parser.add_argument("-s", "--seed", default=12345, type=int, help="Random Seed")
     parser.add_argument(
         "--show-std", dest="show_std", action="store_true", help="show standard deviation for augbench runs"
+    )
+    parser.add_argument(
+        "--deterministic",
+        dest="deterministic",
+        action="store_true",
+        help="Make the benchmark fully deterministic (p=1) for all the transforms",
     )
     parser.add_argument("-p", "--print-package-versions", action="store_true", help="print versions of packages")
     parser.add_argument("-m", "--markdown", action="store_true", help="print benchmarking results as a markdown table")
