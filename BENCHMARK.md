@@ -12,5 +12,5 @@ conda env create -f benchmark/augbench.yaml
 conda activate augbench
 pip install git+https://github.com/MIPT-Oulu/solt@master#egg-name=solt
 pip install -e benchmark
-python -u -m augbench.benchmark -i 500
+python -u -m augbench.benchmark -i 500 -r 20  --deterministic --markdown 
 ```
