@@ -30,7 +30,7 @@ class BenchmarkTest:
             if library == "albumentations":
                 transform(image=img)
             elif library == "solt":
-                transform(img, return_torch=True)
+                transform(img, return_torch=True, normalize=True)
             else:
                 transform(img)
 
