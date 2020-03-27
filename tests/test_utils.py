@@ -255,7 +255,7 @@ def test_complex_transform_serialization():
                     slt.Rotate(angle_range=(45, 45), p=1, padding="r"),
                 ]
             ),
-            slt.Crop(crop_to=(350, 350)),
+            slt.Crop((350, 350)),
             slc.SelectiveStream(
                 [slt.GammaCorrection(gamma_range=0.5, p=1), slt.Noise(gain_range=0.1, p=1), slt.Blur()], n=3
             ),

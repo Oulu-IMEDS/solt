@@ -700,10 +700,13 @@ class Crop(BaseTransform):
         super(Crop, self).__init__(p=1, data_indices=None)
 
         if crop_to is not None:
-            if not isinstance(crop_to, int) and not isinstance(crop_to, tuple):
+            if not isinstance(crop_to, (int, tuple, list)):
                 raise TypeError("Argument crop_to has an incorrect type!")
             if crop_mode not in ALLOWED_CROPS:
                 raise ValueError("Argument crop_mode has an incorrect type!")
+
+            if isinstance(crop_to, list):
+                crop_to = tuple(crop_to)
 
             if isinstance(crop_to, tuple):
                 if not isinstance(crop_to[0], int) or not isinstance(crop_to[1], int):
