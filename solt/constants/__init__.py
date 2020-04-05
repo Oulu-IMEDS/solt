@@ -41,6 +41,7 @@ from ._constants import (
     ALLOWED_INTERPOLATIONS,
     DTYPES_MAX,
     ALLOWED_COLOR_CONVERSIONS,
+    ALLOWED_GRIDMASK_MODES,
 )
 
 __all__ = [
@@ -51,4 +52,5 @@ __all__ = [
     "ALLOWED_INTERPOLATIONS",
     "DTYPES_MAX",
     "ALLOWED_COLOR_CONVERSIONS",
+    "ALLOWED_GRIDMASK_MODES",
 ]
