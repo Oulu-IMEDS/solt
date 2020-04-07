@@ -1510,33 +1510,33 @@ class GridMask(ImageTransform):
         h, w = super(GridMask, self).sample_transform(data)
 
         hh = int(np.ceil(np.sqrt(h ** 2 + w ** 2)))
-        d = np.random.randint(low=self.d_range[0], high=self.d_range[1])
+        d = random.randint(self.d_range[0], self.d_range[1])
 
         mask = np.ones((hh, hh), np.float32)
-        st_h = np.random.randint(d)
-        st_w = np.random.randint(d)
+        st_h = random.randint(0, d)
+        st_w = random.randint(0, d)
         b = int(np.ceil(d * self.ratio))
 
         for i in range(-1, hh // d + 1):
-            s = max(min(d * i + st_h, hh), 0)
-            t = max(min(d * i + st_h + b, hh), 0)
-            mask[s:t, :] *= 0
+            s_row = max(min(d * i + st_h, hh), 0)
+            t_row = max(min(d * i + st_h + b, hh), 0)
 
-            s = max(min(d * i + st_w, hh), 0)
-            t = max(min(d * i + st_w + b, hh), 0)
-            mask[:, s:t] *= 0
+            s_col = max(min(d * i + st_w, hh), 0)
+            t_col = max(min(d * i + st_w + b, hh), 0)
+
+            mask[s_row:t_row, s_col:t_col] *= 0
+
+        mask_w, mask_h = mask.shape
+        if self.rotate:
+            angle = random.randint(self.rotate[0], self.rotate[1])
+            rotation_matrix = cv2.getRotationMatrix2D((mask_w // 2, mask_h // 2), angle, 1)
+            mask = cv2.warpAffine(mask, rotation_matrix, (mask_w, mask_h), flags=cv2.INTER_NEAREST)
 
         mask = mask[(hh - h) // 2 : (hh - h) // 2 + h, (hh - w) // 2 : (hh - w) // 2 + w]
-        mask_w, mask_h = mask.shape[:2]
-        if self.rotate:
-            angle = np.random.randint(low=self.rotate[0], high=self.rotate[1])
-            rotation_matrix = cv2.getRotationMatrix2D((mask_w // 2, mask_h // 2), angle, 1)
-            mask = cv2.warpAffine(mask, rotation_matrix, (mask_h, mask_w))
-
         if self.mode != "reverse":
             mask = 1 - mask
 
-        mask = np.reshape(mask, (w, h))
+        mask = np.reshape(mask, (h, w))
 
         self.state_dict["mask"] = mask.astype(np.uint8)
 
