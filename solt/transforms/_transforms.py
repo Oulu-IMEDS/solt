@@ -19,6 +19,7 @@ from ..constants import (
     ALLOWED_INTERPOLATIONS,
     ALLOWED_PADDINGS,
     DTYPES_MAX,
+    ALLOWED_GRIDMASK_MODES,
 )
 from ..core import Stream
 from ..core import DataContainer, Keypoints
@@ -1450,3 +1451,98 @@ class JPEGCompression(ImageTransform):
             return img
         _, encoded_img = cv2.imencode(".jpg", img, (cv2.IMWRITE_JPEG_QUALITY, self.state_dict["quality"]))
         return cv2.imdecode(encoded_img, cv2.IMREAD_UNCHANGED)
+
+
+class GridMask(ImageTransform):
+    """Performs a GridMask augmentation.
+
+    https://arxiv.org/abs/2001.04086
+
+    Parameters
+    ----------
+    d_range: int or tuple or None
+        The range of parameter d. If tuple, then the d is chosen between ``(d_range[0], d_range[1])``.
+        If none, then the d is chosen between ``(1, 2)``.
+    ratio: float
+        The value of parameter ratio, defines the distance between GridMask squares.
+    rotate : int or tuple or None
+        If int, then the angle of grid mask rotation is between ``(-rotate, rotate)``.
+        If tuple, then the angle of grid mask rotation is between ``(rotate[0], rotate[1])``.
+    mode : str or None
+        GridMask mode. If ``'crop'``, then the default GridMask is applied.
+        If ``'crop'``, the inversed GridMask is applied.
+    data_indices : tuple or None
+        Indices of the images within the data container to which this transform needs to be applied.
+        Every element within the tuple must be integer numbers.
+        If None, then the transform will be applied to all the images withing the DataContainer.
+    p : float
+        Probability of applying this transform.
+    """
+
+    serializable_name = "gridmask"
+    """How the class should be stored in the registry"""
+
+    def __init__(self, d_range=None, ratio=0.6, rotate=0, mode=None, data_indices=None, p=0.5):
+        super(GridMask, self).__init__(p=p, data_indices=data_indices)
+
+        if d_range is None:
+            d_range = (1, 10)
+
+        self.d_range = validate_numeric_range_parameter(d_range, (1, np.inf), min_val=1)
+
+        self.ratio = ratio
+
+        if not isinstance(rotate, int) and not isinstance(rotate, tuple):
+            raise TypeError
+
+        if isinstance(rotate, tuple):
+            if not isinstance(rotate[0], int) or not isinstance(rotate[1], int):
+                raise TypeError
+
+        if isinstance(rotate, int) and rotate:
+            rotate = (-rotate, rotate)
+
+        self.rotate = rotate
+
+        self.mode = validate_parameter(mode, ALLOWED_GRIDMASK_MODES, "none", heritable=False)
+
+    def sample_transform(self, data: DataContainer):
+        h, w = super(GridMask, self).sample_transform(data)
+
+        hh = int(np.ceil(np.sqrt(h ** 2 + w ** 2)))
+        d = np.random.randint(low=self.d_range[0], high=self.d_range[1])
+
+        mask = np.ones((hh, hh), np.float32)
+        st_h = np.random.randint(d)
+        st_w = np.random.randint(d)
+        b = int(np.ceil(d * self.ratio))
+
+        for i in range(-1, hh // d + 1):
+            s = max(min(d * i + st_h, hh), 0)
+            t = max(min(d * i + st_h + b, hh), 0)
+            mask[s:t, :] *= 0
+
+            s = max(min(d * i + st_w, hh), 0)
+            t = max(min(d * i + st_w + b, hh), 0)
+            mask[:, s:t] *= 0
+
+        mask = mask[(hh - h) // 2 : (hh - h) // 2 + h, (hh - w) // 2 : (hh - w) // 2 + w]
+        mask_w, mask_h = mask.shape[:2]
+        if self.rotate:
+            angle = np.random.randint(low=self.rotate[0], high=self.rotate[1])
+            rotation_matrix = cv2.getRotationMatrix2D((mask_w // 2, mask_h // 2), angle, 1)
+            mask = cv2.warpAffine(mask, rotation_matrix, (mask_h, mask_w))
+
+        if self.mode != "reverse":
+            mask = 1 - mask
+
+        mask = np.reshape(mask, (w, h))
+
+        self.state_dict["mask"] = mask.astype(np.uint8)
+
+    @img_shape_checker
+    def _apply_img(self, img: np.ndarray, settings: dict):
+        for k in range(img.shape[2]):
+            img[:, :, k] *= self.state_dict["mask"]
+
+        return img

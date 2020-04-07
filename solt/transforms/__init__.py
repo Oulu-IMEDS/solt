@@ -21,6 +21,7 @@ from ._transforms import (
     CutOut,
     KeypointsJitter,
     JPEGCompression,
+    GridMask,
 )
 
 __all__ = [
@@ -46,4 +47,5 @@ __all__ = [
     "CutOut",
     "KeypointsJitter",
     "JPEGCompression",
+    "GridMask",
 ]

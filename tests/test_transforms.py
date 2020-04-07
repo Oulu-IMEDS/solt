@@ -1227,3 +1227,35 @@ def test_jpeg_transform(img_6x6_rgb, quality, different):
 def test_jpeg_quality_range_raises_error_when_wrong(quality):
     with pytest.raises(TypeError):
         slt.JPEGCompression(quality_range=quality, p=1)
+
+
+@pytest.mark.parametrize(
+    "img, d_range, rotate, ratio, expected", [(np.ones((3, 3, 3)), (5, 10), 1, 0.2, np.zeros((3, 3, 3)))],
+)
+def test_gridmask_transform(img, d_range, rotate, ratio, expected):
+    np.random.seed(42)
+    random.seed(42)
+    dc = slc.DataContainer((img,), "I")
+    trf = slc.Stream([slt.GridMask(d_range=d_range, rotate=rotate, ratio=ratio, p=1)])
+
+    dc_res = trf(dc, return_torch=False)
+    print(dc_res.data[0])
+    assert np.array_equal(expected, dc_res.data[0])
+
+
+@pytest.mark.parametrize("d_range", [(-1, 0)])
+def test_gridmask_d_range_raises_error_when_wrong(d_range):
+    with pytest.raises(ValueError):
+        slt.GridMask(d_range=d_range, p=1)
+
+
+@pytest.mark.parametrize("rotate", [0.1])
+def test_gridmask_rotate_raises_error_when_wrong(rotate):
+    with pytest.raises(TypeError):
+        slt.GridMask(rotate=rotate, p=1)
+
+
+@pytest.mark.parametrize("rotate", [(0.1, 0.1)])
+def test_gridmask_rotate_raises_error_when_wrong_tuple(rotate):
+    with pytest.raises(TypeError):
+        slt.GridMask(rotate=rotate, p=1)
