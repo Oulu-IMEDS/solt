@@ -11,7 +11,7 @@ setup_requirements = ()
 
 test_requirements = ("pytest",)
 
-description = """Data augmentation libarary for Deep Learning, which supports images, segmentation masks, labels and keypoints. 
+description = """Data augmentation library for Deep Learning, which supports images, segmentation masks, labels and keypoints. 
 Furthermore, SOLT is fast and has OpenCV in its backend. 
 Full auto-generated docs and 
 examples are available here: https://mipt-oulu.github.io/solt/.
