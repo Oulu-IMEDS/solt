@@ -26,7 +26,7 @@ def assert_data_containers_equal(dc, dc_new):
 
 
 def generate_data_container_based_on_presence(img, mask, kpts_data, order, presence):
-    kpts = slc.Keypoints(kpts_data.copy(), 3, 4)
+    kpts = slc.Keypoints(kpts_data.copy(), frame=(3, 4))
 
     n_obj1, n_obj2, n_obj3, n_obj4, n_obj5, n_obj6, n_obj7, n_obj8 = presence
     dc_content = []
@@ -59,13 +59,13 @@ def generate_data_container_based_on_presence(img, mask, kpts_data, order, prese
     else:
         del order[order.index('masks')]
     if n_obj5:
-        d['keypoints'] = slc.Keypoints(kpts_data.copy(), 3, 4)
+        d['keypoints'] = slc.Keypoints(kpts_data.copy(), frame=(3, 4))
         dc_content.append(kpts)
         dc_format += 'P'
     else:
         del order[order.index('keypoints')]
     if n_obj6:
-        d['keypoints_array'] = [slc.Keypoints(kpts_data.copy(), 3, 4) for _ in range(n_obj6)]
+        d['keypoints_array'] = [slc.Keypoints(kpts_data.copy(), frame=(3, 4)) for _ in range(n_obj6)]
         dc_content.extend(d['keypoints_array'])
         dc_format += 'P' * n_obj6
     else:
@@ -205,7 +205,7 @@ def test_create_empty_keypoints():
 
 def test_create_4_keypoints():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
-    kpts = slc.Keypoints(kpts_data, 3, 4)
+    kpts = slc.Keypoints(kpts_data, frame=(3, 4))
     assert kpts.height == 3
     assert kpts.width == 4
     assert np.array_equal(kpts_data, kpts.data)
@@ -213,7 +213,7 @@ def test_create_4_keypoints():
 
 def test_create_4_keypoints_change_frame():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
-    kpts = slc.Keypoints(kpts_data, 3, 4)
+    kpts = slc.Keypoints(kpts_data, frame=(3, 4))
     kpts.height = 2
     kpts.width = 2
 
@@ -224,7 +224,7 @@ def test_create_4_keypoints_change_frame():
 
 def test_create_4_keypoints_change_grid_and_frame():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
-    kpts = slc.Keypoints(kpts_data, 3, 4)
+    kpts = slc.Keypoints(kpts_data, frame=(3, 4))
 
     kpts_data_new = np.array([[0, 0], [0, 1], [1, 0], [1, 1], [0.5, 0.5]]).reshape((5, 2))
     kpts.height = 2
@@ -388,7 +388,7 @@ def test_selective_pipeline_selects_transforms_and_does_the_fusion():
     ], n=2, probs=[0.5, 0.5], optimize_stack=True)
 
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
-    kpts = slc.Keypoints(kpts_data, 3, 4)
+    kpts = slc.Keypoints(kpts_data, frame=(3, 4))
     dc = slc.DataContainer(kpts, 'P')
     dc_res = ppl(dc, return_torch=False)
 
@@ -497,7 +497,7 @@ def test_transform_settings_wrong_type_for_item(img_5x5):
     {'padding': 'z'}
 ])
 def test_interpolation_or_padding_settings_for_labels_or_keypoints(setting):
-    kpts = slc.Keypoints(pts=np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2)), height=3, width=3)
+    kpts = slc.Keypoints(pts=np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2)), frame=(3, 3))
     with pytest.raises(TypeError):
         slc.DataContainer(data=(kpts,),
                           fmt='P',
@@ -573,7 +573,7 @@ def test_matrix_transforms_use_cache_for_different_dc_items_raises_error(img_5x5
 
 def test_keypoints_get_set():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
-    kpts = slc.Keypoints(kpts_data, 3, 4)
+    kpts = slc.Keypoints(kpts_data, frame=(3, 4))
 
     assert np.array_equal(kpts[0], np.array([0, 0]))
     kpts[0] = np.array([2, 2])
@@ -609,7 +609,7 @@ def test_data_container_from_and_to_dict(img_3x4, mask_3x4, order, presence):
                 if 'mask' in k:
                     tmp[-1] = tmp[-1].astype(np.uint8).squeeze()
                 if 'keypoints' in k:
-                    tmp[-1] = slc.Keypoints(tmp[-1], 3, 4)
+                    tmp[-1] = slc.Keypoints(tmp[-1], frame=(3, 4))
 
             tensor_dict[k] = tmp
         else:
@@ -620,7 +620,7 @@ def test_data_container_from_and_to_dict(img_3x4, mask_3x4, order, presence):
             if 'mask' in k:
                 tensor_dict[k] = tensor_dict[k].astype(np.uint8).squeeze()
             if 'keypoints' in k:
-                tensor_dict[k] = slc.Keypoints(tensor_dict[k], 3, 4)
+                tensor_dict[k] = slc.Keypoints(tensor_dict[k], frame=(3, 4))
 
     assert dc == slc.DataContainer.from_dict(tensor_dict)
 
@@ -684,7 +684,7 @@ def test_image_mask_pipeline_to_torch_normalization(img_3x3_rgb, mask_3x3, mean,
                     mean=mean, std=std)
 
     if mean is None:
-        np.testing.assert_almost_equal(img[0, :, :].max().item(), 0.515 / 0.229)
+        np.testing.assert_almost_equal(img[:, :, 0].max().item(), 0.515 / 0.229)
     else:
         assert img.max() == 1
     assert mask.max() == 1
@@ -720,7 +720,7 @@ def test_image_mask_pipeline_to_torch_checks_mean_type_and_shape_rgb(img_3x3_rgb
 
 def test_data_container_keypoints_rescale_to_torch():
     kpts_data = np.array([[100, 20], [1023, 80], [20, 20], [100, 700]]).reshape((4, 2))
-    kpts = slc.Keypoints(kpts_data, 768, 1024)
+    kpts = slc.Keypoints(kpts_data, frame=(768, 1024))
     ppl = slc.Stream()
     k, label = ppl({'keypoints': kpts, 'label': 1}, as_dict=False)
     assert isinstance(k, torch.FloatTensor)
