@@ -1,5 +1,5 @@
 import cv2
-import numpy as np
+
 
 ALLOWED_PADDINGS = {"z": cv2.BORDER_CONSTANT, "r": cv2.BORDER_REFLECT_101}
 ALLOWED_INTERPOLATIONS = {
@@ -13,5 +13,4 @@ ALLOWED_CROPS = {"c", "r"}
 ALLOWED_TYPES = {"I", "M", "P", "L"}
 ALLOWED_BLURS = {"g", "m", "mo"}
 ALLOWED_COLOR_CONVERSIONS = {"gs2rgb", "rgb2gs", "none"}
-DTYPES_MAX = {np.dtype("uint8"): 255, np.dtype("uint16"): 65536}  # TODO: refactor using iinfo
 ALLOWED_GRIDMASK_MODES = {"crop", "reserve", "none"}
