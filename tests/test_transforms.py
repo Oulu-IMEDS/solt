@@ -370,8 +370,8 @@ def test_padding_img_mask_3x4_3x4(img, mask):
     dc = slc.DataContainer((img, mask), "IM")
     transf = slt.Pad((4, 3))
     res = transf(dc)
-    assert (res[0][0].shape[0] == 3) and (res[0][0].shape[1] == 4)
-    assert (res[1][0].shape[0] == 3) and (res[1][0].shape[1] == 4)
+    assert (res[0][0].shape[0] == 4) and (res[0][0].shape[1] == 4)
+    assert (res[1][0].shape[0] == 4) and (res[1][0].shape[1] == 4)
 
 
 @pytest.mark.parametrize("img, mask", [(img_3x4(), mask_3x4())])
@@ -533,7 +533,7 @@ def test_2x2_pad_to_20x20_center_crop_2x2(pad_size, crop_size, img, mask):
 
     assert (res[0][0].shape[0] == 2) and (res[0][0].shape[1] == 2)
     assert (res[1][0].shape[0] == 2) and (res[1][0].shape[1] == 2)
-    assert (res[2][0].height == 2) and (res[2][0].width == 2)
+    assert res[2][0].frame == (2, 2)
 
     assert np.array_equal(res[0][0], img)
     assert np.array_equal(res[1][0], mask)
@@ -541,7 +541,11 @@ def test_2x2_pad_to_20x20_center_crop_2x2(pad_size, crop_size, img, mask):
 
 
 @pytest.mark.parametrize("crop_mode", ["c", "r", "d"])
-@pytest.mark.parametrize("img, mask", [(img_2x2(), mask_2x2())])
+@pytest.mark.parametrize("img, mask", [
+    (img_2x2(), mask_2x2()),
+    (np.ones((3, 4, 5, 1)), np.ones((3, 4, 5))),
+    (np.ones((3, 3, 7, 4, 6, 3)), np.zeros((3, 3, 7, 4, 6))),
+])
 def test_different_crop_modes(crop_mode, img, mask):
     if crop_mode == "d":
         with pytest.raises(ValueError):
