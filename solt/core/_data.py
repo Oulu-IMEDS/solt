@@ -90,7 +90,7 @@ class DataContainer(object):
 
     def validate(self):
         """Validates frame consistency in the wrapped data."""
-        frame_prev = None
+        frame_prev = tuple()
 
         for obj, t, settings in self:
             if t == "I":
@@ -102,7 +102,7 @@ class DataContainer(object):
             else:  # t == "L", etc
                 continue
 
-            if frame_prev is None:
+            if len(frame_prev) == 0:
                 frame_prev = frame_curr
             else:
                 if len(frame_prev) != len(frame_curr):

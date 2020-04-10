@@ -741,7 +741,7 @@ class Crop(BaseTransform):
             ndim = len(self.offsets)
             sel = [slice(self.offsets[i], self.offsets[i] + self.crop_to[i])
                    for i in range(ndim)]
-            sel = tuple(sel + [slice(None), ])
+            sel = tuple(sel + [..., ])
             return img_mask[sel]
         else:
             return img_mask

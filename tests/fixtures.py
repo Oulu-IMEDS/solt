@@ -137,7 +137,7 @@ def mask_5x5():
     out : ndarray
         5x5 uint8 image
     """
-    img = np.ones((5, 5, 1))
+    img = np.ones((5, 5))
 
     img[:, :2] = 2
     img[:, -2:] = 2

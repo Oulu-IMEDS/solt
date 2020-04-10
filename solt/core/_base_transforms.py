@@ -74,8 +74,12 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
             Coordinate frame (d0, d1, ...). (d0, d1) are (h, w), respectively.
         """
         self.state_dict["frame"] = data.validate()
-        self.state_dict["h"] = self.state_dict["frame"][0]
-        self.state_dict["w"] = self.state_dict["frame"][1]
+        if len(self.state_dict["frame"]):
+            self.state_dict["h"] = self.state_dict["frame"][0]
+            self.state_dict["w"] = self.state_dict["frame"][1]
+        else:
+            self.state_dict["h"] = None
+            self.state_dict["w"] = None
         return self.state_dict["frame"]
 
     def apply(self, data: DataContainer):
