@@ -7,10 +7,7 @@ import numpy as np
 from solt.utils import Serializable
 from solt.constants import ALLOWED_INTERPOLATIONS, ALLOWED_PADDINGS
 from ._data import DataContainer, Keypoints
-from solt.utils import (
-    img_shape_checker,
-    validate_parameter,
-)
+from solt.utils import img_shape_checker, validate_parameter
 
 
 class BaseTransform(Serializable, metaclass=ABCMeta):
@@ -64,7 +61,7 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
         return False
 
     def sample_transform(self, data: DataContainer):
-        """Samples transform parameters based on data.
+        """Validates data and samples transform parameters based on it.
 
         Parameters
         ----------
@@ -74,11 +71,12 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
         Returns
         -------
         out : tuple
-            Coordinate frame (h, w).
+            Coordinate frame (d0, d1, ...). (d0, d1) are (h, w), respectively.
         """
-
-        self.state_dict["h"], self.state_dict["w"] = data.validate()
-        return self.state_dict["h"], self.state_dict["w"]
+        self.state_dict["frame"] = data.validate()
+        self.state_dict["h"] = self.state_dict["frame"][0]
+        self.state_dict["w"] = self.state_dict["frame"][1]
+        return self.state_dict["frame"]
 
     def apply(self, data: DataContainer):
         """Applies transformation to a DataContainer items depending on the type.
@@ -611,4 +609,4 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         pts_data[:, 0] /= pts_data[:, 2]
         pts_data[:, 1] /= pts_data[:, 2]
 
-        return Keypoints(pts_data[:, :-1], h_new, w_new)
+        return Keypoints(pts_data[:, :-1], frame=(h_new, w_new))
