@@ -539,50 +539,47 @@ class Pad(BaseTransform, PaddingPropertyHolder):
 
         if not isinstance(pad_to, (tuple, list, int)) and (pad_to is not None):
             raise TypeError("The argument pad_to has to be tuple, list or None!")
-        if isinstance(pad_to, int):
-            pad_to = (pad_to, pad_to)
 
         self.pad_to = pad_to
+        self.offsets_s = None
+        self.offsets_e = None
 
     def sample_transform(self, data: DataContainer):
         if self.pad_to is not None:
-            h, w = super(Pad, self).sample_transform(data)[:2]
+            frame_in = super(Pad, self).sample_transform(data)
+            ndim = len(frame_in)
+            if isinstance(self.pad_to, int):
+                self.pad_to = (self.pad_to, ) * ndim
 
-            pad_w = (self.pad_to[0] - w) // 2
-            pad_h = (self.pad_to[1] - h) // 2
+            # raise ValueError(f"{repr(self.pad_to)} ||| {repr(frame_in)}")
+            self.offsets_s = [(self.pad_to[i] - frame_in[i]) // 2 for i in range(ndim)]
 
-            pad_h_top = pad_h
-            pad_h_bottom = pad_h + (self.pad_to[1] - h) % 2
+            self.offsets_e = [self.pad_to[i] - frame_in[i] - self.offsets_s[i]
+                              for i in range(ndim)]
 
-            pad_w_left = pad_w
-            pad_w_right = pad_w + (self.pad_to[0] - w) % 2
+            # If padding is negative, do not pad and do not raise the error
+            for i in range(ndim):
+                if self.offsets_s[i] < 0:
+                    self.offsets_s[i] = 0
+                if self.offsets_e[i] < 0:
+                    self.offsets_e[i] = 0
 
-            if pad_h < 0:
-                pad_h_top = 0
-                pad_h_bottom = 0
+    def _apply_img_or_mask(self, img_mask: np.ndarray, settings: dict):
+        if self.pad_to is not None:
+            pad_width = [(s, e) for s, e in zip(self.offsets_s, self.offsets_e)]
+            if img_mask.ndim > len(pad_width):
+                pad_width = pad_width + [(0, 0), ]
 
-            if pad_w < 0:
-                pad_w_left = 0
-                pad_w_right = 0
+            if settings["padding"][1] == "strict":
+                padding = settings["padding"][0]
+            else:
+                padding = self.padding[0]
+            mode = {"z": "constant", "r": "reflect"}[padding]
 
-            self.state_dict = {
-                "pad_h": (pad_h_top, pad_h_bottom),
-                "pad_w": (pad_w_left, pad_w_right),
-            }
+            return np.pad(img_mask, pad_width=pad_width, mode=mode)
+        else:
+            return img_mask
 
-    def _apply_img_or_mask(self, img: np.ndarray, settings: dict):
-        if self.pad_to is None:
-            return img
-        pad_h_top, pad_h_bottom = self.state_dict["pad_h"]
-        pad_w_left, pad_w_right = self.state_dict["pad_w"]
-        padding = ALLOWED_PADDINGS[self.padding[0]]
-
-        if settings["padding"][1] == "strict":
-            padding = ALLOWED_PADDINGS[settings["padding"][0]]
-
-        return cv2.copyMakeBorder(img, pad_h_top, pad_h_bottom, pad_w_left, pad_w_right, padding, value=0)
-
-    @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
         return self._apply_img_or_mask(img, settings)
 
@@ -597,17 +594,17 @@ class Pad(BaseTransform, PaddingPropertyHolder):
             return pts
         if self.padding[0] != "z":
             raise ValueError
-        pts_data = pts.data.copy()
+        pts_in = pts.data.copy()
+        pts_out = np.empty_like(pts_in)
+        ndim = len(self.offsets_s)
 
-        pad_h_top, pad_h_bottom = self.state_dict["pad_h"]
-        pad_w_left, pad_w_right = self.state_dict["pad_w"]
+        for i in range(ndim):
+            pts_out[:, i] = pts_in[:, i] + self.offsets_s[i]
 
-        pts_data[:, 0] += pad_w_left
-        pts_data[:, 1] += pad_h_top
+        frame = [self.offsets_s[i] + pts.frame[i] + self.offsets_e[i]
+                 for i in range(ndim)]
 
-        return Keypoints(pts_data,
-                         frame=(pad_h_top + pts.height + pad_h_bottom,
-                                pad_w_left + pts.width + pad_w_right))
+        return Keypoints(pts_out, frame=frame)
 
 
 class Resize(BaseTransform, InterpolationPropertyHolder):
@@ -714,39 +711,39 @@ class Crop(BaseTransform):
                 if not isinstance(crop_to[0], int) or not isinstance(crop_to[1], int):
                     raise TypeError("Incorrect type of the crop_to!")
 
-            if isinstance(crop_to, int):
-                crop_to = (crop_to, crop_to)
-
         self.crop_to = crop_to
         self.crop_mode = crop_mode
-        self.offsets = None
+        self.offsets_s = None
+        self.offsets_e = None
 
     def sample_transform(self, data: DataContainer):
-        frame_in = super(Crop, self).sample_transform(data)
-        ndim = len(frame_in)
-
         if self.crop_to is not None:
+            frame_in = super(Crop, self).sample_transform(data)
+            ndim = len(frame_in)
+            if isinstance(self.crop_to, int):
+                self.crop_to = (self.crop_to, ) * ndim
+
             if any([self.crop_to[i] > frame_in[i] for i in range(ndim)]):
                 raise ValueError("Crop size exceeds the data coordinate frame")
 
             if self.crop_mode == "r":
-                self.offsets = [int(random.random() * (frame_in[i] - self.crop_to[i]))
-                                for i in range(ndim)]
+                self.offsets_s = [int(random.random() * (frame_in[i] - self.crop_to[i]))
+                                  for i in range(ndim)]
             else:
-                self.offsets = [(frame_in[i] - self.crop_to[i]) // 2
-                                for i in range(ndim)]
+                self.offsets_s = [(frame_in[i] - self.crop_to[i]) // 2
+                                  for i in range(ndim)]
+            self.offsets_e = [self.offsets_s[i] + self.crop_to[i]
+                              for i in range(ndim)]
 
     def __crop_img_or_mask(self, img_mask):
         if self.crop_to is not None:
-            ndim = len(self.offsets)
-            sel = [slice(self.offsets[i], self.offsets[i] + self.crop_to[i])
-                   for i in range(ndim)]
+            ndim = len(self.offsets_s)
+            sel = [slice(self.offsets_s[i], self.offsets_e[i]) for i in range(ndim)]
             sel = tuple(sel + [..., ])
             return img_mask[sel]
         else:
             return img_mask
 
-    @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
         return self.__crop_img_or_mask(img)
 
@@ -762,8 +759,8 @@ class Crop(BaseTransform):
         pts_in = pts.data.copy()
         pts_out = np.empty_like(pts_in)
 
-        for i in range(len(self.offsets)):
-            pts_out[:, i] = pts_in[:, i] - self.offsets[i]
+        for i in range(len(self.offsets_s)):
+            pts_out[:, i] = pts_in[:, i] - self.offsets_s[i]
 
         return Keypoints(pts_out, frame=self.crop_to)
 
