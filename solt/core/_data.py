@@ -85,38 +85,38 @@ class DataContainer(object):
         self.__data = data
         self.__fmt = fmt
         self.__transform_settings = transform_settings
-
-        self.__imagenet_mean = torch.tensor((0.485, 0.456, 0.406)).view(3, 1, 1)
-        self.__imagenet_std = torch.tensor((0.229, 0.224, 0.225)).view(3, 1, 1)
+        self.__imagenet_mean = torch.tensor((0.485, 0.456, 0.406)).view(1, 1, 3)
+        self.__imagenet_std = torch.tensor((0.229, 0.224, 0.225)).view(1, 1, 3)
 
     def validate(self):
-        prev_h = None
-        prev_w = None
-        # Let's make sure that all the objects have the same coordinate frame
-        data = self
-        for obj, t, settings in data:
-            if t == "M" or t == "I":
-                h = obj.shape[0]
-                w = obj.shape[1]
+        """Validates frame consistency in the wrapped data."""
+        frame_prev = tuple()
+
+        for obj, t, settings in self:
+            if t == "I":
+                frame_curr = obj.shape[:-1]  # exclude channel dim
+            elif t == "M":
+                frame_curr = obj.shape
             elif t == "P":
-                h = obj.height
-                w = obj.width
-            elif t == "L":
+                frame_curr = obj.frame
+            else:  # t == "L", etc
                 continue
 
-            if prev_h is None:
-                prev_h = h
+            if len(frame_prev) == 0:
+                frame_prev = frame_curr
             else:
-                if prev_h != h:
-                    raise ValueError
+                if len(frame_prev) != len(frame_curr):
+                    msg = (f"Inconsistent frame dimensionality: "
+                           f"{len(frame_prev)}, {len(frame_curr)}")
+                    raise ValueError(msg)
+                elif frame_prev != frame_curr:
+                    msg = f"Inconsistent frames shapes: {frame_prev}, {frame_curr}"
+                    raise ValueError(msg)
+                else:
+                    pass
 
-            if prev_w is None:
-                prev_w = w
-            else:
-                if prev_w != w:
-                    raise ValueError
+        return frame_prev
 
-        return prev_h, prev_w
 
     @property
     def data_format(self):
@@ -259,6 +259,7 @@ class DataContainer(object):
         not_as_dict = []
         for el, f in zip(self.__data, self.__fmt):
             if f == "I":
+                # TODO: remove hardcode, use iinfo
                 scale = 255.0
                 if el.dtype == np.uint16:
                     scale = 65535.0
@@ -362,16 +363,25 @@ class Keypoints(object):
     ----------
     pts : numpy.ndarray
         Key points as an numpy.ndarray in (x, y) format.
+    frame : (n, ) list-like
+        Shape of the coordinate frame. frame[0] is `height`, frame[1] is `width`.
     height : int
-        Height of the coordinate frame.
+        (DEPRECATED) Height of the coordinate frame.
     width : int
-        Width of the coordinate frame.
+        (DEPRECATED) Width of the coordinate frame.
     """
 
-    def __init__(self, pts=None, height=None, width=None):
+    def __init__(self, pts=None, *, frame=None, height=None, width=None):
         self.__data = pts
-        self.__height = height
-        self.__width = width
+        if frame is not None:
+            self.__frame = list(frame)
+        elif height is not None and width is not None:
+            self.__frame = [height, width]
+        else:
+            if self.__data is None:
+                self.__frame = []
+            else:
+                raise ValueError("Frame is not specified")
 
     @property
     def data(self):
@@ -386,23 +396,37 @@ class Keypoints(object):
         self.__data[idx, :] = value
 
     @property
+    def frame(self):
+        return tuple(self.__frame)
+
+    @property
     def height(self):
-        return self.__height
+        if len(self.__frame):
+            return self.__frame[0]
+        else:
+            return None
 
     @property
     def width(self):
-        return self.__width
+        if len(self.__frame):
+            return self.__frame[1]
+        else:
+            return None
+
+    @frame.setter
+    def frame(self, value):
+        self.__frame = value
 
     @height.setter
     def height(self, value):
-        self.__height = value
+        self.__frame[0] = value
 
     @width.setter
     def width(self, value):
-        self.__width = value
+        self.__frame[1] = value
 
     def __eq__(self, other):
-        dim_equal = (self.height == other.height) and (self.width == other.width)
+        dim_equal = all([self.frame[i] == other.frame[i] for i in range(len(self.frame))])
         data_equal = np.array_equal(self.data, other.data)
 
         return dim_equal and data_equal

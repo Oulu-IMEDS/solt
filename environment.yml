@@ -1,0 +1,16 @@
+name: solt_dev
+channels:
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.7.5
+  - pyyaml
+  - cython
+  - numpy
+  - scipy
+  - pytorch
+  - torchvision
+  - pytest
+  - pip
+  - pip:
+    - opencv-python-headless

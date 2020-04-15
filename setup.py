@@ -5,18 +5,22 @@
 
 from setuptools import find_packages, setup
 
-requirements = ("numpy", "scipy", "opencv-python-headless", "torch", "torchvision", "pyyaml")
 
-setup_requirements = ()
+def parse_requirements_file(filename):
+    with open(filename) as f:
+        requires = [line.strip() for line in f.readlines() if line]
+    return requires
 
-test_requirements = ("pytest",)
 
-description = """Data augmentation library for Deep Learning, which supports images, segmentation masks, labels and keypoints. 
-Furthermore, SOLT is fast and has OpenCV in its backend. 
-Full auto-generated docs and 
-examples are available here: https://mipt-oulu.github.io/solt/.
+requirements_base = parse_requirements_file("requirements_base.txt")
+requirements_test = parse_requirements_file("requirements_test.txt")
 
-"""
+description = (
+    "Data augmentation library for Deep Learning, which supports images, segmentation "
+    "masks, labels and keypoints. Furthermore, SOLT is fast and has OpenCV in its "
+    "backend. Full auto-generated docs and examples are available here: "
+    "https://mipt-oulu.github.io/solt/."
+)
 
 setup(
     author="Aleksei Tiulpin",
@@ -34,16 +38,15 @@ setup(
         "Operating System :: POSIX :: Linux",
     ],
     description="Optimized data augmentation library for Deep Learning",
-    install_requires=requirements,
+    install_requires=requirements_base,
     license="MIT license",
     long_description=description,
     include_package_data=True,
     keywords="data augmentations, deeep learning",
     name="solt",
     packages=find_packages(include=["solt"]),
-    setup_requires=setup_requirements,
     test_suite="tests",
-    tests_require=test_requirements,
+    tests_require=requirements_test,
     url="https://github.com/mipt-oulu/solt",
     version="0.1.9",
     zip_safe=False,
