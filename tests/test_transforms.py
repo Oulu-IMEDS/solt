@@ -169,22 +169,19 @@ def test_shear_range_none():
 
 @pytest.mark.parametrize("img, mask", [(img_3x3(), mask_3x3())])
 @pytest.mark.parametrize("ignore_state", [True, False])
-@pytest.mark.parametrize(
-    "transform_settings",
-    [
-        None,
-        {0: {"interpolation": "nearest", "padding": "z"}},
-        {0: {"interpolation": "nearest", "padding": "r"}},
-        {0: {"interpolation": "bilinear", "padding": "z"}},
-        {0: {"interpolation": "bilinear", "padding": "r"}},
-        {0: {"interpolation": "bicubic", "padding": "z"}},
-        {0: {"interpolation": "bicubic", "padding": "r"}},
-        {0: {"interpolation": "area", "padding": "z"}},
-        {0: {"interpolation": "area", "padding": "r"}},
-        {0: {"interpolation": "lanczos", "padding": "z"}},
-        {0: {"interpolation": "lanczos", "padding": "r"}},
-    ],
-)
+@pytest.mark.parametrize("transform_settings", [
+    None,
+    {0: {"interpolation": "nearest", "padding": "z"}},
+    {0: {"interpolation": "nearest", "padding": "r"}},
+    {0: {"interpolation": "bilinear", "padding": "z"}},
+    {0: {"interpolation": "bilinear", "padding": "r"}},
+    {0: {"interpolation": "bicubic", "padding": "z"}},
+    {0: {"interpolation": "bicubic", "padding": "r"}},
+    {0: {"interpolation": "area", "padding": "z"}},
+    {0: {"interpolation": "area", "padding": "r"}},
+    {0: {"interpolation": "lanczos", "padding": "z"}},
+    {0: {"interpolation": "lanczos", "padding": "r"}},
+])
 def test_rotate_90_img_mask_keypoints_destructive(img, mask, transform_settings, ignore_state):
     # Setting up the data
 
@@ -395,7 +392,7 @@ def test_pad_to_20x20_img_mask_keypoints_3x3(img, mask):
 
     assert (res[0][0].shape[0] == 20) and (res[0][0].shape[1] == 20)
     assert (res[1][0].shape[0] == 20) and (res[1][0].shape[1] == 20)
-    assert (res[2][0].height == 20) and (res[2][0].width == 20)
+    assert (res[2][0].frame[0] == 20) and (res[2][0].frame[1] == 20)
 
     assert np.array_equal(res[2][0].data, np.array([[8, 8], [8, 10], [10, 10], [10, 8]]).reshape((4, 2)))
 
@@ -459,7 +456,7 @@ def test_resize_img_to_arbitrary_size(img, mask, resize_to):
     assert transf.resize_to == resize_to
     assert (res[0].shape[0] == resize_to[1]) and (res[0].shape[1] == resize_to[0])
     assert (res[1].shape[0] == resize_to[1]) and (res[1].shape[1] == resize_to[0])
-    assert (res[2].height == resize_to[1]) and (res[2].width == resize_to[0])
+    assert (res[2].frame[0] == resize_to[1]) and (res[2].frame[1] == resize_to[0])
 
     kpts_data = kpts_data.astype(float)
     kpts_data[:, 0] *= scale_x
@@ -493,7 +490,7 @@ def test_pad_to_20x20_img_mask_keypoints_3x3_kpts_first(img, mask):
 
     assert (res[2][0].shape[0] == 20) and (res[2][0].shape[1] == 20)
     assert (res[1][0].shape[0] == 20) and (res[1][0].shape[1] == 20)
-    assert (res[0][0].height == 20) and (res[0][0].width == 20)
+    assert (res[0][0].frame[0] == 20) and (res[0][0].frame[1] == 20)
 
     assert np.array_equal(res[0][0].data, np.array([[8, 8], [8, 10], [10, 10], [10, 8]]).reshape((4, 2)))
 
@@ -511,7 +508,7 @@ def test_3x3_pad_to_20x20_center_crop_3x3_shape_stayes_unchanged(img, mask):
 
     assert (res[0][0].shape[0] == 3) and (res[0][0].shape[1] == 3)
     assert (res[1][0].shape[0] == 3) and (res[1][0].shape[1] == 3)
-    assert (res[2][0].height == 3) and (res[2][0].width == 3)
+    assert (res[2][0].frame[0] == 3) and (res[2][0].frame[1] == 3)
 
 
 @pytest.mark.parametrize("pad_size,crop_size", [
@@ -572,7 +569,7 @@ def test_6x6_pad_to_20x20_center_crop_6x6_img_kpts(img):
     res = stream(dc, return_torch=False)
 
     assert (res[0][0].shape[0] == 6) and (res[0][0].shape[1] == 6)
-    assert (res[1][0].height == 6) and (res[1][0].width == 6)
+    assert (res[1][0].frame[0] == 6) and (res[1][0].frame[1] == 6)
 
     assert np.array_equal(res[0][0], img)
     assert np.array_equal(res[1][0].data, kpts_data)
@@ -590,7 +587,7 @@ def test_6x6_pad_to_20x20_center_crop_6x6_kpts_img(img):
     res = stream(dc, return_torch=False)
 
     assert (res[1][0].shape[0] == 6) and (res[1][0].shape[1] == 6)
-    assert (res[0][0].height == 6) and (res[0][0].width == 6)
+    assert (res[0][0].frame[0] == 6) and (res[0][0].frame[1] == 6)
 
     assert np.array_equal(res[1][0], img)
     assert np.array_equal(res[0][0].data, kpts_data)
@@ -1136,8 +1133,8 @@ def test_cvtcolor_keeps_dimensions(img, expected):
 @pytest.mark.parametrize("mask", [mask_3x4(), ])
 def test_image_color_conversion_raises_error(mode, mask):
     trf = slt.CvtColor(mode=mode)
-    dc = slc.DataContainer(mask.squeeze(), "I")
-    with pytest.raises(IndexError):
+    dc = slc.DataContainer(mask, "I")
+    with pytest.raises(ValueError):
         trf(dc)
 
 
@@ -1218,7 +1215,7 @@ def test_cutout_blacks_out_image(img, expected, cut_size):
     assert np.array_equal(expected, dc_res.data[0])
 
 
-@pytest.mark.parametrize("img", [img_2x2(), ])
+@pytest.mark.parametrize("img", [np.ones((2, 2, 1)), ])
 @pytest.mark.parametrize("cut_size", [1, (1, 1), 0.5, (0.5, 0.5)])
 def test_cutout_1x1_blacks_corner_pixels_2x2_img(img, cut_size):
     dc = slc.DataContainer((img,), "I")

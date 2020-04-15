@@ -19,7 +19,7 @@ def assert_data_containers_equal(dc, dc_new):
         if isinstance(d1, np.ndarray):
             np.testing.assert_array_equal(d1, d2)
         elif isinstance(d1, slc.Keypoints):
-            assert d1.height == d2.height and d1.width == d2.width
+            assert d1.frame == d2.frame
             np.testing.assert_array_equal(d1.data, d2.data)
         else:
             assert d1 == d2
@@ -107,11 +107,42 @@ def test_assert_data_containers_equal(img, mask, order, presence):
     assert dc == dc_reordered
 
 
-def test_img_shape_checker_decorator_shape_check():
-    img = np.random.rand(3, 4, 5, 6)
-    func = slu.img_shape_checker(lambda x: x)
-    with pytest.raises(ValueError):
-        func(img)
+@pytest.mark.parametrize('img, num_dims, num_channels, error', [
+    (np.zeros(0,), None, None, None),
+    (np.random.rand(3, 4, 5, 6), (2, 4, 5), None, ValueError),
+    (np.random.rand(3, 4, 5, 6), None, (1, 5, 7), ValueError),
+])
+def test_ensure_valid_image(img, num_dims, num_channels, error):
+    if error is None:
+        slu.ensure_valid_image(img, num_dims=num_dims, num_channels=num_channels)
+    else:
+        with pytest.raises(error):
+            slu.ensure_valid_image(img, num_dims=num_dims, num_channels=num_channels)
+
+
+@pytest.mark.parametrize('mask, num_dims, error', [
+    (np.zeros(0,), None, None),
+    (np.random.rand(3, 4), (2, ), None),
+    (np.random.rand(3, 4, 5, 6), (2, 3, 5), ValueError),
+])
+def test_ensure_valid_mask(mask, num_dims, error):
+    if error is None:
+        slu.ensure_valid_mask(mask, num_dims=num_dims)
+    else:
+        with pytest.raises(error):
+            slu.ensure_valid_mask(mask, num_dims=num_dims)
+
+
+@pytest.mark.parametrize('pts, num_dims, error', [
+    (np.random.rand(7, 2), (2, ), None),
+    (np.random.rand(8, 3), (2, ), ValueError),
+])
+def test_ensure_valid_keypoints(pts, num_dims, error):
+    if error is None:
+        slu.ensure_valid_keypoints(pts, num_dims=num_dims)
+    else:
+        with pytest.raises(error):
+            slu.ensure_valid_keypoints(pts, num_dims=num_dims)
 
 
 @pytest.mark.parametrize('img', [img_2x2(), ])
@@ -202,27 +233,25 @@ def test_image_shape_equal_3_after_nested_flip(img):
 
 def test_create_empty_keypoints():
     kpts = slc.Keypoints()
-    assert kpts.height is None
-    assert kpts.width is None
+    assert len(kpts.frame) == 0
     assert kpts.data is None
 
 
 def test_create_4_keypoints():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
     kpts = slc.Keypoints(kpts_data, frame=(3, 4))
-    assert kpts.height == 3
-    assert kpts.width == 4
+    assert kpts.frame[0] == 3
+    assert kpts.frame[1] == 4
     assert np.array_equal(kpts_data, kpts.data)
 
 
 def test_create_4_keypoints_change_frame():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
     kpts = slc.Keypoints(kpts_data, frame=(3, 4))
-    kpts.height = 2
-    kpts.width = 2
+    kpts.frame = (2, 2)
 
-    assert kpts.height == 2
-    assert kpts.width == 2
+    assert kpts.frame[0] == 2
+    assert kpts.frame[1] == 2
     assert np.array_equal(kpts_data, kpts.data)
 
 
@@ -231,12 +260,11 @@ def test_create_4_keypoints_change_grid_and_frame():
     kpts = slc.Keypoints(kpts_data, frame=(3, 4))
 
     kpts_data_new = np.array([[0, 0], [0, 1], [1, 0], [1, 1], [0.5, 0.5]]).reshape((5, 2))
-    kpts.height = 2
-    kpts.width = 2
+    kpts.frame = (2, 2)
     kpts.pts = kpts_data_new
 
-    assert kpts.height == 2
-    assert kpts.width == 2
+    assert kpts.frame[0] == 2
+    assert kpts.frame[1] == 2
     assert np.array_equal(kpts_data_new, kpts.pts)
 
 
