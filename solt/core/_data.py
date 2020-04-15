@@ -206,14 +206,14 @@ class DataContainer(object):
 
     def wrap_mean_std(self, img, mean, std):
         if not isinstance(mean, (tuple, list, np.ndarray, torch.FloatTensor)):
-            raise TypeError(
-                f"Unknown type ({type(mean)}) of mean vector! " f"Expected tuple, list, np.ndarray or torch.FloatTensor"
-            )
+            msg = (f"Unknown type ({type(mean)}) of mean vector! "
+                   f"Expected tuple, list, np.ndarray or torch.FloatTensor")
+            raise TypeError(msg)
 
         if not isinstance(std, (tuple, list, np.ndarray, torch.FloatTensor)):
-            raise TypeError(
-                f"Unknown type ({type(mean)}) of mean vector! " f"Expected tuple, list, np.ndarray or torch.FloatTensor"
-            )
+            msg = (f"Unknown type ({type(mean)}) of mean vector! "
+                   f"Expected tuple, list, np.ndarray or torch.FloatTensor")
+            raise TypeError(msg)
         if len(mean) != img.size(0):
             raise ValueError("Size of the mean vector does not match the number of channels")
         if len(std) != img.size(0):
@@ -283,8 +283,8 @@ class DataContainer(object):
             elif f == "P":
                 landmarks = torch.from_numpy(el.data).float()
                 if scale_keypoints:
-                    landmarks[:, 0] /= el.width - 1
-                    landmarks[:, 1] /= el.height - 1
+                    landmarks[:, 0] /= el.frame[1] - 1
+                    landmarks[:, 1] /= el.frame[0] - 1
                 res_dict["keypoints_array"].append(landmarks)
                 not_as_dict.append(landmarks)
             elif f == "L":
@@ -362,21 +362,15 @@ class Keypoints(object):
     Parameters
     ----------
     pts : numpy.ndarray
-        Key points as an numpy.ndarray in (x, y) format.
-    frame : (n, ) list-like
+        Array of keypoints. If 2D, has to be in (x, y) format.
+    frame : (n, ) list-like of ints
         Shape of the coordinate frame. frame[0] is `height`, frame[1] is `width`.
-    height : int
-        (DEPRECATED) Height of the coordinate frame.
-    width : int
-        (DEPRECATED) Width of the coordinate frame.
     """
 
-    def __init__(self, pts=None, *, frame=None, height=None, width=None):
+    def __init__(self, pts=None, frame=None):
         self.__data = pts
         if frame is not None:
             self.__frame = list(frame)
-        elif height is not None and width is not None:
-            self.__frame = [height, width]
         else:
             if self.__data is None:
                 self.__frame = []
@@ -399,31 +393,9 @@ class Keypoints(object):
     def frame(self):
         return tuple(self.__frame)
 
-    @property
-    def height(self):
-        if len(self.__frame):
-            return self.__frame[0]
-        else:
-            return None
-
-    @property
-    def width(self):
-        if len(self.__frame):
-            return self.__frame[1]
-        else:
-            return None
-
     @frame.setter
     def frame(self, value):
         self.__frame = value
-
-    @height.setter
-    def height(self, value):
-        self.__frame[0] = value
-
-    @width.setter
-    def width(self, value):
-        self.__frame[1] = value
 
     def __eq__(self, other):
         dim_equal = all([self.frame[i] == other.frame[i] for i in range(len(self.frame))])
