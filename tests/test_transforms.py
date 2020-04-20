@@ -450,17 +450,17 @@ def test_resize_img_to_arbitrary_size(img, mask, resize_to):
     if isinstance(resize_to, int):
         resize_to = (resize_to, resize_to)
 
-    scale_x = resize_to[0] / img.shape[1]
-    scale_y = resize_to[1] / img.shape[0]
+    scale_d0 = resize_to[0] / img.shape[0]
+    scale_d1 = resize_to[1] / img.shape[1]
 
     assert transf.resize_to == resize_to
-    assert (res[0].shape[0] == resize_to[1]) and (res[0].shape[1] == resize_to[0])
-    assert (res[1].shape[0] == resize_to[1]) and (res[1].shape[1] == resize_to[0])
-    assert (res[2].frame[0] == resize_to[1]) and (res[2].frame[1] == resize_to[0])
+    assert (res[0].shape[0] == resize_to[0]) and (res[0].shape[1] == resize_to[1])
+    assert (res[1].shape[0] == resize_to[0]) and (res[1].shape[1] == resize_to[1])
+    assert (res[2].frame[0] == resize_to[0]) and (res[2].frame[1] == resize_to[1])
 
     kpts_data = kpts_data.astype(float)
-    kpts_data[:, 0] *= scale_x
-    kpts_data[:, 1] *= scale_y
+    kpts_data[:, 0] *= scale_d0
+    kpts_data[:, 1] *= scale_d1
     kpts_data = kpts_data.astype(int)
     assert np.array_equal(res[2].data, kpts_data)
 
@@ -1185,13 +1185,14 @@ def test_random_contrast_multiplies_the_data(img):
 )
 def test_different_interpolations_per_item_per_transform(img, transform_settings):
     dc = slc.DataContainer((img, ), "I", transform_settings=transform_settings)
-    dc_res = slt.Resize(resize_to=(10, 15), interpolation="bilinear")(dc)
+    resize_to = (15, 10)
+    dc_res = slt.Resize(resize_to=resize_to, interpolation="bilinear")(dc)
 
     interp = ALLOWED_INTERPOLATIONS["bilinear"]
     if transform_settings is not None:
         interp = ALLOWED_INTERPOLATIONS[transform_settings[0]["interpolation"][0]]
     assert np.array_equal(
-        cv2.resize(img, (10, 15), interpolation=interp).reshape(15, 10, 1),
+        cv2.resize(img, resize_to[::-1], interpolation=interp).reshape(*resize_to, 1),
         dc_res.data[0])
 
 
