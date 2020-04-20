@@ -108,8 +108,7 @@ class DataContainer(object):
                 frame_prev = frame_curr
             else:
                 if len(frame_prev) != len(frame_curr):
-                    msg = (f"Inconsistent frame dimensionality: "
-                           f"{len(frame_prev)}, {len(frame_curr)}")
+                    msg = f"Inconsistent frame dimensionality: " f"{len(frame_prev)}, {len(frame_curr)}"
                     raise ValueError(msg)
                 elif frame_prev != frame_curr:
                     msg = f"Inconsistent frames shapes: {frame_prev}, {frame_curr}"
@@ -207,13 +206,15 @@ class DataContainer(object):
 
     def wrap_mean_std(self, img, mean, std):
         if not isinstance(mean, (tuple, list, np.ndarray, torch.FloatTensor)):
-            msg = (f"Unknown type ({type(mean)}) of mean vector! "
-                   f"Expected tuple, list, np.ndarray or torch.FloatTensor")
+            msg = (
+                f"Unknown type ({type(mean)}) of mean vector! " f"Expected tuple, list, np.ndarray or torch.FloatTensor"
+            )
             raise TypeError(msg)
 
         if not isinstance(std, (tuple, list, np.ndarray, torch.FloatTensor)):
-            msg = (f"Unknown type ({type(mean)}) of mean vector! "
-                   f"Expected tuple, list, np.ndarray or torch.FloatTensor")
+            msg = (
+                f"Unknown type ({type(mean)}) of mean vector! " f"Expected tuple, list, np.ndarray or torch.FloatTensor"
+            )
             raise TypeError(msg)
 
         if len(mean) != img.size(0):
@@ -221,7 +222,7 @@ class DataContainer(object):
         if len(std) != img.size(0):
             raise ValueError("Std vector size does not match the number of channels")
 
-        shape_broadcast = (img.size(0), ) + (1, ) * (img.ndim - 1)
+        shape_broadcast = (img.size(0),) + (1,) * (img.ndim - 1)
         if isinstance(mean, (list, tuple)):
             mean = torch.tensor(mean).view(shape_broadcast)
         if isinstance(std, (list, tuple)):

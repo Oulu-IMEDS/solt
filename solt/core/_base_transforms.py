@@ -508,16 +508,14 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         w_new = self.state_dict["frame_new"][1]
         interp, padding = self.parse_settings(settings)
         transf_m = self.state_dict["transform_matrix_corrected"]
-        return cv2.warpPerspective(img, transf_m, (w_new, h_new),
-                                   flags=interp, borderMode=padding)
+        return cv2.warpPerspective(img, transf_m, (w_new, h_new), flags=interp, borderMode=padding)
 
     def _apply_img_or_mask_affine(self, img: np.ndarray, settings: dict):
         h_new = self.state_dict["frame_new"][0]
         w_new = self.state_dict["frame_new"][1]
         interp, padding = self.parse_settings(settings)
         transf_m = self.state_dict["transform_matrix_corrected"]
-        return cv2.warpAffine(img, transf_m[:2, :], (w_new, h_new),
-                              flags=interp, borderMode=padding)
+        return cv2.warpAffine(img, transf_m[:2, :], (w_new, h_new), flags=interp, borderMode=padding)
 
     @ensure_valid_image(num_dims_spatial=(2,))
     def _apply_img(self, img: np.ndarray, settings: dict):

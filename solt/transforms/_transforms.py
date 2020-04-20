@@ -60,7 +60,7 @@ class Flip(BaseTransform):
         else:
             return np.ascontiguousarray(img[::-1, ::-1, ...])
 
-    @ensure_valid_image(num_dims_total=(2, ))
+    @ensure_valid_image(num_dims_total=(2,))
     def _apply_mask(self, mask: np.ndarray, settings: dict):
         mask_new = cv2.flip(mask, self.axis)
         return mask_new
@@ -548,13 +548,12 @@ class Pad(BaseTransform, PaddingPropertyHolder):
             frame_in = super(Pad, self).sample_transform(data)
             ndim = len(frame_in)
             if isinstance(self.pad_to, int):
-                self.pad_to = (self.pad_to, ) * ndim
+                self.pad_to = (self.pad_to,) * ndim
 
             # raise ValueError(f"{repr(self.pad_to)} ||| {repr(frame_in)}")
             self.offsets_s = [(self.pad_to[i] - frame_in[i]) // 2 for i in range(ndim)]
 
-            self.offsets_e = [self.pad_to[i] - frame_in[i] - self.offsets_s[i]
-                              for i in range(ndim)]
+            self.offsets_e = [self.pad_to[i] - frame_in[i] - self.offsets_s[i] for i in range(ndim)]
 
             # If padding is negative, do not pad and do not raise the error
             for i in range(ndim):
@@ -567,7 +566,9 @@ class Pad(BaseTransform, PaddingPropertyHolder):
         if self.pad_to is not None:
             pad_width = [(s, e) for s, e in zip(self.offsets_s, self.offsets_e)]
             if img_mask.ndim > len(pad_width):
-                pad_width = pad_width + [(0, 0), ]
+                pad_width = pad_width + [
+                    (0, 0),
+                ]
 
             if settings["padding"][1] == "strict":
                 padding = settings["padding"][0]
@@ -600,8 +601,7 @@ class Pad(BaseTransform, PaddingPropertyHolder):
         for i in range(ndim):
             pts_out[:, i] = pts_in[:, i] + self.offsets_s[i]
 
-        frame = [self.offsets_s[i] + pts.frame[i] + self.offsets_e[i]
-                 for i in range(ndim)]
+        frame = [self.offsets_s[i] + pts.frame[i] + self.offsets_e[i] for i in range(ndim)]
 
         return Keypoints(pts_out, frame=frame)
 
@@ -721,25 +721,22 @@ class Crop(BaseTransform):
             frame_in = super(Crop, self).sample_transform(data)
             ndim = len(frame_in)
             if isinstance(self.crop_to, int):
-                self.crop_to = (self.crop_to, ) * ndim
+                self.crop_to = (self.crop_to,) * ndim
 
             if any([self.crop_to[i] > frame_in[i] for i in range(ndim)]):
                 raise ValueError("Crop size exceeds the data coordinate frame")
 
             if self.crop_mode == "r":
-                self.offsets_s = [int(random.random() * (frame_in[i] - self.crop_to[i]))
-                                  for i in range(ndim)]
+                self.offsets_s = [int(random.random() * (frame_in[i] - self.crop_to[i])) for i in range(ndim)]
             else:
-                self.offsets_s = [(frame_in[i] - self.crop_to[i]) // 2
-                                  for i in range(ndim)]
-            self.offsets_e = [self.offsets_s[i] + self.crop_to[i]
-                              for i in range(ndim)]
+                self.offsets_s = [(frame_in[i] - self.crop_to[i]) // 2 for i in range(ndim)]
+            self.offsets_e = [self.offsets_s[i] + self.crop_to[i] for i in range(ndim)]
 
     def __crop_img_or_mask(self, img_mask):
         if self.crop_to is not None:
             ndim = len(self.offsets_s)
             sel = [slice(self.offsets_s[i], self.offsets_e[i]) for i in range(ndim)]
-            sel = tuple(sel + [..., ])
+            sel = tuple(sel + [...,])
             return img_mask[sel]
         else:
             return img_mask
@@ -1163,7 +1160,7 @@ class HSV(ImageTransform):
         v = random.uniform(self.v_range[0], self.v_range[1])
         self.state_dict = {"h_mod": h, "s_mod": s, "v_mod": v}
 
-    @ensure_valid_image(num_dims_spatial=(2,), num_channels=(3, ))
+    @ensure_valid_image(num_dims_spatial=(2,), num_channels=(3,))
     def _apply_img(self, img: np.ndarray, settings: dict):
         img = img.copy()
         dtype = img.dtype
@@ -1259,7 +1256,7 @@ class IntensityRemap(ImageTransform):
 
         self.state_dict = {"LUT": m}
 
-    @ensure_valid_image(num_dims_spatial=(2,), num_channels=(1, ))
+    @ensure_valid_image(num_dims_spatial=(2,), num_channels=(1,))
     def _apply_img(self, img: np.ndarray, settings: dict):
         if img.dtype != np.uint8:
             raise ValueError("IntensityRemap supports uint8 ndarrays only")
