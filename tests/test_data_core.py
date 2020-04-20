@@ -188,12 +188,20 @@ def test_data_item_create_img(img):
     assert dc[0][1] == "I"
 
 
-@pytest.mark.parametrize("img", [img_2x2(),])
-def test_stream_empty(img):
-    dc = slc.DataContainer((img,), "I")
+@pytest.mark.parametrize("img,mask", [(img_2x2(), mask_2x2())])
+def test_stream_empty(img, mask):
+    dc = slc.DataContainer((img, mask, 1), "IML")
     stream = slc.Stream()
-    res, _, _ = stream(dc, return_torch=False)[0]
-    assert np.all(res == img)
+    res = stream(dc, return_torch=False)
+    assert dc == res
+
+
+@pytest.mark.parametrize("img,mask", [(img_2x2(), mask_2x2())])
+def test_stream_with_zero_prob_transform(img, mask):
+    dc = slc.DataContainer((img, mask, 1), "IML")
+    stream = slc.Stream([slt.Rotate(p=0)])
+    res = stream(dc, return_torch=False)
+    assert dc == res
 
 
 def test_empty_stream_selective():

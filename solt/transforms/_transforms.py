@@ -1310,15 +1310,11 @@ class CvtColor(ImageTransform):
         if self.mode == "none":
             return img
         elif self.mode == "gs2rgb":
-            if len(img.shape) != 3:
-                raise ValueError
             if img.shape[-1] == 1:
                 return np.dstack((img, img, img))
             elif img.shape[-1] == 3:
                 return img
         elif self.mode == "rgb2gs":
-            if len(img.shape) != 3:
-                raise ValueError
             if img.shape[-1] == 1:
                 return img
             elif img.shape[-1] == 3:
