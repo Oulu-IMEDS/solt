@@ -7,10 +7,7 @@ import numpy as np
 from solt.utils import Serializable
 from solt.constants import ALLOWED_INTERPOLATIONS, ALLOWED_PADDINGS
 from ._data import DataContainer, Keypoints
-from solt.utils import (ensure_valid_image,
-                        ensure_valid_mask,
-                        ensure_valid_keypoints,
-                        validate_parameter)
+from solt.utils import ensure_valid_image, validate_parameter
 
 
 class BaseTransform(Serializable, metaclass=ABCMeta):
@@ -522,6 +519,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         return cv2.warpAffine(img, transf_m[:2, :], (w_new, h_new),
                               flags=interp, borderMode=padding)
 
+    @ensure_valid_image(num_dims_spatial=(2,))
     def _apply_img(self, img: np.ndarray, settings: dict):
         """Applies a matrix transform to an image.
         If padding is None, the default behavior (zero padding) is expected.
@@ -539,13 +537,7 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
             Output Image
 
         """
-        ensure_valid_image(img, num_dims=(2,))
-        is_gray = img.shape[-1] == 1
-
-        if is_gray:
-            return self._apply_img_or_mask(img, settings)[..., None]
-        else:
-            return self._apply_img_or_mask(img, settings)
+        return self._apply_img_or_mask(img, settings)
 
     def _apply_mask(self, mask: np.ndarray, settings: dict):
         """Abstract method, which defines the transform's behaviour when it is applied to masks HxW.
@@ -565,7 +557,6 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
             Result
 
         """
-        ensure_valid_mask(mask, num_dims=(2,))
         return self._apply_img_or_mask(mask, settings)
 
     def _apply_labels(self, labels, settings: dict):
@@ -602,8 +593,6 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
             Result
 
         """
-        ensure_valid_keypoints(pts, num_dims=(2,))
-
         if self.padding[0] == "r":
             raise ValueError("Cannot apply transform to keypoints with reflective padding!")
 
@@ -617,4 +606,4 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         pts_data[:, 0] /= pts_data[:, 2]
         pts_data[:, 1] /= pts_data[:, 2]
 
-        return Keypoints(pts_data[:, :-1], frame=copy.copy(self.state_dict["frame_new"]))
+        return Keypoints(pts_data[:, :-1], frame=self.state_dict["frame_new"])
