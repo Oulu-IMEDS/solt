@@ -17,13 +17,12 @@ from solt.constants import (
     ALLOWED_COLOR_CONVERSIONS,
     ALLOWED_CROPS,
     ALLOWED_INTERPOLATIONS,
-    ALLOWED_PADDINGS,
     ALLOWED_GRIDMASK_MODES,
 )
 from ..core import Stream
 from ..core import DataContainer, Keypoints
 from ..utils import (
-    img_shape_checker,
+    ensure_valid_image,
     validate_numeric_range_parameter,
     validate_parameter,
 )
@@ -37,8 +36,7 @@ class Flip(BaseTransform):
     p : float
         Probability of flip
     axis : int
-        Axis of flip. Here, 1 stands for horizontal flipping, 0 stands for the vertical one. -1 stands for
-        both axes.
+        Flipping axis. 0 - vertical, 1 - horizontal, etc. -1 - all axes.
     """
 
     serializable_name = "flip"
@@ -51,7 +49,7 @@ class Flip(BaseTransform):
 
         self.axis = axis
 
-    @img_shape_checker
+    @ensure_valid_image(num_dims_spatial=(2,))
     def _apply_img(self, img: np.ndarray, settings: dict):
         if self.axis == 0:
             return np.ascontiguousarray(img[::-1, ...])
@@ -62,6 +60,7 @@ class Flip(BaseTransform):
         else:
             return np.ascontiguousarray(img[::-1, ::-1, ...])
 
+    @ensure_valid_image(num_dims_total=(2,))
     def _apply_mask(self, mask: np.ndarray, settings: dict):
         mask_new = cv2.flip(mask, self.axis)
         return mask_new
@@ -73,14 +72,14 @@ class Flip(BaseTransform):
         # We should guarantee that we do not change the original data.
         pts_data = pts.data.copy()
         if self.axis == 0:
-            pts_data[:, 1] = pts.height - 1 - pts_data[:, 1]
+            pts_data[:, 1] = pts.frame[0] - 1 - pts_data[:, 1]
         elif self.axis == 1:
-            pts_data[:, 0] = pts.width - 1 - pts_data[:, 0]
+            pts_data[:, 0] = pts.frame[1] - 1 - pts_data[:, 0]
         elif self.axis == -1:
-            pts_data[:, 1] = pts.height - 1 - pts_data[:, 1]
-            pts_data[:, 0] = pts.width - 1 - pts_data[:, 0]
+            pts_data[:, 1] = pts.frame[0] - 1 - pts_data[:, 1]
+            pts_data[:, 0] = pts.frame[1] - 1 - pts_data[:, 0]
 
-        return Keypoints(pts=pts_data, frame=(pts.height, pts.width))
+        return Keypoints(pts=pts_data, frame=pts.frame)
 
 
 class Rotate(MatrixTransform):
@@ -170,14 +169,16 @@ class Rotate90(Rotate):
         super(Rotate90, self).__init__(p=p, angle_range=(k * 90, k * 90), ignore_fast_mode=ignore_fast_mode)
         self.k = k
 
-    @img_shape_checker
+    @ensure_valid_image(num_dims_spatial=(2,))
     def _apply_img(self, img: np.ndarray, settings: dict):
         return np.ascontiguousarray(np.rot90(img, -self.k))
 
+    @ensure_valid_image(num_dims_total=(2,))
     def _apply_mask(self, mask: np.ndarray, settings: dict):
         return np.ascontiguousarray(np.rot90(mask, -self.k))
 
 
+# TODO: refactor the API from OpenCV (w, h)/(_x, _y) to new (h, w, ...)
 class Shear(MatrixTransform):
     """Random shear around the center.
 
@@ -254,6 +255,7 @@ class Shear(MatrixTransform):
         self.state_dict["transform_matrix"][2, 2] = 1
 
 
+# TODO: refactor the API from OpenCV (w, h)/(_x, _y) to new (h, w, ...)
 class Scale(MatrixTransform):
     """Random scale transform.
 
@@ -359,6 +361,7 @@ class Scale(MatrixTransform):
         self.state_dict["transform_matrix"][2, 2] = 1
 
 
+# TODO: refactor the API from OpenCV (w, h)/(_x, _y) to new (h, w, ...)
 class Translate(MatrixTransform):
     """Random Translate transform..
 
@@ -508,18 +511,17 @@ class Projection(MatrixTransform):
 
 
 class Pad(BaseTransform, PaddingPropertyHolder):
-    """Transformation, which pads the input to a given size
+    """Pads the input to a given size.
 
     Parameters
     ----------
     pad_to : tuple or int or None
-        Target size ``(width_new, height_new)``.
+        Target size ``(new_height, new_width, ...)``. Trailing channel dimension
+        is kept unchanged and the corresponding padding must be excluded.
         The padding is computed using the following equations:
 
-        ``left_pad = (pad_to[0] - w) // 2``
-        ``right_pad = (pad_to[0] - w) // 2 + (pad_to[0] - w) % 2``
-        ``top_pad = (pad_to[1] - h) // 2``
-        ``bottom_pad = (pad_to[1] - h) // 2 + (pad_to[1] - h) % 2``
+        ``pre_pad[k] = (pad_to[k] - shape_in[k]) // 2``
+        ``post_pad[k] = pad_to[k] - shape_in[k] - pre_pad[k]``
 
     padding : str
         Padding type.
@@ -549,13 +551,12 @@ class Pad(BaseTransform, PaddingPropertyHolder):
             frame_in = super(Pad, self).sample_transform(data)
             ndim = len(frame_in)
             if isinstance(self.pad_to, int):
-                self.pad_to = (self.pad_to, ) * ndim
+                self.pad_to = (self.pad_to,) * ndim
 
             # raise ValueError(f"{repr(self.pad_to)} ||| {repr(frame_in)}")
             self.offsets_s = [(self.pad_to[i] - frame_in[i]) // 2 for i in range(ndim)]
 
-            self.offsets_e = [self.pad_to[i] - frame_in[i] - self.offsets_s[i]
-                              for i in range(ndim)]
+            self.offsets_e = [self.pad_to[i] - frame_in[i] - self.offsets_s[i] for i in range(ndim)]
 
             # If padding is negative, do not pad and do not raise the error
             for i in range(ndim):
@@ -568,7 +569,9 @@ class Pad(BaseTransform, PaddingPropertyHolder):
         if self.pad_to is not None:
             pad_width = [(s, e) for s, e in zip(self.offsets_s, self.offsets_e)]
             if img_mask.ndim > len(pad_width):
-                pad_width = pad_width + [(0, 0), ]
+                pad_width = pad_width + [
+                    (0, 0),
+                ]
 
             if settings["padding"][1] == "strict":
                 padding = settings["padding"][0]
@@ -601,8 +604,7 @@ class Pad(BaseTransform, PaddingPropertyHolder):
         for i in range(ndim):
             pts_out[:, i] = pts_in[:, i] + self.offsets_s[i]
 
-        frame = [self.offsets_s[i] + pts.frame[i] + self.offsets_e[i]
-                 for i in range(ndim)]
+        frame = [self.offsets_s[i] + pts.frame[i] + self.offsets_e[i] for i in range(ndim)]
 
         return Keypoints(pts_out, frame=frame)
 
@@ -613,7 +615,7 @@ class Resize(BaseTransform, InterpolationPropertyHolder):
     Parameters
     ----------
     resize_to : tuple or int or None
-        Target size ``(width_new, height_new)``.
+        Target size ``(height_new, width_new)``.
     interpolation :
         Interpolation type.
 
@@ -644,12 +646,13 @@ class Resize(BaseTransform, InterpolationPropertyHolder):
         if settings["interpolation"][1] == "strict":
             interp = ALLOWED_INTERPOLATIONS[settings["interpolation"][0]]
 
-        return cv2.resize(img, self.resize_to, interpolation=interp)
+        return cv2.resize(img, self.resize_to[::-1], interpolation=interp)
 
-    @img_shape_checker
+    @ensure_valid_image(num_dims_spatial=(2,))
     def _apply_img(self, img: np.ndarray, settings: dict):
         return self._apply_img_or_mask(img, settings)
 
+    @ensure_valid_image(num_dims_total=(2,))
     def _apply_mask(self, mask: np.ndarray, settings: dict):
         return self._apply_img_or_mask(mask, settings)
 
@@ -661,17 +664,17 @@ class Resize(BaseTransform, InterpolationPropertyHolder):
             return pts
         pts_data = pts.data.copy().astype(float)
 
-        resize_x, resize_y = self.resize_to
+        resize_d0, resize_d1 = self.resize_to
 
-        scale_x = resize_x / pts.width
-        scale_y = resize_y / pts.height
+        scale_d0 = resize_d0 / pts.frame[0]
+        scale_d1 = resize_d1 / pts.frame[1]
 
-        pts_data[:, 0] *= scale_x
-        pts_data[:, 1] *= scale_y
+        pts_data[:, 0] *= scale_d0
+        pts_data[:, 1] *= scale_d1
 
         pts_data = pts_data.astype(int)
 
-        return Keypoints(pts_data, frame=(resize_y, resize_x))
+        return Keypoints(pts_data, frame=(resize_d0, resize_d1))
 
 
 class Crop(BaseTransform):
@@ -682,7 +685,7 @@ class Crop(BaseTransform):
     Parameters
     ----------
     crop_to : tuple or int or None
-        Size of the crop ``(width_new, height_new)``. If ``int``, then a square crop will be made.
+        Size of the crop ``(height_new, width_new, ...)``. If ``int``, then a square crop will be made.
     crop_mode : str
         Crop mode. Can be either ``'c'`` - center or ``'r'`` - random.
 
@@ -721,25 +724,22 @@ class Crop(BaseTransform):
             frame_in = super(Crop, self).sample_transform(data)
             ndim = len(frame_in)
             if isinstance(self.crop_to, int):
-                self.crop_to = (self.crop_to, ) * ndim
+                self.crop_to = (self.crop_to,) * ndim
 
             if any([self.crop_to[i] > frame_in[i] for i in range(ndim)]):
                 raise ValueError("Crop size exceeds the data coordinate frame")
 
             if self.crop_mode == "r":
-                self.offsets_s = [int(random.random() * (frame_in[i] - self.crop_to[i]))
-                                  for i in range(ndim)]
+                self.offsets_s = [int(random.random() * (frame_in[i] - self.crop_to[i])) for i in range(ndim)]
             else:
-                self.offsets_s = [(frame_in[i] - self.crop_to[i]) // 2
-                                  for i in range(ndim)]
-            self.offsets_e = [self.offsets_s[i] + self.crop_to[i]
-                              for i in range(ndim)]
+                self.offsets_s = [(frame_in[i] - self.crop_to[i]) // 2 for i in range(ndim)]
+            self.offsets_e = [self.offsets_s[i] + self.crop_to[i] for i in range(ndim)]
 
     def __crop_img_or_mask(self, img_mask):
         if self.crop_to is not None:
             ndim = len(self.offsets_s)
             sel = [slice(self.offsets_s[i], self.offsets_e[i]) for i in range(ndim)]
-            sel = tuple(sel + [..., ])
+            sel = tuple(sel + [...,])
             return img_mask[sel]
         else:
             return img_mask
@@ -765,7 +765,7 @@ class Crop(BaseTransform):
         return Keypoints(pts_out, frame=self.crop_to)
 
 
-class Noise(BaseTransform):
+class Noise(ImageTransform):
     """Adds noise to an image. Other types of data than the image are ignored.
 
     Parameters
@@ -821,20 +821,11 @@ class Noise(BaseTransform):
 
         self.state_dict = {"noise": noise_img, "gain": gain}
 
-    @img_shape_checker
+    @ensure_valid_image(num_dims_spatial=(2,))
     def _apply_img(self, img: np.ndarray, settings: dict):
         return cv2.addWeighted(
             img, (1 - self.state_dict["gain"]), self.state_dict["noise"], self.state_dict["gain"], 0,
         )
-
-    def _apply_mask(self, mask: np.ndarray, settings: dict):
-        return mask
-
-    def _apply_labels(self, labels, settings: dict):
-        return labels
-
-    def _apply_pts(self, pts: Keypoints, settings: dict):
-        return pts
 
 
 class CutOut(ImageTransform):
@@ -876,6 +867,7 @@ class CutOut(ImageTransform):
 
         self.cutout_size = cutout_size
 
+    # TODO: refactor from OpenCV (w, h)/(_x, _y) to new (h, w, ...)/(d0, d1, ...)
     def sample_transform(self, data: DataContainer):
         h, w = super(CutOut, self).sample_transform(data)[:2]
         if isinstance(self.cutout_size[0], float):
@@ -903,7 +895,7 @@ class CutOut(ImageTransform):
         ] = 0
         return img
 
-    @img_shape_checker
+    @ensure_valid_image(num_dims_spatial=(2,))
     def _apply_img(self, img: np.ndarray, settings: dict):
         return self.__cutout_img(img)
 
@@ -960,7 +952,7 @@ class SaltAndPepper(ImageTransform):
 
         self.state_dict = {"salt": salt, "pepper": pepper}
 
-    @img_shape_checker
+    @ensure_valid_image(num_dims_spatial=(2,))
     def _apply_img(self, img: np.ndarray, settings: dict):
         img = img.copy()
         img[np.where(self.state_dict["salt"])] = np.iinfo(img.dtype).max
@@ -1005,7 +997,7 @@ class GammaCorrection(ImageTransform):
 
         self.state_dict = {"gamma": gamma, "LUT": lut}
 
-    @img_shape_checker
+    @ensure_valid_image(num_dims_spatial=(2,))
     def _apply_img(self, img: np.ndarray, settings: dict):
         return cv2.LUT(img, self.state_dict["LUT"])
 
@@ -1045,11 +1037,12 @@ class Contrast(ImageTransform):
         lut = np.clip(lut, 0, 255).astype("uint8")
         self.state_dict = {"contrast_mul": contrast_mul, "LUT": lut}
 
-    @img_shape_checker
+    @ensure_valid_image(num_dims_spatial=(2,))
     def _apply_img(self, img: np.ndarray, settings: dict):
         return cv2.LUT(img, self.state_dict["LUT"])
 
 
+# TODO: refactor from OpenCV (w, h)/(_x, _y) to new (h, w, ...)/(d0, d1, ...)
 class Blur(ImageTransform):
     """Transform blurs an image
 
@@ -1122,7 +1115,7 @@ class Blur(ImageTransform):
             kernel = kernel / np.sum(kernel)
             self.state_dict.update({"motion_kernel": kernel})
 
-    @img_shape_checker
+    @ensure_valid_image(num_dims_spatial=(2,))
     def _apply_img(self, img: np.ndarray, settings: dict):
         if self.blur == "g":
             return cv2.GaussianBlur(
@@ -1172,12 +1165,10 @@ class HSV(ImageTransform):
         v = random.uniform(self.v_range[0], self.v_range[1])
         self.state_dict = {"h_mod": h, "s_mod": s, "v_mod": v}
 
-    @img_shape_checker
+    @ensure_valid_image(num_dims_spatial=(2,), num_channels=(3,))
     def _apply_img(self, img: np.ndarray, settings: dict):
         img = img.copy()
         dtype = img.dtype
-        if img.shape[-1] != 3:
-            raise ValueError("Image has to have 3 channels!")
 
         if dtype != np.uint8:
             raise TypeError("Image type has to be uint8 in this version of SOLT!")
@@ -1191,7 +1182,6 @@ class HSV(ImageTransform):
 
         img_hsv_shifted = cv2.merge((h, s, v))
         img = cv2.cvtColor(img_hsv_shifted, cv2.COLOR_HSV2RGB)
-
         return img
 
 
@@ -1226,7 +1216,7 @@ class Brightness(ImageTransform):
         lut = np.clip(lut, 0, 255).astype("uint8")
         self.state_dict = {"brightness_fact": brightness_fact, "LUT": lut}
 
-    @img_shape_checker
+    @ensure_valid_image(num_dims_spatial=(2,))
     def _apply_img(self, img: np.ndarray, settings: dict):
         return cv2.LUT(img, self.state_dict["LUT"])
 
@@ -1271,12 +1261,10 @@ class IntensityRemap(ImageTransform):
 
         self.state_dict = {"LUT": m}
 
-    @img_shape_checker
+    @ensure_valid_image(num_dims_spatial=(2,), num_channels=(1,))
     def _apply_img(self, img: np.ndarray, settings: dict):
         if img.dtype != np.uint8:
             raise ValueError("IntensityRemap supports uint8 ndarrays only")
-        if img.ndim == 3 and img.shape[-1] != 1:
-            raise ValueError("Only grayscale 2D images are supported")
         return cv2.LUT(img, self.state_dict["LUT"])
 
 
@@ -1317,7 +1305,7 @@ class CvtColor(ImageTransform):
             raise TypeError("Incorrect type of keepdim")
         self.keepdim = keep_dim
 
-    @img_shape_checker
+    @ensure_valid_image(num_dims_spatial=(2,))
     def _apply_img(self, img: np.ndarray, settings: dict):
         if self.mode == "none":
             return img
@@ -1340,6 +1328,7 @@ class CvtColor(ImageTransform):
                 return np.dstack((res, res, res))
 
 
+# TODO: refactor from OpenCV (w, h)/(_x, _y) to new (h, w, ...)/(d0, d1, ...)
 class KeypointsJitter(BaseTransform):
     """
     Applies the jittering to the keypoints in X- and Y-durections
@@ -1367,7 +1356,6 @@ class KeypointsJitter(BaseTransform):
     def sample_transform(self, data: DataContainer):
         pass
 
-    @img_shape_checker
     def _apply_img(self, img, settings: dict):
         return img
 
@@ -1376,8 +1364,8 @@ class KeypointsJitter(BaseTransform):
 
     def _apply_pts(self, pts: Keypoints, settings: dict):
         pts_data = pts.data.copy()
-        h = pts.height
-        w = pts.width
+        h = pts.frame[0]
+        w = pts.frame[1]
 
         for j in range(pts.data.shape[0]):
             dx = int(random.uniform(self.dx_range[0], self.dx_range[1]) * w)
@@ -1447,7 +1435,7 @@ class JPEGCompression(ImageTransform):
     def sample_transform(self, data):
         self.state_dict["quality"] = random.randint(self.quality_range[0], self.quality_range[1])
 
-    @img_shape_checker
+    @ensure_valid_image(num_dims_spatial=(2,))
     def _apply_img(self, img: np.ndarray, settings: dict):
         if self.state_dict["quality"] == 100:
             return img
@@ -1542,7 +1530,7 @@ class GridMask(ImageTransform):
 
         self.state_dict["mask"] = mask.astype(np.uint8)
 
-    @img_shape_checker
+    @ensure_valid_image(num_dims_spatial=(2,))
     def _apply_img(self, img: np.ndarray, settings: dict):
         for k in range(img.shape[2]):
             img[:, :, k] *= self.state_dict["mask"]

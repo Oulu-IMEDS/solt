@@ -11,6 +11,9 @@ dependencies:
   - pytorch
   - torchvision
   - pytest
+  - flake8
+  - black
   - pip
   - pip:
     - opencv-python-headless
+    - pre-commit

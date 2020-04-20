@@ -1,16 +1,13 @@
-from ._utils import validate_numeric_range_parameter
-from ._utils import validate_parameter
-from ._utils import img_shape_checker
-from ._utils import Serializable
-from ._utils import from_dict, from_json, from_yaml
+from ._checks import ensure_valid_image, validate_numeric_range_parameter, validate_parameter
+from ._serial import from_dict, from_json, from_yaml, Serializable
 
 
 __all__ = [
-    "from_json",
     "from_dict",
+    "from_json",
     "from_yaml",
     "Serializable",
-    "img_shape_checker",
+    "ensure_valid_image",
     "validate_numeric_range_parameter",
     "validate_parameter",
 ]

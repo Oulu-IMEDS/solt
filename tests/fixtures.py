@@ -1,12 +1,22 @@
-import pytest
 import numpy as np
 
 
-__all__ = ['img_2x2', 'mask_2x2',
-           'img_3x3_rgb', 'img_3x3', 'img_3x4', 'mask_3x3', 'mask_3x4',
-           'img_5x5', 'mask_5x5',
-           'img_6x6', 'img_6x6_lc', 'img_6x6_rgb', 'mask_6x6',
-           'img_7x7']
+__all__ = [
+    "img_2x2",
+    "mask_2x2",
+    "img_3x3_rgb",
+    "img_3x3",
+    "img_3x4",
+    "mask_3x3",
+    "mask_3x4",
+    "img_5x5",
+    "mask_5x5",
+    "img_6x6",
+    "img_6x6_lc",
+    "img_6x6_rgb",
+    "mask_6x6",
+    "img_7x7",
+]
 
 
 def img_2x2():
@@ -42,9 +52,7 @@ def img_3x4():
     out : ndarray
         3x4x1 uint8 image
     """
-    img = np.array([[1, 1, 1, 0],
-                    [1, 0, 1, 1],
-                    [1, 1, 1, 1]]).reshape((3, 4, 1)).astype(np.uint8) * 255
+    img = np.array([[1, 1, 1, 0], [1, 0, 1, 1], [1, 1, 1, 1]]).reshape((3, 4, 1)).astype(np.uint8) * 255
     return img
 
 
@@ -58,9 +66,7 @@ def mask_3x4():
         3x4 uint8 image
     """
 
-    mask = np.array([[0, 1, 1, 1],
-                    [0, 1, 1, 0],
-                    [0, 1, 1, 0]]).reshape((3, 4)).astype(np.uint8)
+    mask = np.array([[0, 1, 1, 1], [0, 1, 1, 0], [0, 1, 1, 0]]).reshape((3, 4)).astype(np.uint8)
     return mask
 
 
@@ -73,9 +79,7 @@ def img_3x3():
     out : ndarray
         3x4x1 uint8 image
     """
-    img = np.array([[0, 1, 1],
-                    [1, 0, 1],
-                    [1, 1, 1]]).reshape((3, 3, 1)).astype(np.uint8)
+    img = np.array([[0, 1, 1], [1, 0, 1], [1, 1, 1]]).reshape((3, 3, 1)).astype(np.uint8)
     return img
 
 
@@ -88,9 +92,7 @@ def img_3x3_rgb():
     out : ndarray
         3x4x1 uint8 image
     """
-    img = np.array([[0, 1, 1],
-                    [1, 0, 1],
-                    [1, 1, 1]]).reshape((3, 3, 1)).astype(np.uint8)
+    img = np.array([[0, 1, 1], [1, 0, 1], [1, 1, 1]]).reshape((3, 3, 1)).astype(np.uint8)
     return np.dstack((img, img, img)) * 255
 
 
@@ -104,9 +106,7 @@ def mask_3x3():
         3x4 uint8 image
     """
 
-    mask = np.array([[1, 1, 1],
-                    [1, 1, 1],
-                    [0, 1, 1]]).reshape((3, 3)).astype(np.uint8)
+    mask = np.array([[1, 1, 1], [1, 1, 1], [0, 1, 1]]).reshape((3, 3)).astype(np.uint8)
     return mask
 
 
@@ -160,7 +160,7 @@ def img_6x6():
     img[:, -1] = 0
     img[0, :] = 0
     img[-1, :] = 0
-    return img.astype(np.uint8)*255
+    return img.astype(np.uint8) * 255
 
 
 def img_7x7():
@@ -177,7 +177,7 @@ def img_7x7():
     img[:, -1] = 0
     img[0, :] = 0
     img[-1, :] = 0
-    return img.astype(np.uint8)*255
+    return img.astype(np.uint8) * 255
 
 
 def mask_6x6():
@@ -212,7 +212,7 @@ def img_6x6_rgb():
     img[:, -1] = 0
     img[0, :] = 0
     img[-1, :] = 0
-    return np.dstack((img, img, img)).astype(np.uint8)*255
+    return np.dstack((img, img, img)).astype(np.uint8) * 255
 
 
 def img_6x6_lc():
@@ -229,4 +229,4 @@ def img_6x6_lc():
     img[:, -1] = 0
     img[0, :] = 0
     img[-1, :] = 0
-    return np.dstack((img, img, img)).astype(np.uint8)*127
+    return np.dstack((img, img, img)).astype(np.uint8) * 127

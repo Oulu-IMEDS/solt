@@ -1,0 +1,14 @@
+[flake8]
+ignore = E231,E501,F403,F405,E126,E203,E226
+    # E231: space between , and )/]
+    # E501: line width >80
+    # F403 star import used; unable to detect undefined names
+    # F405: may be undefined, or defined from star imports
+    # E126 continuation line over-indented for hanging indent
+    # E203 whitespace before ':'
+    # E226 missing whitespace around arithmetic operator
+exclude =
+    .git,
+    __pycache__,
+    build,
+    dist

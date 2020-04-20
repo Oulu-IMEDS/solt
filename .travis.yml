@@ -5,20 +5,23 @@ matrix:
     - name: "Linux / Python 3.6"
       os: linux
       dist: xenial
-      sudo: true
       python: 3.6
 
     - name: "Linux / Python 3.7"
       os: linux
       dist: xenial
-      sudo: true
       python: 3.7
 
     - name: "Linux / Python 3.8"
       os: linux
       dist: xenial
-      sudo: true
       python: 3.8
+
+    - name: "Linux / Code Style"
+      os: linux
+      dist: xenial
+      python: 3.8
+      env: CHECK_CODE_STYLE=1
 
     - name: "OSX / Python 3.6"
       os: osx
@@ -46,9 +49,11 @@ install:
   - pip install -r ci/requirements.txt
   - pip install .
 script:
-  - py.test tests --cov solt --cov-report term-missing -v
-  - black --config=black.toml --check .
-  - flake8
+  - pytest tests --cov solt --cov-report term-missing -v
+  - if [[ ${CHECK_CODE_STYLE} ]]; then
+      black --config=black.toml --check .;
+      flake8 --config=.flake8 .;
+    fi
 after_success:
   - codecov
 

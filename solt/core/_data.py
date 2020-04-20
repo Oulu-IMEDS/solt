@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from solt.constants import ALLOWED_INTERPOLATIONS, ALLOWED_PADDINGS, ALLOWED_TYPES
+from solt.constants import ALLOWED_INTERPOLATIONS, ALLOWED_PADDINGS, ALLOWED_TYPES, IMAGENET_MEAN, IMAGENET_STD
 from solt.utils import validate_parameter
 
 
@@ -85,8 +85,6 @@ class DataContainer(object):
         self.__data = data
         self.__fmt = fmt
         self.__transform_settings = transform_settings
-        self.__imagenet_mean = torch.tensor((0.485, 0.456, 0.406)).view(1, 1, 3)
-        self.__imagenet_std = torch.tensor((0.229, 0.224, 0.225)).view(1, 1, 3)
 
     def validate(self):
         """Validates frame consistency in the wrapped data."""
@@ -106,8 +104,7 @@ class DataContainer(object):
                 frame_prev = frame_curr
             else:
                 if len(frame_prev) != len(frame_curr):
-                    msg = (f"Inconsistent frame dimensionality: "
-                           f"{len(frame_prev)}, {len(frame_curr)}")
+                    msg = f"Inconsistent frame dimensionality: " f"{len(frame_prev)}, {len(frame_curr)}"
                     raise ValueError(msg)
                 elif frame_prev != frame_curr:
                     msg = f"Inconsistent frames shapes: {frame_prev}, {frame_curr}"
@@ -116,7 +113,6 @@ class DataContainer(object):
                     pass
 
         return frame_prev
-
 
     @property
     def data_format(self):
@@ -206,28 +202,32 @@ class DataContainer(object):
 
     def wrap_mean_std(self, img, mean, std):
         if not isinstance(mean, (tuple, list, np.ndarray, torch.FloatTensor)):
-            raise TypeError(
+            msg = (
                 f"Unknown type ({type(mean)}) of mean vector! " f"Expected tuple, list, np.ndarray or torch.FloatTensor"
             )
+            raise TypeError(msg)
 
         if not isinstance(std, (tuple, list, np.ndarray, torch.FloatTensor)):
-            raise TypeError(
+            msg = (
                 f"Unknown type ({type(mean)}) of mean vector! " f"Expected tuple, list, np.ndarray or torch.FloatTensor"
             )
-        if len(mean) != img.size(0):
-            raise ValueError("Size of the mean vector does not match the number of channels")
-        if len(std) != img.size(0):
-            raise ValueError("Size of the std vector does not match the number of channels")
+            raise TypeError(msg)
 
+        if len(mean) != img.size(0):
+            raise ValueError("Mean vector size does not match the number of channels")
+        if len(std) != img.size(0):
+            raise ValueError("Std vector size does not match the number of channels")
+
+        shape_broadcast = (img.size(0),) + (1,) * (img.ndim - 1)
         if isinstance(mean, (list, tuple)):
-            mean = torch.tensor(mean).view(img.size(0), 1, 1)
+            mean = torch.tensor(mean).view(shape_broadcast)
         if isinstance(std, (list, tuple)):
-            std = torch.tensor(std).view(img.size(0), 1, 1)
+            std = torch.tensor(std).view(shape_broadcast)
 
         if isinstance(mean, np.ndarray):
-            mean = torch.from_numpy(mean).view(img.size(0), 1, 1).float()
+            mean = torch.from_numpy(mean).view(shape_broadcast).float()
         if isinstance(std, np.ndarray):
-            std = torch.from_numpy(std).view(img.size(0), 1, 1).float()
+            std = torch.from_numpy(std).view(shape_broadcast).float()
 
         return mean, std
 
@@ -240,11 +240,11 @@ class DataContainer(object):
             Whether to return the result as a dictionary. If a single item is present, then the singular naming
             will be used. If plural, then the plural will be used. The items will be stored and
             sorted a similar manner to the method ``from_dict``: images, masks, keypoints_array, and labels.
-            The same applies to a singular case/
+            The same applies to a singular case.
         scale_keypoints : bool
             Whether to scale keypoints to 0-1 range. ``True`` by default.
         normalize : bool
-            Whether to subtract mean
+            Whether to subtract the `mean` and divide by the `std`.
         mean : torch.Tensor
             Mean to subtract. If None, then the ImageNet mean will be subtracted.
         std : torch.Tensor
@@ -259,32 +259,32 @@ class DataContainer(object):
         not_as_dict = []
         for el, f in zip(self.__data, self.__fmt):
             if f == "I":
-                # TODO: remove hardcode, use iinfo
+                # TODO: remove hardcode. Use np.iinfo, np.finfo
                 scale = 255.0
                 if el.dtype == np.uint16:
                     scale = 65535.0
                     el = el.astype(np.float32)
-                img = torch.from_numpy(el.transpose((2, 0, 1))).div(scale)
+
+                # Move channels to the front to match the PyTorch notation
+                img = torch.from_numpy(np.moveaxis(el, -1, 0)).div(scale)
+
                 if normalize:
                     if mean is None or std is None:
-                        mean, std = self.__imagenet_mean, self.__imagenet_std
-                    else:
-                        mean, std = self.wrap_mean_std(img, mean, std)
-
+                        mean, std = IMAGENET_MEAN, IMAGENET_STD
+                    mean, std = self.wrap_mean_std(img, mean, std)
                     img.sub_(mean)
                     img.div_(std)
                 res_dict["images"].append(img)
                 not_as_dict.append(img)
 
             elif f == "M":
-                mask = torch.from_numpy(el).squeeze().unsqueeze(0).float()
+                mask = torch.from_numpy(el).unsqueeze(0).float()
                 res_dict["masks"].append(mask)
                 not_as_dict.append(mask)
             elif f == "P":
                 landmarks = torch.from_numpy(el.data).float()
                 if scale_keypoints:
-                    landmarks[:, 0] /= el.width - 1
-                    landmarks[:, 1] /= el.height - 1
+                    landmarks = landmarks / (torch.tensor(el.frame)[None, ...] - 1)
                 res_dict["keypoints_array"].append(landmarks)
                 not_as_dict.append(landmarks)
             elif f == "L":
@@ -362,21 +362,15 @@ class Keypoints(object):
     Parameters
     ----------
     pts : numpy.ndarray
-        Key points as an numpy.ndarray in (x, y) format.
-    frame : (n, ) list-like
+        Array of keypoints. If 2D, has to be in (x, y) format.
+    frame : (n, ) list-like of ints
         Shape of the coordinate frame. frame[0] is `height`, frame[1] is `width`.
-    height : int
-        (DEPRECATED) Height of the coordinate frame.
-    width : int
-        (DEPRECATED) Width of the coordinate frame.
     """
 
-    def __init__(self, pts=None, *, frame=None, height=None, width=None):
+    def __init__(self, pts=None, frame=None):
         self.__data = pts
         if frame is not None:
             self.__frame = list(frame)
-        elif height is not None and width is not None:
-            self.__frame = [height, width]
         else:
             if self.__data is None:
                 self.__frame = []
@@ -399,31 +393,9 @@ class Keypoints(object):
     def frame(self):
         return tuple(self.__frame)
 
-    @property
-    def height(self):
-        if len(self.__frame):
-            return self.__frame[0]
-        else:
-            return None
-
-    @property
-    def width(self):
-        if len(self.__frame):
-            return self.__frame[1]
-        else:
-            return None
-
     @frame.setter
     def frame(self, value):
         self.__frame = value
-
-    @height.setter
-    def height(self, value):
-        self.__frame[0] = value
-
-    @width.setter
-    def width(self, value):
-        self.__frame[1] = value
 
     def __eq__(self, other):
         dim_equal = all([self.frame[i] == other.frame[i] for i in range(len(self.frame))])

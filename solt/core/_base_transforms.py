@@ -7,7 +7,7 @@ import numpy as np
 from solt.utils import Serializable
 from solt.constants import ALLOWED_INTERPOLATIONS, ALLOWED_PADDINGS
 from ._data import DataContainer, Keypoints
-from solt.utils import img_shape_checker, validate_parameter
+from solt.utils import ensure_valid_image, validate_parameter
 
 
 class BaseTransform(Serializable, metaclass=ABCMeta):
@@ -71,15 +71,9 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
         Returns
         -------
         out : tuple
-            Coordinate frame (d0, d1, ...). (d0, d1) are (h, w), respectively.
+            Coordinate frame (d0, d1, ...). (d0, d1) are (height, width), respectively.
         """
         self.state_dict["frame"] = data.validate()
-        if len(self.state_dict["frame"]):
-            self.state_dict["h"] = self.state_dict["frame"][0]
-            self.state_dict["w"] = self.state_dict["frame"][1]
-        else:
-            self.state_dict["h"] = None
-            self.state_dict["w"] = None
         return self.state_dict["frame"]
 
     def apply(self, data: DataContainer):
@@ -382,17 +376,15 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
 
         # If we are in fast mode, we do not have to recompute the the new coordinate frame!
         if "P" not in data.data_format and not self.ignore_fast_mode:
-            width = self.state_dict["w"]
-            height = self.state_dict["h"]
+            width = self.state_dict["frame"][1]
+            height = self.state_dict["frame"][0]
             origin = [(width - 1) // 2, (height - 1) // 2]
             # First, let's make sure that our transformation matrix is applied at the origin
             transform_matrix_corr = MatrixTransform.move_transform_to_origin(
                 self.state_dict["transform_matrix"], origin
             )
-            self.state_dict["h_new"], self.state_dict["w_new"] = (
-                self.state_dict["h"],
-                self.state_dict["w"],
-            )
+            self.state_dict["frame_new"] = list(copy.copy(self.state_dict["frame"]))
+
             self.state_dict["transform_matrix_corrected"] = transform_matrix_corr
         else:
             # If we have the keypoints or the transform is a homographic one, we can't use the fast mode at all.
@@ -472,10 +464,10 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         """
 
     def correct_transform(self):
-        h, w = self.state_dict["h"], self.state_dict["w"]
+        h, w = self.state_dict["frame"][:2]
         tm = self.state_dict["transform_matrix"]
         tm_corr, w_new, h_new = MatrixTransform.correct_for_frame_change(tm, w, h)
-        self.state_dict["h_new"], self.state_dict["w_new"] = h_new, w_new
+        self.state_dict["frame_new"] = [h_new, w_new]
         self.state_dict["transform_matrix_corrected"] = tm_corr
 
     def parse_settings(self, settings):
@@ -512,18 +504,20 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
             return self._apply_img_or_mask_perspective(img, settings)
 
     def _apply_img_or_mask_perspective(self, img: np.ndarray, settings: dict):
-        h_new, w_new = self.state_dict["h_new"], self.state_dict["w_new"]
+        h_new = self.state_dict["frame_new"][0]
+        w_new = self.state_dict["frame_new"][1]
         interp, padding = self.parse_settings(settings)
         transf_m = self.state_dict["transform_matrix_corrected"]
         return cv2.warpPerspective(img, transf_m, (w_new, h_new), flags=interp, borderMode=padding)
 
     def _apply_img_or_mask_affine(self, img: np.ndarray, settings: dict):
-        h_new, w_new = self.state_dict["h_new"], self.state_dict["w_new"]
+        h_new = self.state_dict["frame_new"][0]
+        w_new = self.state_dict["frame_new"][1]
         interp, padding = self.parse_settings(settings)
         transf_m = self.state_dict["transform_matrix_corrected"]
         return cv2.warpAffine(img, transf_m[:2, :], (w_new, h_new), flags=interp, borderMode=padding)
 
-    @img_shape_checker
+    @ensure_valid_image(num_dims_spatial=(2,))
     def _apply_img(self, img: np.ndarray, settings: dict):
         """Applies a matrix transform to an image.
         If padding is None, the default behavior (zero padding) is expected.
@@ -541,7 +535,6 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
             Output Image
 
         """
-
         return self._apply_img_or_mask(img, settings)
 
     def _apply_mask(self, mask: np.ndarray, settings: dict):
@@ -603,8 +596,6 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
 
         pts_data = pts.data.copy()
 
-        w_new = self.state_dict["w_new"]
-        h_new = self.state_dict["h_new"]
         tm_corr = self.state_dict["transform_matrix_corrected"]
 
         pts_data = np.hstack((pts_data, np.ones((pts_data.shape[0], 1))))
@@ -613,4 +604,4 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         pts_data[:, 0] /= pts_data[:, 2]
         pts_data[:, 1] /= pts_data[:, 2]
 
-        return Keypoints(pts_data[:, :-1], frame=(h_new, w_new))
+        return Keypoints(pts_data[:, :-1], frame=self.state_dict["frame_new"])
