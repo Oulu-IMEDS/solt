@@ -51,8 +51,8 @@ install:
 script:
   - pytest tests --cov solt --cov-report term-missing -v
   - if [[ ${CHECK_CODE_STYLE} ]]; then
-      black --config=black.toml --check .
-      flake8 --config=.flake8 .
+      black --config=black.toml --check .;
+      flake8 --config=.flake8 .;
     fi
 after_success:
   - codecov
