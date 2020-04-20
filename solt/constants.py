@@ -14,3 +14,6 @@ ALLOWED_TYPES = {"I", "M", "P", "L"}
 ALLOWED_BLURS = {"g", "m", "mo"}
 ALLOWED_COLOR_CONVERSIONS = {"gs2rgb", "rgb2gs", "none"}
 ALLOWED_GRIDMASK_MODES = {"crop", "reserve", "none"}
+
+IMAGENET_MEAN = (0.485, 0.456, 0.406)
+IMAGENET_STD = (0.229, 0.224, 0.225)

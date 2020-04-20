@@ -413,28 +413,20 @@ def test_pad_crop_resize_dont_change_data_when_parameters_are_not_set(img, mask,
     "img, mask, resize_to",
     [
         (img_6x6(), mask_6x6(), (20, 20)),
-        (img_6x6(), mask_6x6(), 20),
         (img_6x6(), mask_6x6(), (3, 3)),
-        (img_6x6(), mask_6x6(), 3),
         (img_6x6(), mask_6x6(), (5, 5)),
-        (img_6x6(), mask_6x6(), 5),
         (img_6x6(), mask_6x6(), (4, 4)),
-        (img_6x6(), mask_6x6(), 4),
         (img_6x6(), mask_6x6(), (7, 6)),
         (img_6x6(), mask_6x6(), (5, 7)),
-        (img_6x6(), mask_6x6(), 6),
+        (img_6x6(), mask_6x6(), (6, 6)),
         (img_6x6(), mask_6x6(), (2, 3)),
         (img_5x5(), mask_5x5(), (20, 20)),
-        (img_5x5(), mask_5x5(), 20),
         (img_5x5(), mask_5x5(), (3, 3)),
-        (img_5x5(), mask_5x5(), 3),
         (img_5x5(), mask_5x5(), (5, 5)),
-        (img_5x5(), mask_5x5(), 5),
         (img_5x5(), mask_5x5(), (4, 4)),
-        (img_5x5(), mask_5x5(), 4),
         (img_5x5(), mask_5x5(), (7, 6)),
         (img_5x5(), mask_5x5(), (5, 7)),
-        (img_5x5(), mask_5x5(), 6),
+        (img_5x5(), mask_5x5(), (6, 6)),
         (img_5x5(), mask_5x5(), (2, 3)),
     ],
 )
@@ -447,20 +439,15 @@ def test_resize_img_to_arbitrary_size(img, mask, resize_to):
     transf = slt.Resize(resize_to=resize_to)
     res = transf(dc).data
 
-    if isinstance(resize_to, int):
-        resize_to = (resize_to, resize_to)
-
-    scale_d0 = resize_to[0] / img.shape[0]
-    scale_d1 = resize_to[1] / img.shape[1]
+    scales = tuple(resize_to[i] / img.shape[i] for i in range(img.ndim - 1))
 
     assert transf.resize_to == resize_to
-    assert (res[0].shape[0] == resize_to[0]) and (res[0].shape[1] == resize_to[1])
-    assert (res[1].shape[0] == resize_to[0]) and (res[1].shape[1] == resize_to[1])
-    assert (res[2].frame[0] == resize_to[0]) and (res[2].frame[1] == resize_to[1])
+    np.testing.assert_array_equal(res[0].shape[:-1], resize_to)
+    np.testing.assert_array_equal(res[1].shape, resize_to)
+    np.testing.assert_array_equal(res[2].frame, resize_to)
 
     kpts_data = kpts_data.astype(float)
-    kpts_data[:, 0] *= scale_d0
-    kpts_data[:, 1] *= scale_d1
+    kpts_data = kpts_data * np.asarray(scales)[None, ]
     kpts_data = kpts_data.astype(int)
     assert np.array_equal(res[2].data, kpts_data)
 

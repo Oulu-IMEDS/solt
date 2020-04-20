@@ -1,12 +1,8 @@
 import numpy as np
 import torch
 
-from solt.constants import ALLOWED_INTERPOLATIONS, ALLOWED_PADDINGS, ALLOWED_TYPES
+from solt.constants import ALLOWED_INTERPOLATIONS, ALLOWED_PADDINGS, ALLOWED_TYPES, IMAGENET_MEAN, IMAGENET_STD
 from solt.utils import validate_parameter
-
-
-IMAGENET_MEAN = (0.485, 0.456, 0.406)
-IMAGENET_STD = (0.229, 0.224, 0.225)
 
 
 class DataContainer(object):
@@ -248,7 +244,7 @@ class DataContainer(object):
         scale_keypoints : bool
             Whether to scale keypoints to 0-1 range. ``True`` by default.
         normalize : bool
-            Whether to subtract `mean` and divide by `std`.
+            Whether to subtract the `mean` and divide by the `std`.
         mean : torch.Tensor
             Mean to subtract. If None, then the ImageNet mean will be subtracted.
         std : torch.Tensor
