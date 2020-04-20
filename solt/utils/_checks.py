@@ -1,4 +1,4 @@
-from functools import wraps, partialmethod, partial
+from functools import wraps
 
 
 def ensure_valid_image(num_dims_total=None, num_dims_spatial=None, num_channels=None, keep_num_dims=True):
@@ -56,7 +56,7 @@ def ensure_valid_image(num_dims_total=None, num_dims_spatial=None, num_channels=
             result = method(*args, **kwargs)
 
             # Implement the required consistency
-            shape_out, ndim_out = result.shape, result.ndim
+            ndim_out = result.ndim
 
             if keep_num_dims and ndim_out < ndim_in:
                 # Add trailing dimensions to match the input
