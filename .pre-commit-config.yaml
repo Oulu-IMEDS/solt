@@ -8,8 +8,6 @@ repos:
   rev: v2.3.0
   hooks:
   - id: flake8
-    args: [--max-line-length=120]
-    exclude: ^tests/
   - id: check-case-conflict
   - id: check-symlinks
   - id: end-of-file-fixer
