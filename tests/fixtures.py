@@ -16,6 +16,7 @@ __all__ = [
     "img_6x6_rgb",
     "mask_6x6",
     "img_7x7",
+    "cube_3x3x3",
 ]
 
 
@@ -126,6 +127,10 @@ def img_5x5():
     img[0, :] = 0
     img[-1, :] = 0
     return img.astype(np.uint8)
+
+
+def cube_3x3x3():
+    return np.ones((3, 3, 3, 1)).astype(np.uint8)
 
 
 def mask_5x5():

@@ -383,6 +383,7 @@ def test_pad_crop_resize_dont_change_data_when_parameters_are_not_set(img, mask,
     [
         (img_6x6(), mask_6x6(), (20, 20)),
         (img_6x6(), mask_6x6(), (3, 3)),
+        (img_6x6(), mask_6x6(), 3),
         (img_6x6(), mask_6x6(), (5, 5)),
         (img_6x6(), mask_6x6(), (4, 4)),
         (img_6x6(), mask_6x6(), (7, 6)),
@@ -407,6 +408,8 @@ def test_resize_img_to_arbitrary_size(img, mask, resize_to):
     dc = slc.DataContainer((img, mask, kpts,), "IMP")
     transf = slt.Resize(resize_to=resize_to)
     res = transf(dc).data
+    if isinstance(resize_to, int):
+        resize_to = (resize_to, resize_to)
 
     scales = tuple(resize_to[i] / img.shape[i] for i in range(img.ndim - 1))
 
@@ -1051,7 +1054,7 @@ def test_intensity_remap_dtypes(img, dtype, expected):
         ("rgb2gs", img_6x6(), img_6x6()),
     ],
 )
-def test_hsv_returns_expected_results(mode, img, expected):
+def test_gs2rgb_returns_expected_results(mode, img, expected):
     trf = slt.CvtColor(mode=mode, keep_dim=False)
     dc = slc.DataContainer(img, "I")
     dc_res = trf(dc)

@@ -80,7 +80,7 @@ class DataContainer(object):
 
         for t in fmt:
             if t not in ALLOWED_TYPES:
-                raise TypeError
+                raise TypeError(f"The found type was {t}, but needs to be one of {ALLOWED_TYPES}")
 
         self.__data = data
         self.__fmt = fmt
@@ -97,7 +97,7 @@ class DataContainer(object):
                 frame_curr = obj.shape
             elif t == "P":
                 frame_curr = obj.frame
-            else:  # t == "L", etc
+            elif t == "L":
                 continue
 
             if len(frame_prev) == 0:
@@ -109,8 +109,6 @@ class DataContainer(object):
                 elif frame_prev != frame_curr:
                     msg = f"Inconsistent frames shapes: {frame_prev}, {frame_curr}"
                     raise ValueError(msg)
-                else:
-                    pass
 
         return frame_prev
 
