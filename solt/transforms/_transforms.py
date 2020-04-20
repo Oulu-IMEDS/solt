@@ -178,6 +178,7 @@ class Rotate90(Rotate):
         return np.ascontiguousarray(np.rot90(mask, -self.k))
 
 
+# TODO: refactor the API from OpenCV (w, h)/(_x, _y) to new (h, w, ...)
 class Shear(MatrixTransform):
     """Random shear around the center.
 
@@ -254,6 +255,7 @@ class Shear(MatrixTransform):
         self.state_dict["transform_matrix"][2, 2] = 1
 
 
+# TODO: refactor the API from OpenCV (w, h)/(_x, _y) to new (h, w, ...)
 class Scale(MatrixTransform):
     """Random scale transform.
 
@@ -359,6 +361,7 @@ class Scale(MatrixTransform):
         self.state_dict["transform_matrix"][2, 2] = 1
 
 
+# TODO: refactor the API from OpenCV (w, h)/(_x, _y) to new (h, w, ...)
 class Translate(MatrixTransform):
     """Random Translate transform..
 
@@ -682,7 +685,7 @@ class Crop(BaseTransform):
     Parameters
     ----------
     crop_to : tuple or int or None
-        Size of the crop ``(width_new, height_new)``. If ``int``, then a square crop will be made.
+        Size of the crop ``(height_new, width_new, ...)``. If ``int``, then a square crop will be made.
     crop_mode : str
         Crop mode. Can be either ``'c'`` - center or ``'r'`` - random.
 
@@ -864,6 +867,7 @@ class CutOut(ImageTransform):
 
         self.cutout_size = cutout_size
 
+    # TODO: refactor from OpenCV (w, h)/(_x, _y) to new (h, w, ...)/(d0, d1, ...)
     def sample_transform(self, data: DataContainer):
         h, w = super(CutOut, self).sample_transform(data)[:2]
         if isinstance(self.cutout_size[0], float):
@@ -1038,6 +1042,7 @@ class Contrast(ImageTransform):
         return cv2.LUT(img, self.state_dict["LUT"])
 
 
+# TODO: refactor from OpenCV (w, h)/(_x, _y) to new (h, w, ...)/(d0, d1, ...)
 class Blur(ImageTransform):
     """Transform blurs an image
 
@@ -1323,6 +1328,7 @@ class CvtColor(ImageTransform):
                 return np.dstack((res, res, res))
 
 
+# TODO: refactor from OpenCV (w, h)/(_x, _y) to new (h, w, ...)/(d0, d1, ...)
 class KeypointsJitter(BaseTransform):
     """
     Applies the jittering to the keypoints in X- and Y-durections
