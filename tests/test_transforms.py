@@ -1313,7 +1313,6 @@ def test_gridmask_transform(img, d_range, rotate, ratio, expected):
     trf = slc.Stream([slt.GridMask(d_range=d_range, rotate=rotate, ratio=ratio, p=1)])
 
     dc_res = trf(dc, return_torch=False)
-    print(dc_res.data[0])
     assert np.array_equal(expected, dc_res.data[0])
 
 
