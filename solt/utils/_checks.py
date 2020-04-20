@@ -1,80 +1,71 @@
-def ensure_valid_image(img, num_dims=None, num_channels=None):
+from functools import wraps, partialmethod, partial
+
+
+def ensure_valid_image(num_dims_total=None, num_dims_spatial=None, num_channels=None,
+                       keep_num_dims=True):
     """
 
     Parameters
     ----------
-    img: np.ndarray or torch.Tensor
-    num_dims: tuple of ints, int, or None
-    num_channels: tuple of ints, int, or None
+    num_dims_total: tuple of ints or None
+        If not None, checks whether the number of the input dimensions is among
+        the specified values.
+    num_dims_spatial: tuple of ints or None
+        If not None, checks whether the number of the spatial (i.e. total - 1)
+        dimensions is among the specified values.
+    num_channels: tuple of ints or None
+        If not None, checks whether the shape of the last dimension is among
+        the specified values.
+    keep_num_dims: bool
+        If True, adds the trailing dimensions to the result to match the input.
+
+    Returns
+    -------
 
     Raises
     ------
-    ValueError
+    ValueError:
         If one or several of the checks failed.
     """
-    if num_dims is not None:
-        if isinstance(num_dims, int):
-            num_dims = (num_dims, )
+    def inner_decorator(method):
+        @wraps(method)
+        def wrapped(*args, **kwargs):
+            if "img" in kwargs:
+                img = kwargs["img"]
+            else:
+                img = args[1]  # 0th arg is `self`
+            shape_in, ndim_in = img.shape, img.ndim
 
-        # Ignore mandatory channel dimension
-        if (img.ndim - 1) not in num_dims:
-            msg = f"Unsupported number of dimensions {img.ndim}"
-            raise ValueError(msg)
+            # Ensure the input conforms with the num_dims, shape, etc requirements
+            if num_dims_total is not None:
+                if ndim_in not in num_dims_total:
+                    msg = f"Unsupported number of dimensions {ndim_in}"
+                    raise ValueError(msg)
 
-    if num_channels is not None:
-        if isinstance(num_channels, int):
-            num_channels = (num_channels, )
+            if num_dims_spatial is not None:
+                if (ndim_in - 1) not in num_dims_spatial:
+                    msg = f"Unsupported number of spatial dimensions {ndim_in - 1}"
+                    raise ValueError(msg)
 
-        if img.shape[-1] not in num_channels:
-            msg = f"Unsupported number of channels {img.shape[-1]}"
-            raise ValueError(msg)
+            if num_channels is not None:
+                if shape_in[-1] not in num_channels:
+                    msg = f"Unsupported number of channels {shape_in[-1]}"
+                    raise ValueError(msg)
 
+            # Execute the wrapped function
+            result = method(*args, **kwargs)
 
-def ensure_valid_mask(mask, num_dims=None):
-    """
+            # Implement the required consistency
+            shape_out, ndim_out = result.shape, result.ndim
 
-    Parameters
-    ----------
-    mask: np.ndarray or torch.Tensor
-    num_dims: tuple of ints, int, or None
+            if keep_num_dims and ndim_out < ndim_in:
+                # Add trailing dimensions to match the input
+                sel = (..., ) + (None, ) * (ndim_in - ndim_out)
+                result = result[sel]
 
-    Raises
-    ------
-    ValueError
-        If one or several of the checks failed.
-    """
-    if num_dims is not None:
-        if isinstance(num_dims, int):
-            num_dims = (num_dims, )
-
-        # Ignore mandatory channel dimension
-        if mask.ndim not in num_dims:
-            msg = f"Unsupported number of dimensions {mask.ndim}"
-            raise ValueError(msg)
-
-
-def ensure_valid_keypoints(keypoints, num_dims=None):
-    """
-
-    Parameters
-    ----------
-    keypoints: np.ndarray or torch.Tensor
-    num_dims: tuple of ints, int, or None
-
-    Raises
-    ------
-    ValueError
-        If one or several of the checks failed.
-    """
-    if num_dims is not None:
-        if isinstance(num_dims, int):
-            num_dims = (num_dims, )
-
-        # Ignore mandatory channel dimension
-        num_dims_pts = keypoints.data.shape[1]
-        if num_dims_pts not in num_dims:
-            msg = f"Unsupported number of dimensions {num_dims_pts}"
-            raise ValueError(msg)
+            return result
+        return wrapped
+    return inner_decorator
 
 
 def validate_parameter(parameter, allowed_modes, default_value, basic_type=str, heritable=True):
