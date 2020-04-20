@@ -30,10 +30,7 @@ def ensure_valid_image(num_dims_total=None, num_dims_spatial=None, num_channels=
     def inner_decorator(method):
         @wraps(method)
         def wrapped(*args, **kwargs):
-            if "img" in kwargs:
-                img = kwargs["img"]
-            else:
-                img = args[1]  # 0th arg is `self`
+            img = args[1]  # 0th arg is `self`
             shape_in, ndim_in = img.shape, img.ndim
 
             # Ensure the input conforms with the num_dims, shape, etc requirements

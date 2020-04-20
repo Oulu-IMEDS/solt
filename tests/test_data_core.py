@@ -117,18 +117,24 @@ def test_assert_data_containers_equal(img, mask, order, presence):
 
 
 @pytest.mark.parametrize(
-    "img, num_dims_spatial, num_channels, error",
+    "img, num_dims_spatial, num_dims_total, num_channels, error",
     [
-        (np.zeros(0,), None, None, None),
-        (np.random.rand(3, 4, 5, 6), (2, 4, 5), None, ValueError),
-        (np.random.rand(3, 4, 5, 6), None, (1, 5, 7), ValueError),
+        (np.zeros(0,), None, None, None, None),
+        (np.random.rand(3, 4, 5, 6), (3,), None, None, None),
+        (np.random.rand(3, 4, 5, 6), (2, 4, 5), None, None, ValueError),
+        (np.random.rand(3, 4, 5, 6), None, (4,), None, None),
+        (np.random.rand(3, 4, 5, 6), None, (2, 3, 5), None, ValueError),
+        (np.random.rand(3, 4, 5, 6), None, None, (6,), None),
+        (np.random.rand(3, 4, 5, 6), None, None, (1, 5, 7), ValueError),
     ],
 )
-def test_ensure_valid_image(img, num_dims_spatial, num_channels, error):
+def test_ensure_valid_image(img, num_dims_spatial, num_dims_total, num_channels, error):
     def trf(_, i):  # _ is a placeholder for `self`
         return i
 
-    func = slu.ensure_valid_image(num_dims_spatial=num_dims_spatial, num_channels=num_channels)(trf)
+    func = slu.ensure_valid_image(
+        num_dims_spatial=num_dims_spatial, num_dims_total=num_dims_total, num_channels=num_channels
+    )(trf)
     if error is None:
         func(None, img)
     else:
@@ -159,6 +165,19 @@ def test_data_container_can_be_only_tuple_if_iterable_single(img):
 def test_data_container_can_be_only_tuple_if_iterable_multple(img):
     with pytest.raises(TypeError):
         slc.DataContainer([img, img], "II")
+
+
+@pytest.mark.parametrize(
+    "data, types, error",
+    [
+        ((img_2x2(), img_3x3()), "II", ValueError),
+        ((np.ones((3, 3, 3, 3)), np.ones((3, 3, 3))), "II", ValueError),
+        ((img_2x2(), img_2x2()), "IM", ValueError),
+    ],
+)
+def test_data_container_validate_raises_inconsistency(data, types, error):
+    with pytest.raises(error):
+        slc.DataContainer(data, types).validate()
 
 
 @pytest.mark.parametrize("img", [img_2x2(),])
@@ -216,6 +235,11 @@ def test_create_empty_keypoints():
     kpts = slc.Keypoints()
     assert len(kpts.frame) == 0
     assert kpts.data is None
+
+
+def test_keypoint_raises_with_pts_no_frame():
+    with pytest.raises(ValueError):
+        slc.Keypoints(pts=np.asarray([[0, 1], [1, 0]]))
 
 
 def test_create_4_keypoints():
