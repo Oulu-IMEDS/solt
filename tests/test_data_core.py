@@ -107,42 +107,22 @@ def test_assert_data_containers_equal(img, mask, order, presence):
     assert dc == dc_reordered
 
 
-@pytest.mark.parametrize('img, num_dims, num_channels, error', [
+@pytest.mark.parametrize('img, num_dims_spatial, num_channels, error', [
     (np.zeros(0,), None, None, None),
     (np.random.rand(3, 4, 5, 6), (2, 4, 5), None, ValueError),
     (np.random.rand(3, 4, 5, 6), None, (1, 5, 7), ValueError),
 ])
-def test_ensure_valid_image(img, num_dims, num_channels, error):
+def test_ensure_valid_image(img, num_dims_spatial, num_channels, error):
+    def trf(_, i):  # _ is a placeholder for `self`
+        return i
+
+    func = slu.ensure_valid_image(num_dims_spatial=num_dims_spatial,
+                                  num_channels=num_channels)(trf)
     if error is None:
-        slu.ensure_valid_image(img, num_dims=num_dims, num_channels=num_channels)
+        func(None, img)
     else:
         with pytest.raises(error):
-            slu.ensure_valid_image(img, num_dims=num_dims, num_channels=num_channels)
-
-
-@pytest.mark.parametrize('mask, num_dims, error', [
-    (np.zeros(0,), None, None),
-    (np.random.rand(3, 4), (2, ), None),
-    (np.random.rand(3, 4, 5, 6), (2, 3, 5), ValueError),
-])
-def test_ensure_valid_mask(mask, num_dims, error):
-    if error is None:
-        slu.ensure_valid_mask(mask, num_dims=num_dims)
-    else:
-        with pytest.raises(error):
-            slu.ensure_valid_mask(mask, num_dims=num_dims)
-
-
-@pytest.mark.parametrize('pts, num_dims, error', [
-    (np.random.rand(7, 2), (2, ), None),
-    (np.random.rand(8, 3), (2, ), ValueError),
-])
-def test_ensure_valid_keypoints(pts, num_dims, error):
-    if error is None:
-        slu.ensure_valid_keypoints(pts, num_dims=num_dims)
-    else:
-        with pytest.raises(error):
-            slu.ensure_valid_keypoints(pts, num_dims=num_dims)
+            func(None, img)
 
 
 @pytest.mark.parametrize('img', [img_2x2(), ])
@@ -494,24 +474,23 @@ def test_selective_stream_low_prob_transform_should_not_change_the_data(img):
     assert np.array_equal(dc.data, dc_res.data)
 
 
-# TODO: figure out the issue
-# @pytest.mark.parametrize('img, mask', [img_5x5(), mask_5x5()])
-# def test_manually_specified_padding_and_interpolation(img, mask):
-#     dc = slc.DataContainer((img.copy(), img.copy(), mask.copy(), mask.copy(), 1), 'IIMML',
-#                            {0: {'interpolation': 'bicubic', 'padding': 'z'},
-#                             2: {'interpolation': 'bilinear'},
-#                             3: {'padding': 'r'}
-#                             })
-#
-#     assert dc.transform_settings[0]['interpolation'] == ('bicubic', 'strict')
-#     assert dc.transform_settings[1]['interpolation'] == ('bilinear', 'inherit')
-#     assert dc.transform_settings[2]['interpolation'] == ('bilinear', 'strict')
-#     assert dc.transform_settings[3]['interpolation'] == ('nearest', 'strict')
-#
-#     assert dc.transform_settings[0]['padding'] == ('z', 'strict')
-#     assert dc.transform_settings[1]['padding'] == ('z', 'inherit')
-#     assert dc.transform_settings[2]['padding'] == ('z', 'inherit')
-#     assert dc.transform_settings[3]['padding'] == ('r', 'strict')
+@pytest.mark.parametrize('img, mask', [(img_5x5(), mask_5x5()), ])
+def test_manually_specified_padding_and_interpolation(img, mask):
+    dc = slc.DataContainer((img.copy(), img.copy(), mask.copy(), mask.copy(), 1), 'IIMML',
+                           {0: {'interpolation': 'bicubic', 'padding': 'z'},
+                            2: {'interpolation': 'bilinear'},
+                            3: {'padding': 'r'}
+                            })
+
+    assert dc.transform_settings[0]['interpolation'] == ('bicubic', 'strict')
+    assert dc.transform_settings[1]['interpolation'] == ('bilinear', 'inherit')
+    assert dc.transform_settings[2]['interpolation'] == ('bilinear', 'strict')
+    assert dc.transform_settings[3]['interpolation'] == ('nearest', 'strict')
+
+    assert dc.transform_settings[0]['padding'] == ('z', 'strict')
+    assert dc.transform_settings[1]['padding'] == ('z', 'inherit')
+    assert dc.transform_settings[2]['padding'] == ('z', 'inherit')
+    assert dc.transform_settings[3]['padding'] == ('r', 'strict')
 
 
 @pytest.mark.parametrize('img', [img_5x5(), ])
@@ -715,10 +694,13 @@ def test_ignore_fast_mode_for_a_stream(stream_ignore_fast, r1_ignore_fast, r2_ig
 
 
 @pytest.mark.parametrize('img, mask', [(img_3x3_rgb(), mask_3x3())])
-@pytest.mark.parametrize('mean,std', [[None, None], [(0.5, 0.5, 0.5), (0.5, 0.5, 0.5)],
-                                      [np.array((0.5, 0.5, 0.5)), (0.5, 0.5, 0.5)],
-                                      [(0.5, 0.5, 0.5), np.array((0.5, 0.5, 0.5))],
-                                      [np.array((0.5, 0.5, 0.5)), np.array((0.5, 0.5, 0.5))]])
+@pytest.mark.parametrize('mean,std', [
+    [None, None],
+    [(0.5, 0.5, 0.5), (0.5, 0.5, 0.5)],
+    [np.array((0.5, 0.5, 0.5)), (0.5, 0.5, 0.5)],
+    [(0.5, 0.5, 0.5), np.array((0.5, 0.5, 0.5))],
+    [np.array((0.5, 0.5, 0.5)), np.array((0.5, 0.5, 0.5))]
+])
 def test_image_mask_pipeline_to_torch_normalization(img, mask, mean, std):
     ppl = slc.Stream(
         [
@@ -729,7 +711,7 @@ def test_image_mask_pipeline_to_torch_normalization(img, mask, mean, std):
     img, mask = ppl({'image': img, 'mask': mask}, as_dict=False, mean=mean, std=std)
 
     if mean is None:
-        np.testing.assert_almost_equal(img[:, :, 0].max().item(), 0.515 / 0.229)
+        np.testing.assert_almost_equal(img[0, ...].max().item(), 0.515 / 0.229)
     else:
         assert img.max() == 1
     assert mask.max() == 1
@@ -766,7 +748,7 @@ def test_image_mask_pipeline_to_torch_checks_mean_type_and_shape_rgb(img, mask, 
 
 def test_data_container_keypoints_rescale_to_torch():
     kpts_data = np.array([[100, 20], [1023, 80], [20, 20], [100, 700]]).reshape((4, 2))
-    kpts = slc.Keypoints(kpts_data, frame=(768, 1024))
+    kpts = slc.Keypoints(kpts_data, frame=(1024, 768))
     ppl = slc.Stream()
     k, label = ppl({'keypoints': kpts, 'label': 1}, as_dict=False)
     assert isinstance(k, torch.FloatTensor)
