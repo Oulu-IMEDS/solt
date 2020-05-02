@@ -4,6 +4,8 @@ import cv2
 import numpy as np
 import scipy
 import scipy.signal
+import torch
+import torch.nn.functional as torch_func
 
 from ..core import (
     BaseTransform,
@@ -35,8 +37,8 @@ class Flip(BaseTransform):
     ----------
     p : float
         Probability of flip
-    axis : int
-        Flipping axis. 0 - vertical, 1 - horizontal, etc. -1 - all axes.
+    axis : int or tuple of ints
+        Axis or axes along which to flip over. 0 - vertical, 1 - horizontal, etc.
     """
 
     serializable_name = "flip"
@@ -44,41 +46,33 @@ class Flip(BaseTransform):
 
     def __init__(self, p=0.5, axis=1, data_indices=None):
         super(Flip, self).__init__(p=p, data_indices=data_indices)
-        if axis not in [-1, 0, 1]:
-            raise ValueError("Incorrect Value of axis!")
-
+        if isinstance(axis, int):
+            axis = (axis,)
         self.axis = axis
 
     @ensure_valid_image(num_dims_spatial=(2,))
     def _apply_img(self, img: np.ndarray, settings: dict):
-        if self.axis == 0:
-            return np.ascontiguousarray(img[::-1, ...])
-        elif self.axis == 1:
-            if img.shape[2] > 1 and img.dtype == np.uint8:
-                return cv2.flip(img, 1)
-            return np.ascontiguousarray(img[:, ::-1, ...])
-        else:
-            return np.ascontiguousarray(img[::-1, ::-1, ...])
+        return np.ascontiguousarray(np.flip(img, axis=self.axis))
 
     @ensure_valid_image(num_dims_total=(2,))
     def _apply_mask(self, mask: np.ndarray, settings: dict):
-        mask_new = cv2.flip(mask, self.axis)
-        return mask_new
+        return np.ascontiguousarray(np.flip(mask, axis=self.axis))
+
+    @ensure_valid_image()
+    def _apply_img_pt(self, img: torch.Tensor, settings: dict):
+        return torch.flip(img, dims=self.axis)
+
+    @ensure_valid_image()
+    def _apply_mask_pt(self, mask: torch.Tensor, settings: dict):
+        return torch.flip(mask, dims=self.axis)
 
     def _apply_labels(self, labels, settings: dict):
         return labels
 
     def _apply_pts(self, pts: Keypoints, settings: dict):
-        # We should guarantee that we do not change the original data.
         pts_data = pts.data.copy()
-        if self.axis == 0:
-            pts_data[:, 1] = pts.frame[0] - 1 - pts_data[:, 1]
-        elif self.axis == 1:
-            pts_data[:, 0] = pts.frame[1] - 1 - pts_data[:, 0]
-        elif self.axis == -1:
-            pts_data[:, 1] = pts.frame[0] - 1 - pts_data[:, 1]
-            pts_data[:, 0] = pts.frame[1] - 1 - pts_data[:, 0]
-
+        for ax in self.axis:
+            pts_data[:, ax] = pts.frame[ax] - 1 - pts_data[:, ax]
         return Keypoints(pts=pts_data, frame=pts.frame)
 
 
@@ -589,6 +583,31 @@ class Pad(BaseTransform, PaddingPropertyHolder):
     def _apply_mask(self, mask: np.ndarray, settings: dict):
         return self._apply_img_or_mask(mask, settings)
 
+    def _apply_img_or_mask_pt(self, img_mask: torch.Tensor, settings: dict):
+        if self.pad_to is not None:
+            pad_width = []
+            for s, e in zip(self.offsets_s[::-1], self.offsets_e[::-1]):
+                pad_width.extend([e, s])
+            if img_mask.ndim > len(pad_width) / 2:
+                pad_width.extend([0, 0])
+            pad_width = pad_width[::-1]
+
+            if settings["padding"][1] == "strict":
+                padding = settings["padding"][0]
+            else:
+                padding = self.padding[0]
+            mode = {"z": "constant", "r": "reflect"}[padding]
+
+            return torch_func.pad(img_mask, pad=pad_width, mode=mode)
+        else:
+            return img_mask
+
+    def _apply_img_pt(self, img: torch.Tensor, settings: dict):
+        return self._apply_img_or_mask_pt(img, settings)
+
+    def _apply_mask_pt(self, mask: torch.Tensor, settings: dict):
+        return self._apply_img_or_mask_pt(mask, settings)
+
     def _apply_labels(self, labels, settings: dict):
         return labels
 
@@ -735,7 +754,7 @@ class Crop(BaseTransform):
                 self.offsets_s = [(frame_in[i] - self.crop_to[i]) // 2 for i in range(ndim)]
             self.offsets_e = [self.offsets_s[i] + self.crop_to[i] for i in range(ndim)]
 
-    def __crop_img_or_mask(self, img_mask):
+    def _apply_img_or_mask(self, img_mask):
         if self.crop_to is not None:
             ndim = len(self.offsets_s)
             sel = [slice(self.offsets_s[i], self.offsets_e[i]) for i in range(ndim)]
@@ -745,10 +764,16 @@ class Crop(BaseTransform):
             return img_mask
 
     def _apply_img(self, img: np.ndarray, settings: dict):
-        return self.__crop_img_or_mask(img)
+        return self._apply_img_or_mask(img)
 
     def _apply_mask(self, mask: np.ndarray, settings: dict):
-        return self.__crop_img_or_mask(mask)
+        return self._apply_img_or_mask(mask)
+
+    def _apply_img_pt(self, img: torch.Tensor, settings: dict):
+        return self._apply_img_or_mask(img)
+
+    def _apply_mask_pt(self, mask: torch.Tensor, settings: dict):
+        return self._apply_img_or_mask(mask)
 
     def _apply_labels(self, labels, settings: dict):
         return labels

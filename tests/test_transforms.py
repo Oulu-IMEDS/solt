@@ -4,6 +4,7 @@ from contextlib import ExitStack as does_not_raise
 
 import cv2
 import numpy as np
+import torch
 import pytest
 
 import solt.core as slc
@@ -27,11 +28,6 @@ def test_img_mask_vertical_flip(img, mask):
     h, w = mask.shape
     assert np.array_equal(cv2.flip(img, 0).reshape(h, w, 1), img_res)
     assert np.array_equal(cv2.flip(mask, 0), mask_res)
-
-
-def test_flip_invalid_axis():
-    with pytest.raises(ValueError):
-        slt.Flip(p=1, axis=100)
 
 
 @pytest.mark.parametrize("img, mask", [(img_3x4(), mask_3x4())])
@@ -80,27 +76,12 @@ def test_img_mask_vertical_horizontal_flip(img, mask):
 
 
 @pytest.mark.parametrize("img, mask", [(img_3x4(), mask_3x4())])
-def test_img_mask_vertical_horizontal_flip_negative_axes(img, mask):
-    dc = slc.DataContainer((img, mask), "IM")
-
-    stream = slt.Flip(p=1, axis=-1)
-
-    dc = stream(dc)
-    img_res, _, _ = dc[0]
-    mask_res, _, _ = dc[1]
-
-    h, w = mask.shape
-    assert np.array_equal(cv2.flip(cv2.flip(img, 0), 1).reshape(h, w, 1), img_res)
-    assert np.array_equal(cv2.flip(cv2.flip(mask, 0), 1), mask_res)
-
-
-@pytest.mark.parametrize("img, mask", [(img_3x4(), mask_3x4())])
-def test_img_mask__kptsvertical_horizontal_flip_negative_axes(img, mask):
-    kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
+def test_img_mask_kpts_flip_all_axes(img, mask):
+    kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
     kpts = slc.Keypoints(kpts_data.copy(), frame=(3, 4))
     dc = slc.DataContainer((img, mask, kpts), "IMP")
 
-    stream = slt.Flip(p=1, axis=-1)
+    stream = slt.Flip(p=1, axis=(0, 1))
 
     dc = stream(dc)
     img_res, _, _ = dc[0]
@@ -111,13 +92,13 @@ def test_img_mask__kptsvertical_horizontal_flip_negative_axes(img, mask):
     assert np.array_equal(cv2.flip(cv2.flip(img, 0), 1).reshape(h, w, 1), img_res)
     assert np.array_equal(cv2.flip(cv2.flip(mask, 0), 1), mask_res)
 
-    kpts_data[:, 0] = 4 - 1 - kpts_data[:, 0]
-    kpts_data[:, 1] = 3 - 1 - kpts_data[:, 1]
+    kpts_data[:, 0] = (3 - 1) - kpts_data[:, 0]
+    kpts_data[:, 1] = (4 - 1) - kpts_data[:, 1]
 
     assert np.array_equal(kpts_data, kpts_res.data)
 
 
-def test_keypoints_vertical_flip():
+def test_keypoints_flip():
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
     kpts = slc.Keypoints(kpts_data, frame=(2, 2))
     stream = slt.Flip(p=1, axis=0)
@@ -125,29 +106,22 @@ def test_keypoints_vertical_flip():
 
     dc_res = stream(dc)
 
-    assert np.array_equal(dc_res[0][0].data, np.array([[0, 1], [0, 0], [1, 1], [1, 0]]).reshape((4, 2)))
+    expected = np.array([[1, 0], [1, 1], [0, 0], [0, 1]]).reshape((4, 2))
+    assert np.array_equal(dc_res[0][0].data, expected)
 
 
-def test_keypoints_horizontal_flip_within_stream():
+@pytest.mark.parametrize(
+    "axis, kpts_expected",
+    [(0, np.array([[1, 0], [1, 1], [0, 0], [0, 1]])), (1, np.array([[0, 1], [0, 0], [1, 1], [1, 0]]))],
+)
+def test_keypoints_flip_within_stream(axis, kpts_expected):
     kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
     kpts = slc.Keypoints(kpts_data, frame=(2, 2))
-    stream = slc.Stream([slt.Flip(p=1, axis=1)])
+
+    stream = slc.Stream([slt.Flip(p=1, axis=axis)])
     dc = slc.DataContainer((kpts,), "P")
-
     dc_res = stream(dc, return_torch=False)
-
-    assert np.array_equal(dc_res[0][0].data, np.array([[1, 0], [1, 1], [0, 0], [0, 1]]).reshape((4, 2)))
-
-
-def test_keypoints_vertical_flip_within_stream():
-    kpts_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).reshape((4, 2))
-    kpts = slc.Keypoints(kpts_data, frame=(2, 2))
-    stream = slc.Stream([slt.Flip(p=1, axis=0)])
-    dc = slc.DataContainer((kpts,), "P")
-
-    dc_res = stream(dc, return_torch=False)
-
-    assert np.array_equal(dc_res[0][0].data, np.array([[0, 1], [0, 0], [1, 1], [1, 0]]).reshape((4, 2)))
+    assert np.array_equal(dc_res[0][0].data, kpts_expected)
 
 
 def test_rotate_range_none():
@@ -352,7 +326,7 @@ def test_padding_img_mask(img, mask, pad_to, shape_out):
 @pytest.mark.parametrize("img, mask", [(img_3x3(), mask_3x3())])
 def test_pad_to_20x20_img_mask_keypoints_3x3(img, mask):
     # Setting up the data
-    kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
+    kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]])
     kpts = slc.Keypoints(kpts_data, frame=(3, 3))
 
     dc = slc.DataContainer((img, mask, kpts,), "IMP")
@@ -363,14 +337,14 @@ def test_pad_to_20x20_img_mask_keypoints_3x3(img, mask):
     assert (res[1][0].shape[0] == 20) and (res[1][0].shape[1] == 20)
     assert (res[2][0].frame[0] == 20) and (res[2][0].frame[1] == 20)
 
-    assert np.array_equal(res[2][0].data, np.array([[8, 8], [8, 10], [10, 10], [10, 8]]).reshape((4, 2)))
+    assert np.array_equal(res[2][0].data, np.array([[8, 8], [8, 10], [10, 10], [10, 8]]))
 
 
 @pytest.mark.parametrize("img, mask", [(img_3x3(), mask_3x3())])
 @pytest.mark.parametrize("trf", [slt.Pad, slt.Crop, slt.Resize])
 def test_pad_crop_resize_dont_change_data_when_parameters_are_not_set(img, mask, trf):
     # Setting up the data
-    kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
+    kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]])
     kpts = slc.Keypoints(kpts_data, frame=(3, 3))
 
     dc = slc.DataContainer((img, mask, kpts,), "IMP")
@@ -498,8 +472,8 @@ def test_2x2_pad_to_20x20_center_crop_2x2(pad_size, crop_size, img, mask):
     "img, mask",
     [
         (img_2x2(), mask_2x2()),
-        (np.ones((3, 4, 5, 1)), np.ones((3, 4, 5))),
-        (np.ones((3, 3, 7, 4, 6, 3)), np.zeros((3, 3, 7, 4, 6))),
+        (torch.ones((3, 4, 5, 1)), torch.ones((3, 4, 5))),
+        (torch.ones((3, 3, 7, 4, 6, 3)), torch.zeros((3, 3, 7, 4, 6))),
     ],
 )
 def test_different_crop_modes(crop_mode, img, mask):
@@ -507,7 +481,7 @@ def test_different_crop_modes(crop_mode, img, mask):
         with pytest.raises(ValueError):
             slt.Crop(crop_to=2, crop_mode=crop_mode)
     else:
-        stream = slc.Stream([slt.Pad(pad_to=20), slt.Crop(crop_to=2, crop_mode=crop_mode),])
+        stream = slc.Stream([slt.Pad(pad_to=20), slt.Crop(crop_to=2, crop_mode=crop_mode)])
         dc = slc.DataContainer((img, mask,), "IM")
         dc_res = stream(dc, return_torch=False)
 

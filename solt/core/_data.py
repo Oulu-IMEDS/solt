@@ -92,11 +92,11 @@ class DataContainer(object):
 
         for obj, t, settings in self:
             if t == "I":
-                frame_curr = obj.shape[:-1]  # exclude channel dim
+                frame_curr = np.asarray(obj.shape[:-1])  # exclude channel dim
             elif t == "M":
-                frame_curr = obj.shape
+                frame_curr = np.asarray(obj.shape)
             elif t == "P":
-                frame_curr = obj.frame
+                frame_curr = np.asarray(obj.frame)
             elif t == "L":
                 continue
 
@@ -106,7 +106,7 @@ class DataContainer(object):
                 if len(frame_prev) != len(frame_curr):
                     msg = f"Inconsistent frame dimensionality: " f"{len(frame_prev)}, {len(frame_curr)}"
                     raise ValueError(msg)
-                elif frame_prev != frame_curr:
+                elif frame_prev.tolist() != frame_curr.tolist():
                     msg = f"Inconsistent frames shapes: {frame_prev}, {frame_curr}"
                     raise ValueError(msg)
 

@@ -3,6 +3,7 @@ import random
 from abc import ABCMeta, abstractmethod
 import cv2
 import numpy as np
+import torch
 
 from solt.utils import Serializable
 from solt.constants import ALLOWED_INTERPOLATIONS, ALLOWED_PADDINGS
@@ -99,9 +100,15 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
         for i, (item, t, item_settings) in enumerate(data):
             if i in self.data_indices:
                 if t == "I":  # Image
-                    tmp_item = self._apply_img(item, item_settings)
+                    if item.ndim <= 3 and isinstance(item, np.ndarray):
+                        tmp_item = self._apply_img(item, item_settings)
+                    else:
+                        tmp_item = self._apply_img_pt(item, item_settings)
                 elif t == "M":  # Mask
-                    tmp_item = self._apply_mask(item, item_settings)
+                    if item.ndim <= 3 and isinstance(item, np.ndarray):
+                        tmp_item = self._apply_mask(item, item_settings)
+                    else:
+                        tmp_item = self._apply_mask_pt(item, item_settings)
                 elif t == "P":  # Points
                     tmp_item = self._apply_pts(item, item_settings)
                 elif t == "L":  # Labels
@@ -180,8 +187,8 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
         return res
 
     @abstractmethod
-    def _apply_img(self, img: np.ndarray, settings: dict):
-        """Abstract method, which determines the transform's behaviour when it is applied to images HxWxC.
+    def _apply_img(self, img: np.ndarray, settings: dict) -> np.ndarray:
+        """Determines the transform applied to 2D mask (ndarray, last dim - channels).
 
         Parameters
         ----------
@@ -195,8 +202,8 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def _apply_mask(self, mask: np.ndarray, settings: dict):
-        """Abstract method, which determines the transform's behaviour when it is applied to masks HxW.
+    def _apply_mask(self, mask: np.ndarray, settings: dict) -> np.ndarray:
+        """Determines the transform applied to 2D mask (ndarray, no channel dim).
 
         Parameters
         ----------
@@ -209,6 +216,39 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
             Result
 
         """
+
+    def _apply_img_pt(self, img: torch.Tensor, settings: dict) -> torch.Tensor:
+        """Determines the transform applied to 3D+ image (PyTorch Tensor, last dim - channels).
+
+        Parameters
+        ----------
+        img : torch.Tensor
+            Image to be augmented
+
+        Returns
+        -------
+        out : torch.Tensor
+
+        """
+        msg = f"{self.__name__} does not currently supports torch.Tensors and 3D+ arrays"
+        raise NotImplementedError(msg)
+
+    def _apply_mask_pt(self, mask: torch.Tensor, settings: dict) -> torch.Tensor:
+        """Determines the transform applied to 3D+ mask (PyTorch Tensor, no channel dim).
+
+        Parameters
+        ----------
+        mask : torch.Tensor
+            Mask to be augmented
+
+        Returns
+        -------
+        out : torch.Tensor
+            Result
+
+        """
+        msg = f"{self.__name__} does not currently supports torch.Tensors and 3D+ arrays"
+        raise NotImplementedError(msg)
 
     @abstractmethod
     def _apply_labels(self, labels, settings: np.ndarray):
