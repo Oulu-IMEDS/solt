@@ -1,0 +1,473 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>solt.utils module &mdash; solt v0.1.9 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/msmb.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Basics of SOLT" href="Basics_of_solt.html" />
+    <link rel="prev" title="solt.constants" href="constants.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html">
+          
+
+          
+            
+            <img src="_static/logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                v0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">Welcome to solt’s documentation!</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">solt</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="core.html">solt.core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transforms.html">solt.transforms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="constants.html">solt.constants</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">solt.utils module</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Examples:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Basics_of_solt.html">Basics of <code class="docutils literal notranslate"><span class="pre">SOLT</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="Helen_faces.html">Using <code class="docutils literal notranslate"><span class="pre">SOLT</span></code> to augment the keypoints (landmarks)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DSBowl18_segmentation.html">Using <code class="docutils literal notranslate"><span class="pre">SOLT</span></code> for instance and semantic segmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Medical_Data_Augmentation_CXR14.html">Augmenting Medical Images: Chest X-ray 14 dataset</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">solt</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="modules.html">solt</a> &raquo;</li>
+        
+      <li>solt.utils module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/utils.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-solt.utils">
+<span id="solt-utils-module"></span><h1>solt.utils module<a class="headerlink" href="#module-solt.utils" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="solt.utils.from_dict">
+<code class="descclassname">solt.utils.</code><code class="descname">from_dict</code><span class="sig-paren">(</span><em>transforms</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/utils/_serial.html#from_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.utils.from_dict" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Deserializes the transformations stored in a dict.</dt>
+<dd>Supports deserialization of Streams only.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>transforms</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)"><em>dict</em></a>) – Transforms</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – An instance of solt.core.Stream.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="core.html#solt.core.Stream" title="solt.core.Stream">solt.core.Stream</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="solt.utils.from_json">
+<code class="descclassname">solt.utils.</code><code class="descname">from_json</code><span class="sig-paren">(</span><em>s</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/utils/_serial.html#from_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.utils.from_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allows to deserialize transforms from a json file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>s</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.8)"><em>pathlib.Path</em></a>) – Json string or path. Path can be stored as a string or as a pathlib object.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>s</strong> – A serializable object</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#solt.utils.Serializable" title="solt.utils.Serializable">Serializable</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="solt.utils.from_yaml">
+<code class="descclassname">solt.utils.</code><code class="descname">from_yaml</code><span class="sig-paren">(</span><em>s</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/utils/_serial.html#from_yaml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.utils.from_yaml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allows to deserialize transforms from a yaml file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>s</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.8)"><em>pathlib.Path</em></a>) – Path to the yaml object.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>s</strong> – A serializable object</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#solt.utils.Serializable" title="solt.utils.Serializable">Serializable</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="solt.utils.Serializable">
+<em class="property">class </em><code class="descclassname">solt.utils.</code><code class="descname">Serializable</code><a class="reference internal" href="_modules/solt/utils/_serial.html#Serializable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.utils.Serializable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="attribute">
+<dt id="solt.utils.Serializable.registry">
+<code class="descname">registry</code><em class="property"> = {'blur': &lt;class 'solt.transforms._transforms.Blur'&gt;, 'brightness': &lt;class 'solt.transforms._transforms.Brightness'&gt;, 'contrast': &lt;class 'solt.transforms._transforms.Contrast'&gt;, 'crop': &lt;class 'solt.transforms._transforms.Crop'&gt;, 'cutout': &lt;class 'solt.transforms._transforms.CutOut'&gt;, 'cvt_color': &lt;class 'solt.transforms._transforms.CvtColor'&gt;, 'flip': &lt;class 'solt.transforms._transforms.Flip'&gt;, 'gamma_correction': &lt;class 'solt.transforms._transforms.GammaCorrection'&gt;, 'gridmask': &lt;class 'solt.transforms._transforms.GridMask'&gt;, 'hsv': &lt;class 'solt.transforms._transforms.HSV'&gt;, 'intensity_remap': &lt;class 'solt.transforms._transforms.IntensityRemap'&gt;, 'jpeg_compression': &lt;class 'solt.transforms._transforms.JPEGCompression'&gt;, 'keypoints_jitter': &lt;class 'solt.transforms._transforms.KeypointsJitter'&gt;, 'noise': &lt;class 'solt.transforms._transforms.Noise'&gt;, 'pad': &lt;class 'solt.transforms._transforms.Pad'&gt;, 'projection': &lt;class 'solt.transforms._transforms.Projection'&gt;, 'resize': &lt;class 'solt.transforms._transforms.Resize'&gt;, 'rotate': &lt;class 'solt.transforms._transforms.Rotate'&gt;, 'rotate_90': &lt;class 'solt.transforms._transforms.Rotate90'&gt;, 'salt_and_pepper': &lt;class 'solt.transforms._transforms.SaltAndPepper'&gt;, 'scale': &lt;class 'solt.transforms._transforms.Scale'&gt;, 'selective_stream': &lt;class 'solt.core._core.SelectiveStream'&gt;, 'shear': &lt;class 'solt.transforms._transforms.Shear'&gt;, 'stream': &lt;class 'solt.core._core.Stream'&gt;, 'translate': &lt;class 'solt.transforms._transforms.Translate'&gt;}</em><a class="headerlink" href="#solt.utils.Serializable.registry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="solt.utils.Serializable.serializable_name">
+<code class="descname">serializable_name</code><em class="property"> = None</em><a class="headerlink" href="#solt.utils.Serializable.serializable_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>How the class should be stored in the registry. If <code class="docutils literal notranslate"><span class="pre">None</span></code> (default), the transform is not added.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="solt.utils.Serializable.to_dict">
+<code class="descname">to_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/utils/_serial.html#Serializable.to_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.utils.Serializable.to_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method returns a dict, describing the object sufficiently enough to reconstruct it
+back.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – OrderedDict, ready for json serialization.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)">dict</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="solt.utils.Serializable.to_json">
+<code class="descname">to_json</code><span class="sig-paren">(</span><em>filename=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/utils/_serial.html#Serializable.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.utils.Serializable.to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes a Serializable object into a json file. If the filename is None,
+then this function returns a string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.8)"><em>pathlib.Path</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)"><em>None</em></a>) – </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – Serialized object</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)">str</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="solt.utils.Serializable.to_yaml">
+<code class="descname">to_yaml</code><span class="sig-paren">(</span><em>filename=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/utils/_serial.html#Serializable.to_yaml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.utils.Serializable.to_yaml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes a Serializable object into a file. If the filename is None,
+then this function just returns a string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.8)"><em>pathlib.Path</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)"><em>None</em></a>) – Path to the .yaml file.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – Serialized object</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)">str</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="solt.utils.ensure_valid_image">
+<code class="descclassname">solt.utils.</code><code class="descname">ensure_valid_image</code><span class="sig-paren">(</span><em>num_dims_total=None</em>, <em>num_dims_spatial=None</em>, <em>num_channels=None</em>, <em>keep_num_dims=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/utils/_checks.html#ensure_valid_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.utils.ensure_valid_image" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>num_dims_total</strong> (<em>tuple of ints</em><em> or </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)"><em>None</em></a>) – If not None, checks whether the number of the input dimensions is among
+the specified values.</li>
+<li><strong>num_dims_spatial</strong> (<em>tuple of ints</em><em> or </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)"><em>None</em></a>) – If not None, checks whether the number of the spatial (i.e. total - 1)
+dimensions is among the specified values.</li>
+<li><strong>num_channels</strong> (<em>tuple of ints</em><em> or </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)"><em>None</em></a>) – If not None, checks whether the shape of the last dimension is among
+the specified values.</li>
+<li><strong>keep_num_dims</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – If True, adds the trailing dimensions to the result to match the input.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">ValueError: – If one or several of the checks failed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="solt.utils.validate_numeric_range_parameter">
+<code class="descclassname">solt.utils.</code><code class="descname">validate_numeric_range_parameter</code><span class="sig-paren">(</span><em>parameter</em>, <em>default_val</em>, <em>min_val=None</em>, <em>max_val=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/utils/_checks.html#validate_numeric_range_parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.utils.validate_numeric_range_parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validates the range-type parameter, e.g. angle in Random Rotation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>parameter</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><em>tuple</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)"><em>None</em></a>) – The value of the parameter</li>
+<li><strong>default_val</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><em>object</em></a>) – Default value of the parameter if it is None.</li>
+<li><strong>min_val</strong> (<a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)"><em>None</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><em>int</em></a>) – Check whether the parameter is greater or equal than this. Optional.</li>
+<li><strong>max_val</strong> (<a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)"><em>None</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><em>int</em></a>) – Check whether the parameter is less or equal than this. Optional.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>out</strong> – Parameter value, passed all the checks.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)">tuple</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="solt.utils.validate_parameter">
+<code class="descclassname">solt.utils.</code><code class="descname">validate_parameter</code><span class="sig-paren">(</span><em>parameter</em>, <em>allowed_modes</em>, <em>default_value</em>, <em>basic_type=&lt;class 'str'&gt;</em>, <em>heritable=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/utils/_checks.html#validate_parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.utils.validate_parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validates the parameter and wraps it into a tuple with the
+inheritance option (if parameter is not a tuple already).
+In this case the parameter will become a tuple (parameter, ‘inherit’),
+which will indicate that the stream settings will override this parameter.
+In case if the parameter is already a tuple specified as parameter=(value, ‘strict’), then the parameter
+will not be overrided.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>parameter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><em>object</em></a>) – The value of the parameter</li>
+<li><strong>allowed_modes</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)"><em>dict</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.8)"><em>set</em></a>) – Allowed values for the parameter</li>
+<li><strong>default_value</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><em>object</em></a>) – Default value to substitute if the parameter is None</li>
+<li><strong>basic_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.8)"><em>type</em></a>) – Type of the parameter.</li>
+<li><strong>heritable</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Whether to check for heretability option.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>out</strong> – New parameter value wrapped into a tuple.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)">tuple</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="Basics_of_solt.html" class="btn btn-neutral float-right" title="Basics of SOLT" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="constants.html" class="btn btn-neutral" title="solt.constants" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Aleksei Tiulpin, Research Unit of Medical Imaging, Physics and Technology. University of Oulu.
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  <script>
+    var versions_json_url = ''
+</script>
+
+<div class="rst-versions" data-toggle="rst-versions" role="note"
+     aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"></span>
+        v0.1.9
+      <span class="fa fa-caret-down"></span>
+    </span>
+
+    <div class="rst-other-versions">
+        <dl id="versionselector">
+            <dt>Other Versions</dt>
+        </dl>
+
+    </div>
+</div>
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'v0.1.9',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="_static/language_data.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script type="text/javascript" src="_static/js/versions.js"></script>
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

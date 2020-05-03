@@ -1,0 +1,1138 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Basics of SOLT &mdash; solt v0.1.9 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/msmb.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Using SOLT to augment the keypoints (landmarks)" href="Helen_faces.html" />
+    <link rel="prev" title="solt.utils module" href="utils.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html">
+          
+
+          
+            
+            <img src="_static/logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                v0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">Welcome to solt’s documentation!</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Modules:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">solt</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Examples:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Basics of <code class="docutils literal notranslate"><span class="pre">SOLT</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#Wrapping-the-data-into-containers">Wrapping the data into containers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Handling-the-keypoints">Handling the keypoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Applying-SOLT-transforms">Applying <code class="docutils literal notranslate"><span class="pre">SOLT</span></code> transforms</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#Creating-the-data">Creating the data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Using-Dict-instead-of-a-DataContainer-(covers-99%-of-usecases)">Using Dict instead of a DataContainer (covers 99% of usecases)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Applying-the-transformations">Applying the transformations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Visualizing-the-results">Visualizing the results</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#Serializing-transforms-into-dict,-yaml-or-json">Serializing transforms into <code class="docutils literal notranslate"><span class="pre">dict</span></code>, <code class="docutils literal notranslate"><span class="pre">yaml</span></code> or <code class="docutils literal notranslate"><span class="pre">json</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Extending-with-own-transforms">Extending with own transforms</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#More-details-about-serialization">More details about serialization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Summary">Summary</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Helen_faces.html">Using <code class="docutils literal notranslate"><span class="pre">SOLT</span></code> to augment the keypoints (landmarks)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DSBowl18_segmentation.html">Using <code class="docutils literal notranslate"><span class="pre">SOLT</span></code> for instance and semantic segmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Medical_Data_Augmentation_CXR14.html">Augmenting Medical Images: Chest X-ray 14 dataset</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">solt</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Basics of <code class="docutils literal notranslate"><span class="pre">SOLT</span></code></li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/Basics_of_solt.nblink.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container,
+div.nbinput.container div.prompt,
+div.nbinput.container div.input_area,
+div.nbinput.container div[class*=highlight],
+div.nbinput.container div[class*=highlight] pre,
+div.nboutput.container,
+div.nboutput.container div.prompt,
+div.nboutput.container div.output_area,
+div.nboutput.container div[class*=highlight],
+div.nboutput.container div[class*=highlight] pre {
+    background: none;
+    border: none;
+    padding: 0 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    min-width: 7ex;
+    padding-top: 0.3rem;
+    padding-right: 0.3rem;
+    text-align: right;
+    flex: 0;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    background: #f5f5f5;
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 0.3rem;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt a.copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+</style>
+<div class="section" id="Basics-of-SOLT">
+<h1>Basics of <code class="docutils literal notranslate"><span class="pre">SOLT</span></code><a class="headerlink" href="#Basics-of-SOLT" title="Permalink to this headline">¶</a></h1>
+<p>In this short tutorial, you will get to know the core concepts behind the <code class="docutils literal notranslate"><span class="pre">SOLT</span></code> library and also learn how to implement simple data augmentations by yourself.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="o">%</span><span class="k">matplotlib</span> inline
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">patches</span>
+<span class="kn">import</span> <span class="nn">cv2</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">12345</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Solt has several main modules:</p>
+<ul class="simple">
+<li><code class="docutils literal notranslate"><span class="pre">core</span></code> - Data Streaming classes. Base classes and other core elements</li>
+<li><code class="docutils literal notranslate"><span class="pre">transforms</span></code> - Transformations (data augmentations)</li>
+<li><code class="docutils literal notranslate"><span class="pre">utils</span></code> - Tools used in the librrary and also serialiation functionality</li>
+</ul>
+<p>The naming convention is in the cell below:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">solt.transforms</span> <span class="k">as</span> <span class="nn">slt</span>
+<span class="kn">import</span> <span class="nn">solt.core</span> <span class="k">as</span> <span class="nn">slc</span>
+<span class="kn">import</span> <span class="nn">solt.utils</span> <span class="k">as</span> <span class="nn">slu</span>
+</pre></div>
+</div>
+</div>
+<p>We note here that <code class="docutils literal notranslate"><span class="pre">SOLT</span></code> has a convenient flat API structure:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">solt</span>
+<span class="nb">list</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">),</span> <span class="nb">dir</span><span class="p">(</span><span class="n">solt</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;DataContainer&#39;,
+ &#39;Keypoints&#39;,
+ &#39;SelectiveStream&#39;,
+ &#39;Stream&#39;,
+ &#39;constants&#39;,
+ &#39;core&#39;,
+ &#39;from_dict&#39;,
+ &#39;from_json&#39;,
+ &#39;from_yaml&#39;,
+ &#39;transforms&#39;,
+ &#39;utils&#39;]
+</pre></div></div>
+</div>
+<p>In the cell above, we can see that the classess <code class="docutils literal notranslate"><span class="pre">DataContainer</span></code>, <code class="docutils literal notranslate"><span class="pre">Keypoints</span></code>, <code class="docutils literal notranslate"><span class="pre">Stream</span></code> and <code class="docutils literal notranslate"><span class="pre">SelectiveStream</span></code> are available in <code class="docutils literal notranslate"><span class="pre">solt</span></code>. This is done for the convenience of the user. For example, instead of using <code class="docutils literal notranslate"><span class="pre">solt.core.DataContainer</span></code>, the user can use <code class="docutils literal notranslate"><span class="pre">solt.DataContainer</span></code> or <code class="docutils literal notranslate"><span class="pre">solt.Stream</span></code> instead of <code class="docutils literal notranslate"><span class="pre">solt.core.Stream</span></code>. Given this, we sugget to use the following naming convention for simplicity:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">solt</span>
+<span class="kn">import</span> <span class="nn">solt.transforms</span> <span class="k">as</span> <span class="nn">slt</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="Wrapping-the-data-into-containers">
+<h2>Wrapping the data into containers<a class="headerlink" href="#Wrapping-the-data-into-containers" title="Permalink to this headline">¶</a></h2>
+<p>While taking a look at the other libraries, we found one particular disadvantage: the transforms do not understand the data and one needs to implement some hacks to deal with it. The best library that has specialized containers for different datatypes is <a class="reference external" href="https://github.com/aleju/imgaug">imgaug</a>, however, it is very slow.</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">SOLT</span></code>, we created a <code class="docutils literal notranslate"><span class="pre">DataContainer</span></code> that wraps all your data into a single object. Furthermore, the DataContainer enables a possibility to apply the same transformation to multiple images (e.g.&nbsp;to a minibatch if images, an instance segmentation mask, a set of keypoints). What is needed is just the data and the specification whether it is an image (<code class="docutils literal notranslate"><span class="pre">I</span></code>), mask (<code class="docutils literal notranslate"><span class="pre">M</span></code>), keypoints (<code class="docutils literal notranslate"><span class="pre">P</span></code>), or labels (<code class="docutils literal notranslate"><span class="pre">L</span></code>). An example of creating the data container is given in the cell below:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1"># Images must be in OpenCV format</span>
+<span class="n">test_img_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+<span class="n">dc</span> <span class="o">=</span> <span class="n">solt</span><span class="o">.</span><span class="n">DataContainer</span><span class="p">(</span><span class="n">test_img_1</span><span class="p">,</span> <span class="s1">&#39;I&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>An alternative way of creating data containers is using a dictionary:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">dc_from_dict</span> <span class="o">=</span> <span class="n">solt</span><span class="o">.</span><span class="n">DataContainer</span><span class="o">.</span><span class="n">from_dict</span><span class="p">({</span><span class="s1">&#39;image&#39;</span><span class="p">:</span> <span class="n">test_img_1</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="k">assert</span> <span class="n">dc</span> <span class="o">==</span> <span class="n">dc_from_dict</span>
+</pre></div>
+</div>
+</div>
+<p>When you have multiple data items, use tuple in <code class="docutils literal notranslate"><span class="pre">DataContainer</span></code> constructor. The number of elements in the tuple and the length of the format string must match:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1"># Images must be in OpenCV format</span>
+<span class="n">test_img_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+<span class="n">test_img_3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+<span class="n">dc</span> <span class="o">=</span> <span class="n">solt</span><span class="o">.</span><span class="n">DataContainer</span><span class="p">((</span><span class="n">test_img_1</span><span class="p">,</span> <span class="n">test_img_2</span><span class="p">,</span> <span class="n">test_img_3</span><span class="p">),</span> <span class="s1">&#39;III&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>In this case, you can also use <code class="docutils literal notranslate"><span class="pre">dict</span></code> API:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">dc_from_dict</span> <span class="o">=</span> <span class="n">solt</span><span class="o">.</span><span class="n">DataContainer</span><span class="o">.</span><span class="n">from_dict</span><span class="p">({</span><span class="s1">&#39;images&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">test_img_1</span><span class="p">,</span> <span class="n">test_img_2</span><span class="p">,</span> <span class="n">test_img_3</span><span class="p">]})</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="k">assert</span> <span class="n">dc</span> <span class="o">==</span> <span class="n">dc_from_dict</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Handling-the-keypoints">
+<h2>Handling the keypoints<a class="headerlink" href="#Handling-the-keypoints" title="Permalink to this headline">¶</a></h2>
+<p>We found some difficulties when working with the other libraries that support keypoints (landmarks). One solution was to create a dedicated container for keypoints, which stores the information about the coordinate frame where those keypoints are located:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1"># Creating fake data</span>
+<span class="n">kpts_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="c1"># Saying the the keypoints need to be within a rectangle HxW, where H=3, W=4 in this case</span>
+<span class="n">kpts</span> <span class="o">=</span> <span class="n">solt</span><span class="o">.</span><span class="n">Keypoints</span><span class="p">(</span><span class="n">kpts_data</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="c1"># Now we can wrap these keypoints into a Data Container:</span>
+<span class="n">dc</span> <span class="o">=</span> <span class="n">solt</span><span class="o">.</span><span class="n">DataContainer</span><span class="p">(</span><span class="n">kpts</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Please, note that there is no keypoint-specific <code class="docutils literal notranslate"><span class="pre">dict</span></code> API yet.</p>
+</div>
+<div class="section" id="Applying-SOLT-transforms">
+<h2>Applying <code class="docutils literal notranslate"><span class="pre">SOLT</span></code> transforms<a class="headerlink" href="#Applying-SOLT-transforms" title="Permalink to this headline">¶</a></h2>
+<p>In <code class="docutils literal notranslate"><span class="pre">SOLT</span></code>, we implemented a large variety of transformations. We recommend to always use a <code class="docutils literal notranslate"><span class="pre">Stream</span></code> to perform the data augmentations. Let us define a simple stream with only one transform - <code class="docutils literal notranslate"><span class="pre">Flip</span></code>. This transform will flip the data around the given axis:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">stream</span> <span class="o">=</span> <span class="n">solt</span><span class="o">.</span><span class="n">Stream</span><span class="p">([</span>
+    <span class="n">slt</span><span class="o">.</span><span class="n">Flip</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="Creating-the-data">
+<h3>Creating the data<a class="headerlink" href="#Creating-the-data" title="Permalink to this headline">¶</a></h3>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1"># Plese, note that the image must always have a channel dimension</span>
+<span class="n">test_img_4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                       <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                       <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Masks, however, should have only two dimensions</span>
+<span class="n">test_mask_4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+
+<span class="n">dc</span> <span class="o">=</span> <span class="n">solt</span><span class="o">.</span><span class="n">DataContainer</span><span class="p">((</span><span class="n">test_img_4</span><span class="p">,</span> <span class="n">test_mask_4</span><span class="p">),</span> <span class="s1">&#39;IM&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Using-Dict-instead-of-a-DataContainer-(covers-99%-of-usecases)">
+<h3>Using Dict instead of a DataContainer (covers 99% of usecases)<a class="headerlink" href="#Using-Dict-instead-of-a-DataContainer-(covers-99%-of-usecases)" title="Permalink to this headline">¶</a></h3>
+<p>By default, SOLT is designed to return <code class="docutils literal notranslate"><span class="pre">torch</span></code> tensors, normalize them, and subtract ImageNet mean. If we want SOLT to return a <code class="docutils literal notranslate"><span class="pre">solt.DataContainer</span></code>, we have to specify <code class="docutils literal notranslate"><span class="pre">return_torch=False</span></code> when calling the transforms:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">dc_res</span> <span class="o">=</span> <span class="n">stream</span><span class="p">({</span><span class="s1">&#39;image&#39;</span><span class="p">:</span> <span class="n">test_img_4</span><span class="p">,</span> <span class="s1">&#39;mask&#39;</span><span class="p">:</span> <span class="n">test_mask_4</span><span class="p">},</span> <span class="n">return_torch</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dc_res</span><span class="p">,</span> <span class="n">solt</span><span class="o">.</span><span class="n">DataContainer</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="Applying-the-transformations">
+<h3>Applying the transformations<a class="headerlink" href="#Applying-the-transformations" title="Permalink to this headline">¶</a></h3>
+<p>Let’s continue using a previously created <code class="docutils literal notranslate"><span class="pre">solt.DataContainer</span></code></p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">dc_res</span> <span class="o">=</span> <span class="n">stream</span><span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="n">return_torch</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>We can get access to the data in the container as follows:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">img_res</span><span class="p">,</span> <span class="n">mask_res</span> <span class="o">=</span> <span class="n">dc_res</span><span class="o">.</span><span class="n">data</span>
+</pre></div>
+</div>
+</div>
+<p>The format can also be retrieved:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">dc_res</span><span class="o">.</span><span class="n">data_format</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&#39;IM&#39;
+</pre></div></div>
+</div>
+</div>
+<div class="section" id="Visualizing-the-results">
+<h3>Visualizing the results<a class="headerlink" href="#Visualizing-the-results" title="Permalink to this headline">¶</a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Original image&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">test_img_4</span><span class="o">.</span><span class="n">squeeze</span><span class="p">())</span>
+
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Transformed image&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img_res</span><span class="o">.</span><span class="n">squeeze</span><span class="p">())</span>
+
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Original mask&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">test_mask_4</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Transformed mask&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">mask_res</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/Basics_of_solt_37_0.png" src="_images/Basics_of_solt_37_0.png" />
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="Serializing-transforms-into-dict,-yaml-or-json">
+<h2>Serializing transforms into <code class="docutils literal notranslate"><span class="pre">dict</span></code>, <code class="docutils literal notranslate"><span class="pre">yaml</span></code> or <code class="docutils literal notranslate"><span class="pre">json</span></code><a class="headerlink" href="#Serializing-transforms-into-dict,-yaml-or-json" title="Permalink to this headline">¶</a></h2>
+<p>We found serialization of the augmentation pipelines to be an important challenge when running experiements. In <code class="docutils literal notranslate"><span class="pre">SOLT</span></code>, we developed the API that allows you to conveniently serialize the whole transformation stream into <code class="docutils literal notranslate"><span class="pre">dict</span></code>, <code class="docutils literal notranslate"><span class="pre">yaml</span></code> or <code class="docutils literal notranslate"><span class="pre">json</span></code>:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">stream</span> <span class="o">=</span> <span class="n">solt</span><span class="o">.</span><span class="n">Stream</span><span class="p">([</span>
+    <span class="n">slt</span><span class="o">.</span><span class="n">Flip</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+    <span class="n">slt</span><span class="o">.</span><span class="n">Rotate</span><span class="p">(</span><span class="n">angle_range</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span> <span class="mi">90</span><span class="p">)),</span>
+<span class="p">])</span>
+<span class="n">stream</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>  <span class="c1"># this converts the pipeline into a dict</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;optimize_stack&#39;: False,
+ &#39;interpolation&#39;: None,
+ &#39;padding&#39;: None,
+ &#39;transforms&#39;: [{&#39;flip&#39;: {&#39;p&#39;: 0.5, &#39;data_indices&#39;: None, &#39;axis&#39;: 1}},
+  {&#39;rotate&#39;: {&#39;p&#39;: 0.5,
+    &#39;padding&#39;: (&#39;z&#39;, &#39;inherit&#39;),
+    &#39;interpolation&#39;: (&#39;bilinear&#39;, &#39;inherit&#39;),
+    &#39;ignore_state&#39;: True,
+    &#39;angle_range&#39;: (-90, 90)}}]}
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="nb">print</span><span class="p">(</span><span class="n">stream</span><span class="o">.</span><span class="n">to_json</span><span class="p">())</span>  <span class="c1"># to json</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{
+    &#34;stream&#34;: {
+        &#34;optimize_stack&#34;: false,
+        &#34;interpolation&#34;: null,
+        &#34;padding&#34;: null,
+        &#34;transforms&#34;: [
+            {
+                &#34;flip&#34;: {
+                    &#34;p&#34;: 0.5,
+                    &#34;data_indices&#34;: null,
+                    &#34;axis&#34;: 1
+                }
+            },
+            {
+                &#34;rotate&#34;: {
+                    &#34;p&#34;: 0.5,
+                    &#34;padding&#34;: [
+                        &#34;z&#34;,
+                        &#34;inherit&#34;
+                    ],
+                    &#34;interpolation&#34;: [
+                        &#34;bilinear&#34;,
+                        &#34;inherit&#34;
+                    ],
+                    &#34;ignore_state&#34;: true,
+                    &#34;angle_range&#34;: [
+                        -90,
+                        90
+                    ]
+                }
+            }
+        ]
+    }
+}
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="nb">print</span><span class="p">(</span><span class="n">stream</span><span class="o">.</span><span class="n">to_yaml</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+stream:
+  interpolation: null
+  optimize_stack: false
+  padding: null
+  transforms:
+  - flip:
+      axis: 1
+      data_indices: null
+      p: 0.5
+  - rotate:
+      angle_range:
+      - -90
+      - 90
+      ignore_state: true
+      interpolation:
+      - bilinear
+      - inherit
+      p: 0.5
+      padding:
+      - z
+      - inherit
+
+</pre></div></div>
+</div>
+</div>
+<div class="section" id="Extending-with-own-transforms">
+<h2>Extending with own transforms<a class="headerlink" href="#Extending-with-own-transforms" title="Permalink to this headline">¶</a></h2>
+<p>Let’s implement a simple transform that randomly zeroes one of the image corners. All transforms must be inherited from <code class="docutils literal notranslate"><span class="pre">solt.core.ImageTransform</span></code> or <code class="docutils literal notranslate"><span class="pre">solt.core.BaseTransform</span></code>. In this case, you do not need to worry about how to read and write the data from DataContainer, how to do serialization, etc. To fully understand the implementation details, please, follow the docstrings:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="k">class</span> <span class="nc">ImageCornerDropTransform</span><span class="p">(</span><span class="n">solt</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">ImageTransform</span><span class="p">):</span>
+
+    <span class="n">serializable_name</span> <span class="o">=</span> <span class="s1">&#39;corner_drop&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">corner_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data_indices</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Transform, which simply drops one of the image corners.</span>
+
+
+<span class="sd">        Here is the order of corners used:</span>
+
+<span class="sd">        01</span>
+<span class="sd">        23</span>
+
+<span class="sd">        Because this transform is only for images, let&#39;s use a parent class `ImageTransform` from</span>
+<span class="sd">        the module `base_transforms`.</span>
+
+<span class="sd">        p : None or float</span>
+<span class="sd">            Probability of using this transform.</span>
+<span class="sd">        data_indicies : tuple or None</span>
+<span class="sd">            Indices within a data container where this transform need to be applied.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ImageCornerDropTransform</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">data_indices</span><span class="o">=</span><span class="n">data_indices</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">corner_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">corner_size</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">corner_size</span> <span class="o">=</span> <span class="n">corner_size</span>
+
+    <span class="k">def</span> <span class="nf">sample_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This method samples the parameters of the transform.</span>
+
+<span class="sd">        Having called this method once we can easily apply the same transformation to</span>
+<span class="sd">        every item within a data container.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_dict</span><span class="p">[</span><span class="s1">&#39;corner&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_apply_img</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">item_settings</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Applies a transform to an image.</span>
+
+<span class="sd">        Every transform has the following set of methods, which are applied autimatically, depending on the data:</span>
+<span class="sd">        _apply_img</span>
+<span class="sd">        _apply_mask</span>
+<span class="sd">        _apply_labels</span>
+<span class="sd">        _apply_pts</span>
+
+<span class="sd">        Because this particular transform is a subclass of ImageTransform, then we just need to define the behavior for images.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">corner_size</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_dict</span><span class="p">[</span><span class="s1">&#39;corner&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">img</span><span class="p">[:</span><span class="n">s</span><span class="p">,</span> <span class="p">:</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_dict</span><span class="p">[</span><span class="s1">&#39;corner&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">img</span><span class="p">[:</span><span class="n">s</span><span class="p">,</span> <span class="o">-</span><span class="n">s</span><span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_dict</span><span class="p">[</span><span class="s1">&#39;corner&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">img</span><span class="p">[</span><span class="o">-</span><span class="n">s</span><span class="p">:,</span> <span class="p">:</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_dict</span><span class="p">[</span><span class="s1">&#39;corner&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">img</span><span class="p">[</span><span class="o">-</span><span class="n">s</span><span class="p">:,</span> <span class="o">-</span><span class="n">s</span><span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">return</span> <span class="n">img</span>
+</pre></div>
+</div>
+</div>
+<p>We are not going to write any tests or do parameter checks for the transform here. To learn how this can be done, please, see the source code or the contributing guidelines.</p>
+<p>Once the transform is implemented, it can be used right away. Let’s create some data and apply this transform to it:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">test_img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">test_img</span><span class="p">[:</span><span class="mi">2</span><span class="p">,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">test_img</span><span class="p">[:</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">:]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">test_img</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">test_img</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:,</span> <span class="o">-</span><span class="mi">2</span><span class="p">:]</span> <span class="o">=</span> <span class="mi">1</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">test_img</span><span class="o">.</span><span class="n">squeeze</span><span class="p">())</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/Basics_of_solt_46_0.png" src="_images/Basics_of_solt_46_0.png" />
+</div>
+</div>
+<p>Applying transform to drop at least 1 corner:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">trf</span> <span class="o">=</span> <span class="n">slc</span><span class="o">.</span><span class="n">Stream</span><span class="p">([</span><span class="n">ImageCornerDropTransform</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">corner_size</span><span class="o">=</span><span class="mi">2</span><span class="p">)])</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+        <span class="n">dc_res</span> <span class="o">=</span> <span class="n">trf</span><span class="p">({</span><span class="s1">&#39;image&#39;</span><span class="p">:</span> <span class="n">test_img</span><span class="p">},</span> <span class="n">return_torch</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">ax</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">dc_res</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">squeeze</span><span class="p">())</span>
+        <span class="n">ax</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+        <span class="n">ax</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/Basics_of_solt_48_0.png" src="_images/Basics_of_solt_48_0.png" />
+</div>
+</div>
+<div class="section" id="More-details-about-serialization">
+<h3>More details about serialization<a class="headerlink" href="#More-details-about-serialization" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">SOLT</span></code> is using a pattern <code class="docutils literal notranslate"><span class="pre">registry</span></code> for serialization. Whenever a transform is inherited from <code class="docutils literal notranslate"><span class="pre">solt.core.BaseTransform</span></code> or <code class="docutils literal notranslate"><span class="pre">solt.core.Stream</span></code>, it gets added to the registry that tracks all the available transformations. It is quite easy to see what is stored in the registry:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">slc</span><span class="o">.</span><span class="n">Stream</span><span class="o">.</span><span class="n">registry</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;stream&#39;: solt.core._core.Stream,
+ &#39;flip&#39;: solt.transforms._transforms.Flip,
+ &#39;rotate&#39;: solt.transforms._transforms.Rotate,
+ &#39;rotate_90&#39;: solt.transforms._transforms.Rotate90,
+ &#39;shear&#39;: solt.transforms._transforms.Shear,
+ &#39;scale&#39;: solt.transforms._transforms.Scale,
+ &#39;translate&#39;: solt.transforms._transforms.Translate,
+ &#39;projection&#39;: solt.transforms._transforms.Projection,
+ &#39;pad&#39;: solt.transforms._transforms.Pad,
+ &#39;resize&#39;: solt.transforms._transforms.Resize,
+ &#39;crop&#39;: solt.transforms._transforms.Crop,
+ &#39;noise&#39;: solt.transforms._transforms.Noise,
+ &#39;cutout&#39;: solt.transforms._transforms.CutOut,
+ &#39;salt_and_pepper&#39;: solt.transforms._transforms.SaltAndPepper,
+ &#39;gamma_correction&#39;: solt.transforms._transforms.GammaCorrection,
+ &#39;contrast&#39;: solt.transforms._transforms.Contrast,
+ &#39;blur&#39;: solt.transforms._transforms.Blur,
+ &#39;hsv&#39;: solt.transforms._transforms.HSV,
+ &#39;brightness&#39;: solt.transforms._transforms.Brightness,
+ &#39;cvt_color&#39;: solt.transforms._transforms.CvtColor,
+ &#39;keypoints_jitter&#39;: solt.transforms._transforms.KeypointsJitter,
+ &#39;jpeg_compression&#39;: solt.transforms._transforms.JPEGCompression,
+ &#39;corner_drop&#39;: __main__.ImageCornerDropTransform}
+</pre></div></div>
+</div>
+<p>It can be seen that <code class="docutils literal notranslate"><span class="pre">corner_drop</span></code> has been added to the registry, which means we can also deserialize it later:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">yaml_str</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">stream:</span>
+<span class="s2">    transforms:</span>
+<span class="s2">    - rotate_90:</span>
+<span class="s2">        k: 2</span>
+<span class="s2">    - corner_drop:</span>
+<span class="s2">        corner_size: 2</span>
+<span class="s2">        p: 1</span>
+<span class="s2">&quot;&quot;&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">deserialized</span> <span class="o">=</span> <span class="n">solt</span><span class="o">.</span><span class="n">from_yaml</span><span class="p">(</span><span class="n">yaml_str</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Let’s check how the deserialized transform works:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[30]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+        <span class="n">dc_res</span> <span class="o">=</span> <span class="n">deserialized</span><span class="p">({</span><span class="s1">&#39;image&#39;</span><span class="p">:</span> <span class="n">test_img</span><span class="p">},</span> <span class="n">return_torch</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">ax</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">dc_res</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">squeeze</span><span class="p">())</span>
+        <span class="n">ax</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([])</span>
+        <span class="n">ax</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/Basics_of_solt_56_0.png" src="_images/Basics_of_solt_56_0.png" />
+</div>
+</div>
+</div>
+<div class="section" id="Summary">
+<h3>Summary<a class="headerlink" href="#Summary" title="Permalink to this headline">¶</a></h3>
+<p>In this tutorial, we have overviewed the basics of <code class="docutils literal notranslate"><span class="pre">SOLT</span></code> and learned how to apply transformations to images. We have also learned how to serialize, deserialize and create own transforms.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="Helen_faces.html" class="btn btn-neutral float-right" title="Using SOLT to augment the keypoints (landmarks)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="utils.html" class="btn btn-neutral" title="solt.utils module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Aleksei Tiulpin, Research Unit of Medical Imaging, Physics and Technology. University of Oulu.
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  <script>
+    var versions_json_url = ''
+</script>
+
+<div class="rst-versions" data-toggle="rst-versions" role="note"
+     aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"></span>
+        v0.1.9
+      <span class="fa fa-caret-down"></span>
+    </span>
+
+    <div class="rst-other-versions">
+        <dl id="versionselector">
+            <dt>Other Versions</dt>
+        </dl>
+
+    </div>
+</div>
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'v0.1.9',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="_static/language_data.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script type="text/javascript" src="_static/js/versions.js"></script>
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

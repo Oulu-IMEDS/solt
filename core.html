@@ -1,0 +1,700 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>solt.core &mdash; solt v0.1.9 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/msmb.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="solt.transforms" href="transforms.html" />
+    <link rel="prev" title="solt" href="modules.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html">
+          
+
+          
+            
+            <img src="_static/logo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                v0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">Welcome to solt’s documentation!</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Modules:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">solt</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">solt.core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transforms.html">solt.transforms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="constants.html">solt.constants</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">solt.utils module</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Examples:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Basics_of_solt.html">Basics of <code class="docutils literal notranslate"><span class="pre">SOLT</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="Helen_faces.html">Using <code class="docutils literal notranslate"><span class="pre">SOLT</span></code> to augment the keypoints (landmarks)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DSBowl18_segmentation.html">Using <code class="docutils literal notranslate"><span class="pre">SOLT</span></code> for instance and semantic segmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Medical_Data_Augmentation_CXR14.html">Augmenting Medical Images: Chest X-ray 14 dataset</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">solt</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="modules.html">solt</a> &raquo;</li>
+        
+      <li>solt.core</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/core.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-solt.core">
+<span id="solt-core"></span><h1>solt.core<a class="headerlink" href="#module-solt.core" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="solt.core.Stream">
+<em class="property">class </em><code class="descclassname">solt.core.</code><code class="descname">Stream</code><span class="sig-paren">(</span><em>transforms=None</em>, <em>interpolation=None</em>, <em>padding=None</em>, <em>optimize_stack=False</em>, <em>ignore_fast_mode=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_core.html#Stream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.Stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">solt.utils._serial.Serializable</span></code></p>
+<p>Stream class. Executes the list of transformations</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>transforms</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><em>list</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)"><em>None</em></a>) – List of transforms to execute</li>
+<li><strong>interpolation</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)"><em>None</em></a>) – Stream-wide settings for interpolation. If for some particular transform your would like
+to still use its own mode, simply pass <code class="docutils literal notranslate"><span class="pre">(&lt;interpolation_value&gt;,</span> <span class="pre">'strict')</span></code>
+in the constructor of that transform.</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)"><em>None</em></a>) – Stream-wide settings for padding. If for some particular transform your would like
+to still use its own mode, simply pass <code class="docutils literal notranslate"><span class="pre">(&lt;padding_value&gt;,</span> <span class="pre">'strict')</span></code>
+in the constructor of that transform.</li>
+<li><strong>optimize_stack</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Whether to run transforms stack optimization. It can only be useful if many matrix transformations are
+in a row.</li>
+<li><strong>ignore_fast_mode</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Whether to ignore the fast mode. This option enables full geometric transforms.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="staticmethod">
+<dt id="solt.core.Stream.exec_stream">
+<em class="property">static </em><code class="descname">exec_stream</code><span class="sig-paren">(</span><em>transforms</em>, <em>data</em>, <em>optimize_stack</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_core.html#Stream.exec_stream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.Stream.exec_stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Static method, executes the list of transformations for a given data point.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>transforms</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><em>list</em></a>) – List of transformations to execute</li>
+<li><strong>data</strong> (<a class="reference internal" href="#solt.core.DataContainer" title="solt.core.DataContainer"><em>DataContainer</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)"><em>dict</em></a>) – Data to be augmented. See <code class="docutils literal notranslate"><span class="pre">solt.data.DataContainer.from_dict</span></code>
+to check how a conversion from dict is done.</li>
+<li><strong>optimize_stack</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Whether to execute augmentations stack optimization.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>out</strong> – Result</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#solt.core.DataContainer" title="solt.core.DataContainer">DataContainer</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="solt.core.Stream.optimize_transforms_stack">
+<em class="property">static </em><code class="descname">optimize_transforms_stack</code><span class="sig-paren">(</span><em>transforms</em>, <em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_core.html#Stream.optimize_transforms_stack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.Stream.optimize_transforms_stack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Static method which fuses the transformations</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>transforms</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)"><em>list</em></a>) – A list of transforms</li>
+<li><strong>data</strong> (<a class="reference internal" href="#solt.core.DataContainer" title="solt.core.DataContainer"><em>DataContainer</em></a>) – Data container to be used to sample the transforms</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>out</strong> – An optimized list of transforms</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.8)">list</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="solt.core.Stream.reset_interpolation">
+<code class="descname">reset_interpolation</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_core.html#Stream.reset_interpolation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.Stream.reset_interpolation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resets the interpolation for the whole pipeline of transforms.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)"><em>None</em></a>) – A value from <code class="docutils literal notranslate"><span class="pre">solt.constants.ALLOWED_INTERPOLATIONS</span></code></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><code class="xref py py-meth docutils literal notranslate"><span class="pre">solt.constants.ALLOWED_INTERPOLATIONS()</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="solt.core.Stream.reset_padding">
+<code class="descname">reset_padding</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_core.html#Stream.reset_padding"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.Stream.reset_padding" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allows to reset the padding for the whole Stream</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>value</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a>) – Should be a string from <code class="docutils literal notranslate"><span class="pre">solt.constants.ALLOWED_PADDINGS</span></code></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><code class="xref py py-meth docutils literal notranslate"><span class="pre">solt.constants.ALLOWED_PADDINGS()</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="solt.core.Stream.serializable_name">
+<code class="descname">serializable_name</code><em class="property"> = 'stream'</em><a class="headerlink" href="#solt.core.Stream.serializable_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>How the class should be stored in the registry</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="solt.core.SelectiveStream">
+<em class="property">class </em><code class="descclassname">solt.core.</code><code class="descname">SelectiveStream</code><span class="sig-paren">(</span><em>transforms=None</em>, <em>n=1</em>, <em>probs=None</em>, <em>optimize_stack=False</em>, <em>ignore_fast_mode=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_core.html#SelectiveStream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.SelectiveStream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">solt.core._core.Stream</span></code></p>
+<p>Stream that uniformly selects n out of k given transforms.</p>
+<dl class="attribute">
+<dt id="solt.core.SelectiveStream.serializable_name">
+<code class="descname">serializable_name</code><em class="property"> = 'selective_stream'</em><a class="headerlink" href="#solt.core.SelectiveStream.serializable_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>How the class should be stored in the registry</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="solt.core.DataContainer">
+<em class="property">class </em><code class="descclassname">solt.core.</code><code class="descname">DataContainer</code><span class="sig-paren">(</span><em>data</em>, <em>fmt</em>, <em>transform_settings=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_data.html#DataContainer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.DataContainer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Data container to encapsulate different types of data, such as images, bounding boxes, etc.</p>
+<p>The container itself is iterable according to the format.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><em>tuple</em></a>) – Data items stored in a tuple</li>
+<li><strong>fmt</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a>) – Data format. Example: ‘IMMM’ - image and three masks.</li>
+<li><strong>transform_settings</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)"><em>dict</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)"><em>None</em></a>) – Settings for each data item. At this stage, the settings include only padding and interpolation.
+The key in this dict corresponds to the index of the element in the given data tuple.
+The value is another dict, which has all the settings. Segmentation masks have nearest neighbor interpolation
+by default, this can be changed manually if needed.
+Example: <code class="docutils literal notranslate"><span class="pre">transform_settings={0:{'interpolation':'bilinear'},</span> <span class="pre">1:</span> <span class="pre">{'interpolation':'bicubic'}}</span></code></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="staticmethod">
+<dt id="solt.core.DataContainer.from_dict">
+<em class="property">static </em><code class="descname">from_dict</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_data.html#DataContainer.from_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.DataContainer.from_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a data container from a dictionary.</p>
+<p>If data is a dict, then the <code class="docutils literal notranslate"><span class="pre">solt.data.DataContainer</span></code> will be created so that the
+<code class="docutils literal notranslate"><span class="pre">image</span></code> data will be stored first. Subsequently, multiple images under the key <code class="docutils literal notranslate"><span class="pre">images</span></code>
+will be stored. The same applies to masks (first <code class="docutils literal notranslate"><span class="pre">mask</span></code> and then <code class="docutils literal notranslate"><span class="pre">masks</span></code>),
+labels (<code class="docutils literal notranslate"><span class="pre">label</span></code> and <code class="docutils literal notranslate"><span class="pre">labels</span></code>), and the keypoints (<code class="docutils literal notranslate"><span class="pre">keypoints</span></code> and <code class="docutils literal notranslate"><span class="pre">keypoints_array</span></code>).
+You must use <code class="docutils literal notranslate"><span class="pre">solt.data.KeyPoints</span></code> object here. Labels will always be stored last.</p>
+<p>For example, if the input <code class="docutils literal notranslate"><span class="pre">dict</span></code> looks like this: <code class="docutils literal notranslate"><span class="pre">d</span> <span class="pre">=</span> <span class="pre">{'label':</span> <span class="pre">l1,</span> <span class="pre">'image':</span> <span class="pre">i1,</span> <span class="pre">'mask':</span> <span class="pre">m1}</span></code> or
+<code class="docutils literal notranslate"><span class="pre">d</span> <span class="pre">=</span> <span class="pre">{'mask':</span> <span class="pre">m1,</span> <span class="pre">'image':</span> <span class="pre">i1,</span> <span class="pre">'label':</span> <span class="pre">l1}</span></code>, the <code class="docutils literal notranslate"><span class="pre">DataContainer</span></code> will convert this
+into <code class="docutils literal notranslate"><span class="pre">sld.DataContainer((i1,</span> <span class="pre">m1,</span> <span class="pre">l1),</span> <span class="pre">'IML')</span></code>.</p>
+<p>More complex case:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;image&#39;</span><span class="p">:</span> <span class="n">i1</span><span class="p">,</span> <span class="n">masks</span><span class="p">:</span> <span class="p">(</span><span class="n">m1</span><span class="p">,</span> <span class="n">m2</span><span class="p">,</span> <span class="n">m3</span><span class="p">,</span> <span class="n">m4</span><span class="p">),</span> <span class="s1">&#39;labels&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">l1</span><span class="p">,</span> <span class="n">l2</span><span class="p">,</span> <span class="n">l3</span><span class="p">,</span> <span class="n">l4</span><span class="p">,</span> <span class="n">l5</span><span class="p">),</span>
+<span class="s1">&#39;keypoints&#39;</span><span class="p">:</span> <span class="n">solt</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">KeyPoints</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+<span class="n">dc_from_dict</span> <span class="o">=</span> <span class="n">solt</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">DataContainer</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>will be equivalent to</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dc</span> <span class="o">=</span> <span class="n">solt</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">DataContainer</span><span class="p">((</span><span class="n">i1</span><span class="p">,</span> <span class="n">m1</span><span class="p">,</span> <span class="n">m2</span><span class="p">,</span> <span class="n">m3</span><span class="p">,</span> <span class="n">m4</span><span class="p">,</span> <span class="n">solt</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">KeyPoints</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">),</span> <span class="n">l1</span><span class="p">,</span> <span class="n">l2</span><span class="p">,</span> <span class="n">l3</span><span class="p">,</span> <span class="n">l4</span><span class="p">,</span> <span class="n">l5</span><span class="p">),</span>
+<span class="s1">&#39;IMMMMPLLLLLL&#39;</span><span class="p">)</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>Please note, that when you create DataContainer using such a simplified interface,
+you cannot setup the transform parameters per item. Use a proper constructor instead.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)"><em>dict</em></a>) – Data stored in a dictionary</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – Newly instantiated data container object</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">sld.DataContainer</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="solt.core.DataContainer.to_torch">
+<code class="descname">to_torch</code><span class="sig-paren">(</span><em>as_dict=False</em>, <em>scale_keypoints=True</em>, <em>normalize=False</em>, <em>mean=None</em>, <em>std=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_data.html#DataContainer.to_torch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.DataContainer.to_torch" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method converts the DataContainer Content into a dict or a list PyTorch objects</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>as_dict</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Whether to return the result as a dictionary. If a single item is present, then the singular naming
+will be used. If plural, then the plural will be used. The items will be stored and
+sorted a similar manner to the method <code class="docutils literal notranslate"><span class="pre">from_dict</span></code>: images, masks, keypoints_array, and labels.
+The same applies to a singular case.</li>
+<li><strong>scale_keypoints</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Whether to scale keypoints to 0-1 range. <code class="docutils literal notranslate"><span class="pre">True</span></code> by default.</li>
+<li><strong>normalize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Whether to subtract the <cite>mean</cite> and divide by the <cite>std</cite>.</li>
+<li><strong>mean</strong> (<em>torch.Tensor</em>) – Mean to subtract. If None, then the ImageNet mean will be subtracted.</li>
+<li><strong>std</strong> (<em>torch.Tensor</em>) – Std to subtract. If None, then the ImageNet std will be subtracted.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="solt.core.DataContainer.validate">
+<code class="descname">validate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_data.html#DataContainer.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.DataContainer.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validates frame consistency in the wrapped data.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="solt.core.Keypoints">
+<em class="property">class </em><code class="descclassname">solt.core.</code><code class="descname">Keypoints</code><span class="sig-paren">(</span><em>pts=None</em>, <em>frame=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_data.html#Keypoints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.Keypoints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Keypoints class</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>pts</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><em>numpy.ndarray</em></a>) – Array of keypoints. If 2D, has to be in (x, y) format.</li>
+<li><strong>frame</strong> (<em>(</em><em>n</em><em>, </em><em>) </em><em>list-like of ints</em>) – Shape of the coordinate frame. frame[0] is <cite>height</cite>, frame[1] is <cite>width</cite>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="solt.core.BaseTransform">
+<em class="property">class </em><code class="descclassname">solt.core.</code><code class="descname">BaseTransform</code><span class="sig-paren">(</span><em>p=None</em>, <em>data_indices=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_base_transforms.html#BaseTransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.BaseTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">solt.utils._serial.Serializable</span></code></p>
+<p>Transformation abstract class.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>p</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)"><em>None</em></a>) – Probability of executing this transform</li>
+<li><strong>data_indices</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><em>tuple</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)"><em>None</em></a>) – Indices where the transforms need to be applied</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="solt.core.BaseTransform.apply">
+<code class="descname">apply</code><span class="sig-paren">(</span><em>data: solt.core._data.DataContainer</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_base_transforms.html#BaseTransform.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.BaseTransform.apply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies transformation to a DataContainer items depending on the type.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<a class="reference internal" href="#solt.core.DataContainer" title="solt.core.DataContainer"><em>DataContainer</em></a>) – Data to be augmented</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – Result</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#solt.core.DataContainer" title="solt.core.DataContainer">DataContainer</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="solt.core.BaseTransform.sample_transform">
+<code class="descname">sample_transform</code><span class="sig-paren">(</span><em>data: solt.core._data.DataContainer</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_base_transforms.html#BaseTransform.sample_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.BaseTransform.sample_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validates data and samples transform parameters based on it.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<a class="reference internal" href="#solt.core.DataContainer" title="solt.core.DataContainer"><em>DataContainer</em></a>) – Data container to be used for sampling.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – Coordinate frame (d0, d1, …). (d0, d1) are (height, width), respectively.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)">tuple</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="solt.core.BaseTransform.use_transform">
+<code class="descname">use_transform</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_base_transforms.html#BaseTransform.use_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.BaseTransform.use_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to randomly determine whether to use this transform.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>out</strong> – Boolean flag. True if the transform is used.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)">bool</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="solt.core.MatrixTransform">
+<em class="property">class </em><code class="descclassname">solt.core.</code><code class="descname">MatrixTransform</code><span class="sig-paren">(</span><em>interpolation='bilinear'</em>, <em>padding='z'</em>, <em>p=0.5</em>, <em>ignore_state=True</em>, <em>affine=True</em>, <em>ignore_fast_mode=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_base_transforms.html#MatrixTransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.MatrixTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">solt.core._base_transforms.BaseTransform</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">solt.core._base_transforms.InterpolationPropertyHolder</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">solt.core._base_transforms.PaddingPropertyHolder</span></code></p>
+<p>Matrix Transform abstract class. (Affine and Homography).
+Does all the transforms around the image /  center.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>interpolation</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a>) – Interpolation mode.</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)"><em>None</em></a>) – Padding Mode.</li>
+<li><strong>p</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a>) – Probability of transform’s execution.</li>
+<li><strong>ignore_state</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Whether to ignore the pre-calculated transformation or not. If False,
+then it will lead to an incorrect behavior when the objects are of different sizes.
+Should be used only when it is assumed that the image, mask and keypoints are of
+the same size.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="staticmethod">
+<dt id="solt.core.MatrixTransform.correct_for_frame_change">
+<em class="property">static </em><code class="descname">correct_for_frame_change</code><span class="sig-paren">(</span><em>transform_matrix: numpy.ndarray</em>, <em>width: int</em>, <em>height: int</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_base_transforms.html#MatrixTransform.correct_for_frame_change"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.MatrixTransform.correct_for_frame_change" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method takes a matrix transform, and modifies its origin.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>transform_matrix</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)"><em>numpy.ndarray</em></a>) – Transform (3x3) matrix</li>
+<li><strong>width</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><em>int</em></a>) – Width of the coordinate frame</li>
+<li><strong>height</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><em>int</em></a>) – Height of the coordinate frame</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>out</strong> – Modified Transform matrix</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17)">numpy.ndarray</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="solt.core.MatrixTransform.fuse_with">
+<code class="descname">fuse_with</code><span class="sig-paren">(</span><em>trf</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_base_transforms.html#MatrixTransform.fuse_with"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.MatrixTransform.fuse_with" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a transform an performs a matrix fusion. This is useful to optimize the computations</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>trf</strong> (<a class="reference internal" href="#solt.core.MatrixTransform" title="solt.core.MatrixTransform"><em>MatrixTransform</em></a>) – </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="solt.core.MatrixTransform.sample_transform">
+<code class="descname">sample_transform</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_base_transforms.html#MatrixTransform.sample_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.MatrixTransform.sample_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Samples the transform and corrects for frame change.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)">None</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="solt.core.MatrixTransform.sample_transform_matrix">
+<code class="descname">sample_transform_matrix</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_base_transforms.html#MatrixTransform.sample_transform_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.MatrixTransform.sample_transform_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method that is called to sample the transform matrix</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="solt.core.PaddingPropertyHolder">
+<em class="property">class </em><code class="descclassname">solt.core.</code><code class="descname">PaddingPropertyHolder</code><span class="sig-paren">(</span><em>padding=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_base_transforms.html#PaddingPropertyHolder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.PaddingPropertyHolder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Adds padding property to a class and validates it using the allowed paddings from constants.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)"><em>None</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><em>tuple</em></a>) – Padding mode. Inheritance can be specified as the second argument of the <cite>padding</cite> tuple.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="solt.core.InterpolationPropertyHolder">
+<em class="property">class </em><code class="descclassname">solt.core.</code><code class="descname">InterpolationPropertyHolder</code><span class="sig-paren">(</span><em>interpolation=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_base_transforms.html#InterpolationPropertyHolder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.InterpolationPropertyHolder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Adds interpolation property to a class and validates it using the allowed interpolations from constants.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>interpolation</strong> (<a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)"><em>None</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.8)"><em>tuple</em></a>) – Interpolation mode. Inheritance can be specified as the second argument of the <cite>interpolation</cite> tuple.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="solt.core.ImageTransform">
+<em class="property">class </em><code class="descclassname">solt.core.</code><code class="descname">ImageTransform</code><span class="sig-paren">(</span><em>p=None</em>, <em>data_indices=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solt/core/_base_transforms.html#ImageTransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solt.core.ImageTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">solt.core._base_transforms.BaseTransform</span></code></p>
+<p>Abstract class, allowing the application of a transform only to an image</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="transforms.html" class="btn btn-neutral float-right" title="solt.transforms" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="modules.html" class="btn btn-neutral" title="solt" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Aleksei Tiulpin, Research Unit of Medical Imaging, Physics and Technology. University of Oulu.
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  <script>
+    var versions_json_url = ''
+</script>
+
+<div class="rst-versions" data-toggle="rst-versions" role="note"
+     aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"></span>
+        v0.1.9
+      <span class="fa fa-caret-down"></span>
+    </span>
+
+    <div class="rst-other-versions">
+        <dl id="versionselector">
+            <dt>Other Versions</dt>
+        </dl>
+
+    </div>
+</div>
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'v0.1.9',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="_static/language_data.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script type="text/javascript" src="_static/js/versions.js"></script>
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
