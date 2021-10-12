@@ -4,7 +4,7 @@ coverage==5.0.3
 ipykernel==4.8.2
 msmb-theme==1.2.0
 nbsphinx-link==1.2
-opencv-python-headless==4.1.2.30
+opencv-python-headless==4.2.0.32
 pytest==3.6.4
 pytest-cov==2.6.0
 pytest-flake8==1.0.2
