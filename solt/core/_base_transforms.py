@@ -14,7 +14,8 @@ from solt.utils import (
 
 
 class BaseTransform(Serializable, metaclass=ABCMeta):
-    """Transformation abstract class.
+    """
+    Transformation abstract class.
 
     Parameters
     ----------
@@ -49,7 +50,8 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
         self.state_dict = {"use": False}
 
     def use_transform(self):
-        """Method to randomly determine whether to use this transform.
+        """
+        Method to randomly determine whether to use this transform.
 
         Returns
         -------
@@ -64,7 +66,8 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
         return False
 
     def sample_transform(self, data: DataContainer):
-        """Samples transform parameters based on data.
+        """
+        Samples transform parameters based on data.
 
         Parameters
         ----------
@@ -81,7 +84,8 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
         return self.state_dict["h"], self.state_dict["w"]
 
     def apply(self, data: DataContainer):
-        """Applies transformation to a DataContainer items depending on the type.
+        """
+        Applies transformation to a DataContainer items depending on the type.
 
         Parameters
         ----------
@@ -137,7 +141,8 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
     def __call__(
         self, data, return_torch=False, as_dict=True, scale_keypoints=True, normalize=True, mean=None, std=None,
     ):
-        """Applies the transform to a DataContainer
+        """
+        Applies the transform to a DataContainer
 
         Parameters
         ----------
@@ -185,7 +190,8 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
 
     @abstractmethod
     def _apply_img(self, img: np.ndarray, settings: dict):
-        """Abstract method, which determines the transform's behaviour when it is applied to images HxWxC.
+        """
+        Abstract method, which determines the transform's behaviour when it is applied to images HxWxC.
 
         Parameters
         ----------
@@ -200,7 +206,8 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
 
     @abstractmethod
     def _apply_mask(self, mask: np.ndarray, settings: dict):
-        """Abstract method, which determines the transform's behaviour when it is applied to masks HxW.
+        """
+        Abstract method, which determines the transform's behaviour when it is applied to masks HxW.
 
         Parameters
         ----------
@@ -216,7 +223,8 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
 
     @abstractmethod
     def _apply_labels(self, labels, settings: np.ndarray):
-        """Abstract method, which determines the transform's behaviour when it is applied to labels (e.g. label smoothing)
+        """
+        Abstract method, which determines the transform's behaviour when it is applied to labels (e.g. label smoothing)
 
         Parameters
         ----------
@@ -232,7 +240,8 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
 
     @abstractmethod
     def _apply_pts(self, pts: Keypoints, settings: dict):
-        """Abstract method, which determines the transform's behaviour when it is applied to keypoints.
+        """
+        Abstract method, which determines the transform's behaviour when it is applied to keypoints.
 
         Parameters
         ----------
@@ -248,7 +257,8 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
 
 
 class ImageTransform(BaseTransform):
-    """Abstract class, allowing the application of a transform only to an image
+    """
+    Abstract class, allowing the application of a transform only to an image
 
     """
 
@@ -266,7 +276,8 @@ class ImageTransform(BaseTransform):
 
     @abstractmethod
     def _apply_img(self, img: np.ndarray, settings: dict):
-        """Abstract method, which determines the transform's behaviour when it is applied to images HxWxC.
+        """
+        Abstract method, which determines the transform's behaviour when it is applied to images HxWxC.
 
         Parameters
         ----------
@@ -281,7 +292,8 @@ class ImageTransform(BaseTransform):
 
 
 class PaddingPropertyHolder(object):
-    """PaddingPropertyHolder
+    """
+    PaddingPropertyHolder
 
     Adds padding property to a class and validates it using the allowed paddings from constants.
 
@@ -298,7 +310,8 @@ class PaddingPropertyHolder(object):
 
 
 class InterpolationPropertyHolder(object):
-    """InterpolationPropertyHolder
+    """
+    InterpolationPropertyHolder
 
     Adds interpolation property to a class and validates it using the allowed interpolations from constants.
 
@@ -315,7 +328,8 @@ class InterpolationPropertyHolder(object):
 
 
 class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropertyHolder):
-    """Matrix Transform abstract class. (Affine and Homography).
+    """
+    Matrix Transform abstract class. (Affine and Homography).
     Does all the transforms around the image /  center.
 
     Parameters
@@ -368,7 +382,8 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         self.state_dict["transform_matrix"] = trf.state_dict["transform_matrix"] @ self.state_dict["transform_matrix"]
 
     def sample_transform(self, data):
-        """Samples the transform and corrects for frame change.
+        """
+        Samples the transform and corrects for frame change.
 
         Returns
         -------
@@ -431,7 +446,8 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
 
     @staticmethod
     def correct_for_frame_change(transform_matrix: np.ndarray, width: int, height: int):
-        """Method takes a matrix transform, and modifies its origin.
+        """
+        Method takes a matrix transform, and modifies its origin.
 
         Parameters
         ----------
@@ -465,7 +481,8 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
 
     @abstractmethod
     def sample_transform_matrix(self, data):
-        """Method that is called to sample the transform matrix
+        """
+        Method that is called to sample the transform matrix
 
         """
 
@@ -488,7 +505,8 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         return interp, padding
 
     def _apply_img_or_mask(self, img: np.ndarray, settings: dict):
-        """Applies a transform to an image or mask without controlling the shapes.
+        """
+        Applies a transform to an image or mask without controlling the shapes.
 
         Parameters
         ----------
@@ -523,7 +541,8 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
-        """Applies a matrix transform to an image.
+        """
+        Applies a matrix transform to an image.
         If padding is None, the default behavior (zero padding) is expected.
 
         Parameters
@@ -543,7 +562,8 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         return self._apply_img_or_mask(img, settings)
 
     def _apply_mask(self, mask: np.ndarray, settings: dict):
-        """Abstract method, which defines the transform's behaviour when it is applied to masks HxW.
+        """
+        Abstract method, which defines the transform's behaviour when it is applied to masks HxW.
 
         If padding is None, the default behavior (zero padding) is expected.
 
@@ -563,7 +583,8 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         return self._apply_img_or_mask(mask, settings)
 
     def _apply_labels(self, labels, settings: dict):
-        """Transform's application to labels. Simply returns them back without modifications.
+        """
+        Transform's application to labels. Simply returns them back without modifications.
 
         Parameters
         ----------
@@ -581,7 +602,8 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
         return labels
 
     def _apply_pts(self, pts: Keypoints, settings: dict):
-        """Abstract method, which defines the transform's behaviour when it is applied to keypoints.
+        """
+        Abstract method, which defines the transform's behaviour when it is applied to keypoints.
 
         Parameters
         ----------

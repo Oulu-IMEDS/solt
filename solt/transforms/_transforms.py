@@ -31,7 +31,8 @@ from ..utils import (
 
 
 class Flip(BaseTransform):
-    """Random Flipping transform.
+    """
+    Random Flipping transform.
 
     Parameters
     ----------
@@ -85,7 +86,8 @@ class Flip(BaseTransform):
 
 
 class Rotate(MatrixTransform):
-    """Random rotation around the center clockwise
+    """
+    Random rotation around the center clockwise
 
     Parameters
     ----------
@@ -150,7 +152,8 @@ class Rotate(MatrixTransform):
 
 
 class Rotate90(Rotate):
-    """Random rotation around the center by 90 degrees.
+    """
+    Random rotation around the center by 90 degrees.
 
     Parameters
     ----------
@@ -180,7 +183,8 @@ class Rotate90(Rotate):
 
 
 class Shear(MatrixTransform):
-    """Random shear around the center.
+    """
+    Random shear around the center.
 
     Parameters
     ----------
@@ -256,7 +260,8 @@ class Shear(MatrixTransform):
 
 
 class Scale(MatrixTransform):
-    """Random scale transform.
+    """
+    Random scale transform.
 
     Parameters
     ----------
@@ -361,7 +366,8 @@ class Scale(MatrixTransform):
 
 
 class Translate(MatrixTransform):
-    """Random Translate transform..
+    """
+    Random Translate transform..
 
     Parameters
     ----------
@@ -433,7 +439,8 @@ class Translate(MatrixTransform):
 
 
 class Projection(MatrixTransform):
-    """Random Projective transform.
+    """
+    Random Projective transform.
 
     Takes a set of affine transforms.
 
@@ -509,7 +516,8 @@ class Projection(MatrixTransform):
 
 
 class Pad(BaseTransform, PaddingPropertyHolder):
-    """Transformation, which pads the input to a given size
+    """
+    Transformation, which pads the input to a given size
 
     Parameters
     ----------
@@ -610,7 +618,8 @@ class Pad(BaseTransform, PaddingPropertyHolder):
 
 
 class Resize(BaseTransform, InterpolationPropertyHolder):
-    """Transformation, which resizes the input to a given size
+    """
+    Transformation, which resizes the input to a given size
 
     Parameters
     ----------
@@ -677,7 +686,8 @@ class Resize(BaseTransform, InterpolationPropertyHolder):
 
 
 class Crop(BaseTransform):
-    """Center / Random crop transform.
+    """
+    Center / Random crop transform.
 
     Object performs center or random cropping depending on the parameters.
 
@@ -764,7 +774,8 @@ class Crop(BaseTransform):
 
 
 class Noise(BaseTransform):
-    """Adds noise to an image. Other types of data than the image are ignored.
+    """
+    Adds noise to an image. Other types of data than the image are ignored.
 
     Parameters
     ----------
@@ -836,7 +847,8 @@ class Noise(BaseTransform):
 
 
 class CutOut(ImageTransform):
-    """Does cutout augmentation.
+    """
+    Does cutout augmentation.
 
     https://arxiv.org/abs/1708.04552
 
@@ -907,7 +919,8 @@ class CutOut(ImageTransform):
 
 
 class SaltAndPepper(ImageTransform):
-    """Adds salt and pepper noise to an image. Other types of data than the image are ignored.
+    """
+    Adds salt and pepper noise to an image. Other types of data than the image are ignored.
 
     Parameters
     ----------
@@ -967,7 +980,8 @@ class SaltAndPepper(ImageTransform):
 
 
 class GammaCorrection(ImageTransform):
-    """Transform applies random gamma correction
+    """
+    Transform applies random gamma correction
 
     Parameters
     ----------
@@ -1009,7 +1023,8 @@ class GammaCorrection(ImageTransform):
 
 
 class Contrast(ImageTransform):
-    """Transform randomly changes the contrast
+    """
+    Transform randomly changes the contrast
 
     Parameters
     ----------
@@ -1049,7 +1064,8 @@ class Contrast(ImageTransform):
 
 
 class Blur(ImageTransform):
-    """Transform blurs an image
+    """
+    Transform blurs an image
 
     Parameters
     ----------
@@ -1134,7 +1150,8 @@ class Blur(ImageTransform):
 
 
 class HSV(ImageTransform):
-    """Performs a random HSV color shift.
+    """
+    Performs a random HSV color shift.
 
     Parameters
     ----------
@@ -1194,7 +1211,8 @@ class HSV(ImageTransform):
 
 
 class Brightness(ImageTransform):
-    """Performs a random brightness augmentation
+    """
+    Performs a random brightness augmentation
 
     Parameters
     ----------
@@ -1230,7 +1248,8 @@ class Brightness(ImageTransform):
 
 
 class IntensityRemap(ImageTransform):
-    """Performs random intensity remapping [1]_.
+    """
+    Performs random intensity remapping [1]_.
 
     Parameters
     ----------
@@ -1279,7 +1298,8 @@ class IntensityRemap(ImageTransform):
 
 
 class CvtColor(ImageTransform):
-    """RGB to grayscale or grayscale to RGB image conversion.
+    """
+    RGB to grayscale or grayscale to RGB image conversion.
 
     If converting from grayscale to RGB, then the gs channel is simply clonned.
     If converting from RGB to grayscale, then opencv is used.
@@ -1390,7 +1410,8 @@ class KeypointsJitter(BaseTransform):
 
 
 class JPEGCompression(ImageTransform):
-    """Performs random JPEG-based worsening of images.
+    """
+    Performs random JPEG-based worsening of images.
 
     Parameters
     ----------
@@ -1454,7 +1475,8 @@ class JPEGCompression(ImageTransform):
 
 
 class GridMask(ImageTransform):
-    """Performs a GridMask augmentation.
+    """
+    Performs a GridMask augmentation.
 
     https://arxiv.org/abs/2001.04086
 

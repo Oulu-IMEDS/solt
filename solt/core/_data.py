@@ -6,7 +6,8 @@ from solt.utils import validate_parameter
 
 
 class DataContainer(object):
-    """Data container to encapsulate different types of data, such as images, bounding boxes, etc.
+    """
+    Data container to encapsulate different types of data, such as images, bounding boxes, etc.
 
     The container itself is iterable according to the format.
 
@@ -132,7 +133,8 @@ class DataContainer(object):
 
     @staticmethod
     def from_dict(data):
-        """Creates a data container from a dictionary.
+        """
+        Creates a data container from a dictionary.
 
         If data is a dict, then the ``solt.data.DataContainer`` will be created so that the
         ``image`` data will be stored first. Subsequently, multiple images under the key ``images``
@@ -232,7 +234,8 @@ class DataContainer(object):
         return mean, std
 
     def to_torch(self, as_dict=False, scale_keypoints=True, normalize=False, mean=None, std=None):
-        """This method converts the DataContainer Content into a dict or a list PyTorch objects
+        """
+        This method converts the DataContainer Content into a dict or a list PyTorch objects
 
         Parameters
         ----------
@@ -356,7 +359,8 @@ class DataContainer(object):
 
 
 class Keypoints(object):
-    """Keypoints class
+    """
+    Keypoints class
 
     Parameters
     ----------

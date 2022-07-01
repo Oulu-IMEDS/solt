@@ -12,7 +12,8 @@ from ._data import DataContainer
 
 
 class Stream(Serializable):
-    """Stream class. Executes the list of transformations
+    """
+    Stream class. Executes the list of transformations
 
     Parameters
     ----------
@@ -35,7 +36,8 @@ class Stream(Serializable):
     """
 
     serializable_name = "stream"
-    """How the class should be stored in the registry"""
+    """
+    How the class should be stored in the registry"""
 
     def __init__(
         self, transforms=None, interpolation=None, padding=None, optimize_stack=False, ignore_fast_mode=False,
@@ -66,7 +68,8 @@ class Stream(Serializable):
                 trf.ignore_fast_mode = value
 
     def reset_interpolation(self, value):
-        """Resets the interpolation for the whole pipeline of transforms.
+        """
+        Resets the interpolation for the whole pipeline of transforms.
 
         Parameters
         ----------
@@ -90,7 +93,8 @@ class Stream(Serializable):
                     trf.reset_interpolation(self.interpolation)
 
     def reset_padding(self, value):
-        """Allows to reset the padding for the whole Stream
+        """
+        Allows to reset the padding for the whole Stream
 
         Parameters
         ----------
@@ -229,7 +233,8 @@ class Stream(Serializable):
 
 
 class SelectiveStream(Stream):
-    """Stream that uniformly selects n out of k given transforms.
+    """
+    Stream that uniformly selects n out of k given transforms.
 
     """
 
@@ -267,7 +272,8 @@ class SelectiveStream(Stream):
     def __call__(
         self, data, return_torch=True, as_dict=True, scale_keypoints=True, normalize=True, mean=None, std=None,
     ):
-        """Applies randomly selected n transforms to the given data item
+        """
+        Applies randomly selected n transforms to the given data item
 
         Parameters
         ----------

@@ -14,7 +14,8 @@ class Serializable(object):
             self.registry[self.serializable_name] = self.__class__
 
     def to_dict(self):
-        """Method returns a dict, describing the object sufficiently enough to reconstruct it
+        """
+        Method returns a dict, describing the object sufficiently enough to reconstruct it
         back.
 
         Returns
