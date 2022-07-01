@@ -6,3 +6,4 @@ exclude_paths:
   - 'solt/**/__init__.py'
   - 'setup.py'
   - 'ci/*'
+  - '*.md'
