@@ -11,7 +11,7 @@
 Data augmentation libarary for Deep Learning, which supports images, segmentation masks, labels and keypoints. 
 Furthermore, SOLT is fast and has OpenCV in its backend. 
 Full auto-generated docs and 
-examples are available here: [https://mipt-oulu.github.io/solt/](https://mipt-oulu.github.io/solt/).
+examples are available here: [https://oulu-imeds.github.io/solt/](https://oulu-imeds.github.io/solt/).
 
 ## Features
 
