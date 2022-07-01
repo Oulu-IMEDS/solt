@@ -3,7 +3,7 @@
 [![PyPI version](https://badge.fury.io/py/solt.svg)](https://badge.fury.io/py/solt)
 [![Build Status](https://travis-ci.org/MIPT-Oulu/solt.svg?branch=master)](https://travis-ci.org/MIPT-Oulu/solt)
 [![Codecoverage](https://codecov.io/gh/MIPT-Oulu/solt/branch/master/graph/badge.svg)](https://codecov.io/gh/MIPT-Oulu/solt)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/80bb13f72fe645b29ded3d6cabaacf15)](https://www.codacy.com/app/lext/solt?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=MIPT-Oulu/solt&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/0deaebc6804a4b7185e6ed3cf27c0836)](https://www.codacy.com/gh/Oulu-IMEDS/solt/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Oulu-IMEDS/solt&amp;utm_campaign=Badge_Grade)
 [![License](http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE.md)
 [![DOI](https://zenodo.org/badge/143310844.svg)](https://zenodo.org/badge/latestdoi/143310844)
 
