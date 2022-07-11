@@ -6,3 +6,4 @@ pytest==7.1.2
 pytest-cov==2.6.0
 pytest-flake8==1.1.1
 pytest-pep8==1.0.6
+pytest-lazy-fixture==0.6.3
