@@ -894,6 +894,8 @@ class CutOut(ImageTransform):
     ----------
     cutout_size : tuple or int or float or None
         The size of the cutout. If None, then it is equal to 2.
+    n_cuts: int
+        Number of cutouts to make. By default, it is 1.
     data_indices : tuple or None
         Indices of the images within the data container to which this transform needs to be applied.
         Every element within the tuple must be integer numbers.
@@ -905,10 +907,16 @@ class CutOut(ImageTransform):
     serializable_name = "cutout"
     """How the class should be stored in the registry"""
 
-    def __init__(self, cutout_size=2, data_indices=None, p=0.5):
+    def __init__(self, cutout_size=2, n_cuts=1, data_indices=None, p=0.5):
         super(CutOut, self).__init__(p=p, data_indices=data_indices)
         if not isinstance(cutout_size, (int, tuple, list, float)):
             raise TypeError("Cutout size is of an incorrect type!")
+
+        if not isinstance(n_cuts, int):
+            raise TypeError("Incorrect n_cuts type")
+
+        if n_cuts < 0:
+            raise ValueError("Cannot make less than 0 cutouts")
 
         if isinstance(cutout_size, list):
             cutout_size = tuple(cutout_size)
@@ -923,6 +931,7 @@ class CutOut(ImageTransform):
             raise TypeError("CutOut sizes must be of the same type")
 
         self.cutout_size = cutout_size
+        self.n_cuts = n_cuts
 
     def sample_transform(self, data: DataContainer):
         h, w = super(CutOut, self).sample_transform(data)
@@ -953,7 +962,9 @@ class CutOut(ImageTransform):
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
-        return self.__cutout_img(img)
+        for i in range(self.n_cuts):
+            img = self.__cutout_img(img)
+        return img
 
 
 class SaltAndPepper(ImageTransform):
