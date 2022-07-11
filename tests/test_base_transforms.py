@@ -154,7 +154,7 @@ def test_data_container_wraps_correctly(img):
 
 
 @pytest.mark.parametrize("return_torch", [False, True])
-@pytest.mark.parametrize("trf", filter(lambda t: not issubclass(t, slt.HSV), all_trfs_solt))
+@pytest.mark.parametrize("trf", filter(lambda t: not issubclass(t, (slt.HSV, slt.RandomResizedCrop)), all_trfs_solt))
 def test_transforms_return_torch(img_3x3, trf, return_torch):
     if "p" in inspect.getfullargspec(trf.__init__):
         trf: slc.BaseTransform = trf(p=1)
