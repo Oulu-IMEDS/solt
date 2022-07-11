@@ -2,7 +2,7 @@ black==22.6.0
 codecov==2.1.12
 coverage==5.0.3
 opencv-python-headless==4.6.0.66
-pytest==7.1.2
+pytest==3.10.1
 pytest-cov==2.6.0
 pytest-flake8==1.1.1
 pytest-pep8==1.0.6
