@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import scipy
 import scipy.signal
+import math
 
 from ..core import (
     BaseTransform,
@@ -1621,7 +1622,6 @@ class GridMask(ImageTransform):
         return img
 
 
-
 class RandomResizedCrop(BaseTransform, InterpolationPropertyHolder):
     """Random resized crop transform.
 
@@ -1680,11 +1680,13 @@ class RandomResizedCrop(BaseTransform, InterpolationPropertyHolder):
             if 0 < new_w <= w and 0 < new_h <= h:
                 i = random.randint(0, h - new_h)
                 j = random.randint(0, w - new_w)
-                self.state_dict.update({
-                    "crop_to": (new_w, new_h),
-                    "y": i,
-                    "x": j,
-                })
+                self.state_dict.update(
+                    {
+                        "crop_to": (new_w, new_h),
+                        "y": i,
+                        "x": j,
+                    }
+                )
                 return
 
         # Fallback to central crop
@@ -1700,11 +1702,13 @@ class RandomResizedCrop(BaseTransform, InterpolationPropertyHolder):
         i = (h - new_h) // 2
         j = (w - new_w) // 2
 
-        self.state_dict.update({
-            "crop_to": (new_w, new_h),
-            "y": i,
-            "x": j,
-        })
+        self.state_dict.update(
+            {
+                "crop_to": (new_w, new_h),
+                "y": i,
+                "x": j,
+            }
+        )
 
     def __crop_img_or_mask(self, img_mask):
         return img_mask[
@@ -1730,4 +1734,4 @@ class RandomResizedCrop(BaseTransform, InterpolationPropertyHolder):
         return labels
 
     def _apply_pts(self, pts: Keypoints, settings: dict):
-        raise NotImplementedError('Made for images only at this stage')
+        raise NotImplementedError("Made for images only at this stage")
