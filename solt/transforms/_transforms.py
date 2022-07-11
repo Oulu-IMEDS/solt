@@ -651,7 +651,7 @@ class Resize(BaseTransform, InterpolationPropertyHolder):
         BaseTransform.__init__(self, p=1)
         InterpolationPropertyHolder.__init__(self, interpolation=interpolation)
         if resize_to is not None:
-            if not isinstance(resize_to, tuple) and not isinstance(resize_to, int):
+            if not isinstance(resize_to, (tuple, list, int)) and (resize_to is not None):
                 raise TypeError("The argument resize_to has an incorrect type!")
             if isinstance(resize_to, int):
                 resize_to = (resize_to, resize_to)
