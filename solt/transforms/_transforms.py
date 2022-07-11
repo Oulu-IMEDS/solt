@@ -634,7 +634,7 @@ class Resize(BaseTransform, InterpolationPropertyHolder):
 
     Parameters
     ----------
-    resize_to : tuple or int or None
+    resize_to : list or tuple or int or None
         Target size ``(width_new, height_new)``.
     interpolation : str
         Interpolation type.
