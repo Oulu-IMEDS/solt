@@ -139,7 +139,14 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
         return data
 
     def __call__(
-        self, data, return_torch=False, as_dict=True, scale_keypoints=True, normalize=True, mean=None, std=None,
+        self,
+        data,
+        return_torch=False,
+        as_dict=True,
+        scale_keypoints=True,
+        normalize=True,
+        mean=None,
+        std=None,
     ):
         """
         Applies the transform to a DataContainer
@@ -184,7 +191,11 @@ class BaseTransform(Serializable, metaclass=ABCMeta):
 
         if return_torch:
             return res.to_torch(
-                as_dict=as_dict, scale_keypoints=scale_keypoints, normalize=normalize, mean=mean, std=std,
+                as_dict=as_dict,
+                scale_keypoints=scale_keypoints,
+                normalize=normalize,
+                mean=mean,
+                std=std,
             )
         return res
 
@@ -349,7 +360,13 @@ class MatrixTransform(BaseTransform, InterpolationPropertyHolder, PaddingPropert
     """
 
     def __init__(
-        self, interpolation="bilinear", padding="z", p=0.5, ignore_state=True, affine=True, ignore_fast_mode=False,
+        self,
+        interpolation="bilinear",
+        padding="z",
+        p=0.5,
+        ignore_state=True,
+        affine=True,
+        ignore_fast_mode=False,
     ):
         BaseTransform.__init__(self, p=p, data_indices=None)
         InterpolationPropertyHolder.__init__(self, interpolation=interpolation)

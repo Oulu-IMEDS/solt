@@ -158,7 +158,15 @@ man_pages = [(master_doc, "solt", "solt Documentation", [author], 1)]
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, "solt", "solt Documentation", author, "solt", "One line description of project.", "Miscellaneous",),
+    (
+        master_doc,
+        "solt",
+        "solt Documentation",
+        author,
+        "solt",
+        "One line description of project.",
+        "Miscellaneous",
+    ),
 ]
 
 

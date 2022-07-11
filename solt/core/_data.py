@@ -70,7 +70,11 @@ class DataContainer(object):
                     transform_settings[idx]["padding"] = validate_parameter(None, ALLOWED_PADDINGS, "z", str, True)
                 else:
                     transform_settings[idx]["padding"] = validate_parameter(
-                        (transform_settings[idx]["padding"], "strict"), ALLOWED_PADDINGS, "z", str, True,
+                        (transform_settings[idx]["padding"], "strict"),
+                        ALLOWED_PADDINGS,
+                        "z",
+                        str,
+                        True,
                     )
             else:
                 if "interpolation" in transform_settings[idx] or "padding" in transform_settings[idx]:

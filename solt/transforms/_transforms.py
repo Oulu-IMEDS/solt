@@ -112,7 +112,13 @@ class Rotate(MatrixTransform):
     """How the class should be stored in the registry"""
 
     def __init__(
-        self, angle_range=None, interpolation="bilinear", padding="z", p=0.5, ignore_state=True, ignore_fast_mode=False,
+        self,
+        angle_range=None,
+        interpolation="bilinear",
+        padding="z",
+        p=0.5,
+        ignore_state=True,
+        ignore_fast_mode=False,
     ):
         super(Rotate, self).__init__(
             interpolation=interpolation,
@@ -614,7 +620,11 @@ class Pad(BaseTransform, PaddingPropertyHolder):
         pts_data[:, 0] += pad_w_left
         pts_data[:, 1] += pad_h_top
 
-        return Keypoints(pts_data, pad_h_top + pts.height + pad_h_bottom, pad_w_left + pts.width + pad_w_right,)
+        return Keypoints(
+            pts_data,
+            pad_h_top + pts.height + pad_h_bottom,
+            pad_w_left + pts.width + pad_w_right,
+        )
 
 
 class Resize(BaseTransform, InterpolationPropertyHolder):
@@ -820,7 +830,7 @@ class Noise(BaseTransform):
         if w is None or h is None or c is None:
             raise ValueError
 
-        random_state = np.random.RandomState(random.randint(0, 2 ** 32 - 1))
+        random_state = np.random.RandomState(random.randint(0, 2**32 - 1))
         noise_img = random_state.randn(h, w, c)
 
         noise_img -= noise_img.min()
@@ -833,7 +843,11 @@ class Noise(BaseTransform):
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
         return cv2.addWeighted(
-            img, (1 - self.state_dict["gain"]), self.state_dict["noise"], self.state_dict["gain"], 0,
+            img,
+            (1 - self.state_dict["gain"]),
+            self.state_dict["noise"],
+            self.state_dict["gain"],
+            0,
         )
 
     def _apply_mask(self, mask: np.ndarray, settings: dict):
@@ -960,7 +974,7 @@ class SaltAndPepper(ImageTransform):
         gain = random.uniform(self.gain_range[0], self.gain_range[1])
         salt_p = random.uniform(self.salt_p[0], self.salt_p[1])
 
-        random_state = np.random.RandomState(random.randint(0, 2 ** 32 - 1))
+        random_state = np.random.RandomState(random.randint(0, 2**32 - 1))
         sp = random_state.rand(h, w) <= gain
         salt = sp.copy() * 1.0
         pepper = sp.copy() * 1.0
@@ -1140,7 +1154,9 @@ class Blur(ImageTransform):
     def _apply_img(self, img: np.ndarray, settings: dict):
         if self.blur == "g":
             return cv2.GaussianBlur(
-                img, ksize=(self.state_dict["k_size"], self.state_dict["k_size"]), sigmaX=self.state_dict["sigma"],
+                img,
+                ksize=(self.state_dict["k_size"], self.state_dict["k_size"]),
+                sigmaX=self.state_dict["sigma"],
             )
         if self.blur == "m":
             return cv2.medianBlur(img, ksize=self.state_dict["k_size"])
@@ -1531,7 +1547,7 @@ class GridMask(ImageTransform):
     def sample_transform(self, data: DataContainer):
         h, w = super(GridMask, self).sample_transform(data)
 
-        hh = int(np.ceil(np.sqrt(h ** 2 + w ** 2)))
+        hh = int(np.ceil(np.sqrt(h**2 + w**2)))
         d = random.randint(self.d_range[0], self.d_range[1])
 
         mask = np.ones((hh, hh), np.float32)

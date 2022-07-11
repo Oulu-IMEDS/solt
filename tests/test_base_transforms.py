@@ -62,7 +62,14 @@ def test_transform_returns_original_data_if_use_transform_is_false(img_2x2, trf)
     np.testing.assert_array_equal(res.data[0], img_2x2)
 
 
-@pytest.mark.parametrize("trf", [slt.Flip, slt.HSV, slt.Brightness,])
+@pytest.mark.parametrize(
+    "trf",
+    [
+        slt.Flip,
+        slt.HSV,
+        slt.Brightness,
+    ],
+)
 def test_transform_returns_original_data_if_not_in_specified_indices(trf, img_3x3_rgb):
     img_3x3 = img_3x3_rgb * 128
     kpts_data = np.array([[0, 0], [0, 2], [2, 2], [2, 0]]).reshape((4, 2))
@@ -92,11 +99,26 @@ def test_transform_returns_original_data_if_not_in_specified_indices(trf, img_3x
     np.testing.assert_array_equal(res.data[5].data, kpts_data)
 
 
-@pytest.mark.parametrize("img_1,img_2", [(img_2x2, img_6x6), (img_3x3, img_3x4),])
+@pytest.mark.parametrize(
+    "img_1,img_2",
+    [
+        (pytest.lazy_fixture("img_2x2"), pytest.lazy_fixture("img_6x6")),
+        (pytest.lazy_fixture("img_3x3"), pytest.lazy_fixture("img_3x4")),
+    ],
+)
 def test_data_dep_trf_raises_value_error_when_imgs_are_of_different_size(img_1, img_2):
     trf = slt.SaltAndPepper(gain_range=0.0, p=1)
     with pytest.raises(ValueError):
-        trf(slc.DataContainer((1, img_1().astype(np.uint8), img_2().astype(np.uint8),), "LII"))
+        trf(
+            slc.DataContainer(
+                (
+                    1,
+                    img_1,
+                    img_2,
+                ),
+                "LII",
+            )
+        )
 
 
 def test_transform_returns_original_data_when_not_used_and_applied(img_2x2):
@@ -106,16 +128,29 @@ def test_transform_returns_original_data_when_not_used_and_applied(img_2x2):
     assert dc_res == dc
 
 
-@pytest.mark.parametrize("data", [[123,], "123", 2.3])
+@pytest.mark.parametrize(
+    "data",
+    [
+        [
+            123,
+        ],
+        "123",
+        2.3,
+    ],
+)
 def test_wrap_data_throws_a_type_error_when_unknown_type(data):
     with pytest.raises(TypeError):
         slc.BaseTransform.wrap_data(data)
 
 
-@pytest.mark.parametrize("data", [img_2x2(), slc.DataContainer(img_2x2(), "I")])
-def test_data_container_wraps_correctly(data, img_2x2):
-    dc = slc.DataContainer(img_2x2, "I")
-    assert slc.BaseTransform.wrap_data(data) == dc
+@pytest.mark.parametrize(
+    "img", [pytest.lazy_fixture("img_2x2"), pytest.lazy_fixture("img_5x5"), pytest.lazy_fixture("img_7x7")]
+)
+def test_data_container_wraps_correctly(img):
+    dc1 = slc.DataContainer(img, "I")
+    dc2 = slc.DataContainer(img, "I")
+    assert slc.BaseTransform.wrap_data(dc1) == dc2
+    assert slc.BaseTransform.wrap_data(img) == dc1
 
 
 @pytest.mark.parametrize("return_torch", [False, True])
