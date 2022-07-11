@@ -22,6 +22,7 @@ from ._transforms import (
     KeypointsJitter,
     JPEGCompression,
     GridMask,
+    RandomResizedCrop
 )
 
 __all__ = [
@@ -48,4 +49,5 @@ __all__ = [
     "KeypointsJitter",
     "JPEGCompression",
     "GridMask",
+    "RandomResizedCrop"
 ]
