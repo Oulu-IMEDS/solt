@@ -635,8 +635,13 @@ class Resize(BaseTransform, InterpolationPropertyHolder):
     ----------
     resize_to : tuple or int or None
         Target size ``(width_new, height_new)``.
-    interpolation :
+    interpolation : str
         Interpolation type.
+    keep_ar : bool
+        Whether or not to keep the aspect ratio for non-squared images.
+    height_first : bool
+        In non-squared images, this will resize the height and will compute the width using the
+        original aspect ration if ``keep_ar`` is ``True``.
 
     See also
     --------
@@ -647,16 +652,32 @@ class Resize(BaseTransform, InterpolationPropertyHolder):
     serializable_name = "resize"
     """How the class should be stored in the registry"""
 
-    def __init__(self, resize_to=None, interpolation="bilinear"):
+    def __init__(self, resize_to=None, interpolation="bilinear", keep_ar=False, height_first=True):
         BaseTransform.__init__(self, p=1)
         InterpolationPropertyHolder.__init__(self, interpolation=interpolation)
         if resize_to is not None:
             if not isinstance(resize_to, (tuple, list, int)) and (resize_to is not None):
                 raise TypeError("The argument resize_to has an incorrect type!")
-            if isinstance(resize_to, int):
-                resize_to = (resize_to, resize_to)
 
         self.resize_to = resize_to
+        self.keep_ar = keep_ar
+        self.height_first = height_first
+
+    def _handle_resize(self, h, w):
+        resize_to = self.resize_to
+        # Handling the non-square case
+        if isinstance(resize_to, int):
+            if h != w and self.keep_ar:
+                if self.height_first:
+                    scale_factor = float(w) / float(h)
+                    resize_to = (self.resize_to, int(self.resize_to * scale_factor))
+                else:
+                    scale_factor = float(h) / float(w)
+                    resize_to = (int(scale_factor * self.resize_to), self.resize_to)
+            else:
+                resize_to = (resize_to, resize_to)
+
+        return resize_to
 
     def _apply_img_or_mask(self, img: np.ndarray, settings: dict):
         if self.resize_to is None:
@@ -665,7 +686,9 @@ class Resize(BaseTransform, InterpolationPropertyHolder):
         if settings["interpolation"][1] == "strict":
             interp = ALLOWED_INTERPOLATIONS[settings["interpolation"][0]]
 
-        return cv2.resize(img, self.resize_to, interpolation=interp)
+        resize_to = self._handle_resize(img.shape[0], img.shape[1])
+
+        return cv2.resize(img, resize_to, interpolation=interp)
 
     @img_shape_checker
     def _apply_img(self, img: np.ndarray, settings: dict):
@@ -682,7 +705,8 @@ class Resize(BaseTransform, InterpolationPropertyHolder):
             return pts
         pts_data = pts.data.copy().astype(float)
 
-        resize_x, resize_y = self.resize_to
+        resize_to = self._handle_resize(pts.height, pts.width)
+        resize_x, resize_y = resize_to
 
         scale_x = resize_x / pts.width
         scale_y = resize_y / pts.height

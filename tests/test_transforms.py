@@ -514,15 +514,19 @@ def test_resize_img_to_arbitrary_size(img, mask, resize_to):
     res = transf(dc).data
 
     if isinstance(resize_to, int):
-        resize_to = (resize_to, resize_to)
-
-    scale_x = resize_to[0] / img.shape[1]
-    scale_y = resize_to[1] / img.shape[0]
+        scale_x = resize_to / img.shape[1]
+        scale_y = resize_to / img.shape[0]
+        assert (res[0].shape[0] == resize_to) and (res[0].shape[1] == resize_to)
+        assert (res[1].shape[0] == resize_to) and (res[1].shape[1] == resize_to)
+        assert (res[2].height == resize_to) and (res[2].width == resize_to)
+    else:
+        scale_x = resize_to[0] / img.shape[1]
+        scale_y = resize_to[1] / img.shape[0]
+        assert (res[0].shape[0] == resize_to[1]) and (res[0].shape[1] == resize_to[0])
+        assert (res[1].shape[0] == resize_to[1]) and (res[1].shape[1] == resize_to[0])
+        assert (res[2].height == resize_to[1]) and (res[2].width == resize_to[0])
 
     assert transf.resize_to == resize_to
-    assert (res[0].shape[0] == resize_to[1]) and (res[0].shape[1] == resize_to[0])
-    assert (res[1].shape[0] == resize_to[1]) and (res[1].shape[1] == resize_to[0])
-    assert (res[2].height == resize_to[1]) and (res[2].width == resize_to[0])
 
     kpts_data = kpts_data.astype(float)
     kpts_data[:, 0] *= scale_x
@@ -531,7 +535,7 @@ def test_resize_img_to_arbitrary_size(img, mask, resize_to):
     assert np.array_equal(res[2].data, kpts_data)
 
 
-@pytest.mark.parametrize("resize_to", ["1123", [123, 123], 123.0])
+@pytest.mark.parametrize("resize_to", ["1123", 123.0])
 def test_wrong_resize_types(resize_to):
     with pytest.raises(TypeError):
         slt.Resize(resize_to=resize_to)
