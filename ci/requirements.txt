@@ -7,5 +7,5 @@ nbsphinx-link==1.2
 opencv-python-headless==4.6.0.66
 pytest==3.6.4
 pytest-cov==2.6.0
-pytest-flake8=1.1.1
+pytest-flake8==1.1.1
 pytest-pep8==1.0.6
