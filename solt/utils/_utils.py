@@ -32,7 +32,7 @@ class Serializable(object):
             if item[0] not in argspec.args:
                 continue
             if hasattr(item[1], "to_dict") and isinstance(item[1], Serializable):
-                # Thsi situation is only possible when we serialize the stream
+                # This situation is only possible when we serialize the stream
                 d[item[0]] = {"stream": item[1].to_dict()}
             elif item[0] != "transforms":
                 d[item[0]] = item[1]

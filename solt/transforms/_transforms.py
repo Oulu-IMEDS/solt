@@ -1619,3 +1619,115 @@ class GridMask(ImageTransform):
             img[:, :, k] *= self.state_dict["mask"]
 
         return img
+
+
+
+class RandomResizedCrop(BaseTransform, InterpolationPropertyHolder):
+    """Random resized crop transform.
+
+    Random cropping of a random size with a random aspect ratio, and then resizes the crop to a
+    target size.
+
+    Parameters
+    ----------
+    resize_to : tuple or int or None
+        Size of the crop ``(width_new, height_new)``. If ``int``, then a square crop will be made.
+    scale : tuple of flat or None
+        Range of size of the origin size cropped. If None, then default Imagenet values are used -- ``(0.08, 1.0)``.
+    ratio : tuple of float or None
+        Range of the aspect ratio. If None, then default Imagenet values are used -- ``(3 / 4., 4 / 3.)``.
+
+    """
+
+    serializable_name = "random_resized_crop"
+    """How the class should be stored in the registry"""
+
+    def __init__(self, resize_to, scale=None, ratio=None, interpolation="bilinear"):
+        BaseTransform.__init__(self, p=1)
+        InterpolationPropertyHolder.__init__(self, interpolation=interpolation)
+        if scale is None:
+            self.scale = (0.08, 1.0)
+        if ratio is None:
+            self.ratio = (0.75, 1.3333333333333333)
+        if resize_to is not None:
+            if not isinstance(resize_to, (int, tuple, list)):
+                raise TypeError("Argument crop_to has an incorrect type!")
+
+            if isinstance(resize_to, list):
+                resize_to = tuple(resize_to)
+
+            if isinstance(resize_to, tuple):
+                if not isinstance(resize_to[0], int) or not isinstance(resize_to[1], int):
+                    raise TypeError("Incorrect type of the crop_to!")
+
+            if isinstance(resize_to, int):
+                resize_to = (resize_to, resize_to)
+
+        self.resize_to = resize_to
+
+    def sample_transform(self, data: DataContainer):
+        h, w = super(RandomResizedCrop, self).sample_transform(data)
+        area = h * w
+
+        for _attempt in range(10):
+            target_area = random.uniform(*self.scale) * area
+            log_ratio = (math.log(self.ratio[0]), math.log(self.ratio[1]))
+            aspect_ratio = math.exp(random.uniform(*log_ratio))
+
+            new_w = int(round(math.sqrt(target_area * aspect_ratio)))
+            new_h = int(round(math.sqrt(target_area / aspect_ratio)))
+
+            if 0 < new_w <= w and 0 < new_h <= h:
+                i = random.randint(0, h - new_h)
+                j = random.randint(0, w - new_w)
+                self.state_dict.update({
+                    "crop_to": (new_w, new_h),
+                    "y": i,
+                    "x": j,
+                })
+                return
+
+        # Fallback to central crop
+        new_h, new_w = h, w
+        in_ratio = w / h
+        if in_ratio < min(self.ratio):
+            new_w = w
+            new_h = int(round(new_w / min(self.ratio)))
+        elif in_ratio > max(self.ratio):
+            new_h = h
+            new_w = int(round(new_h * max(self.ratio)))
+
+        i = (h - new_h) // 2
+        j = (w - new_w) // 2
+
+        self.state_dict.update({
+            "crop_to": (new_w, new_h),
+            "y": i,
+            "x": j,
+        })
+
+    def __crop_img_or_mask(self, img_mask):
+        return img_mask[
+            self.state_dict["y"] : self.state_dict["y"] + self.state_dict["crop_to"][1],
+            self.state_dict["x"] : self.state_dict["x"] + self.state_dict["crop_to"][0],
+        ]
+
+    @img_shape_checker
+    def _apply_img(self, img: np.ndarray, settings: dict):
+        img = self.__crop_img_or_mask(img)
+        if self.resize_to is None:
+            return img
+        interp = ALLOWED_INTERPOLATIONS[self.interpolation[0]]
+        if settings["interpolation"][1] == "strict":
+            interp = ALLOWED_INTERPOLATIONS[settings["interpolation"][0]]
+
+        return cv2.resize(img, self.resize_to, interpolation=interp)
+
+    def _apply_mask(self, mask: np.ndarray, settings: dict):
+        return self.__crop_img_or_mask(mask)
+
+    def _apply_labels(self, labels, settings: dict):
+        return labels
+
+    def _apply_pts(self, pts: Keypoints, settings: dict):
+        raise NotImplementedError('Made for images only at this stage')
