@@ -1,5 +1,5 @@
-black-22.6.0
-codecov-2.1.12
+black==22.6.0
+codecov==2.1.12
 coverage==5.0.3
 ipykernel==4.8.2
 msmb-theme==1.2.0
