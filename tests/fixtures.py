@@ -8,6 +8,7 @@ __all__ = [
     "img_3x3_rgb",
     "img_3x3",
     "img_3x4",
+    "img_3x4_rgb",
     "img_5x5",
     "img_6x6",
     "img_6x6_lc",
@@ -58,6 +59,20 @@ def img_3x4():
     """
     img = np.array([[1, 1, 1, 0], [1, 0, 1, 1], [1, 1, 1, 1]]).reshape((3, 4, 1)).astype(np.uint8) * 255
     return img
+
+
+@pytest.fixture
+def img_3x4_rgb():
+    """
+    Generates a grayscale image 3x4
+
+    Returns
+    -------
+    out : ndarray
+        3x4x1 uint8 image
+    """
+    img = np.array([[1, 1, 1, 0], [1, 0, 1, 1], [1, 1, 1, 1]]).reshape((3, 4, 1)).astype(np.uint8) * 255
+    return np.dstack((img, img, img))
 
 
 @pytest.fixture

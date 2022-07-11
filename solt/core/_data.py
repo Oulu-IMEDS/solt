@@ -10,6 +10,18 @@ class DataContainer(object):
     Data container to encapsulate different types of data, such as images, bounding boxes, etc.
 
     The container itself is iterable according to the format.
+    Data container assumes the same coordinate system for all the items it is storing.
+    For instance, the behavior shown below is not supported:
+
+    .. highlight:: python
+    .. code-block:: python
+
+        from solt.core import DataContainer
+        import numpy as np
+
+        img1 = np.ones((100, 100, 3), dtype=np.int32)
+        img2 = np.ones((110, 110, 3), dtype=np.int32)
+        trf_img = DataContainer.from_dict({'images': (img1, img2)})
 
     Parameters
     ----------
@@ -94,6 +106,8 @@ class DataContainer(object):
         self.__imagenet_mean = torch.tensor((0.485, 0.456, 0.406)).view(3, 1, 1)
         self.__imagenet_std = torch.tensor((0.229, 0.224, 0.225)).view(3, 1, 1)
 
+        self.validate()
+
     def validate(self):
         prev_h = None
         prev_w = None
@@ -113,13 +127,13 @@ class DataContainer(object):
                 prev_h = h
             else:
                 if prev_h != h:
-                    raise ValueError
+                    raise ValueError("Coordinate frames within DataContainer do not match (height)!")
 
             if prev_w is None:
                 prev_w = w
             else:
                 if prev_w != w:
-                    raise ValueError
+                    raise ValueError("Coordinate frames within DataContainer do not match (width)!")
 
         return prev_h, prev_w
 

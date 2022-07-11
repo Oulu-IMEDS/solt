@@ -13,7 +13,24 @@ from ._data import DataContainer
 
 class Stream(Serializable):
     """
-    Stream class. Executes the list of transformations
+    Stream class. Executes the list of transformations.
+
+    The stream can be called directly on a dict of items,
+    which get converted into a DataContainer. Note that the DataContainer assumes
+    **the same** coordinate system for all the items it is storing.
+    For instance, the behavior shown below is not supported for any stream:
+
+    .. highlight:: python
+    .. code-block:: python
+
+        import solt.transforms as slt
+        import numpy as np
+
+        trf = solt.Stream([slt.Resize(resize_to=(50, 50)),
+                               slt.Flip()])
+        img1 = np.ones((100, 100, 3), dtype=np.int32)
+        img2 = np.ones((110, 110, 3), dtype=np.int32)
+        trf({'images': (img1, img2)})
 
     Parameters
     ----------

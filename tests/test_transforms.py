@@ -870,21 +870,18 @@ def test_image_trfs_dont_change_mask_labels_kpts(trf_cls, trf_params, img_3x4, m
     assert dc.data[3] == dc_res.data[3]
 
 
-def test_brightness_returns_correct_number_of_channels(img_3x4, img_6x6_rgb):
+def test_brightness_returns_correct_number_of_channels(img_3x4, img_3x4_rgb):
     trf = slt.Brightness(p=1, brightness_range=(10, 10))
-    dc = slc.DataContainer((img_3x4, img_3x4, img_6x6_rgb), "III")
+    dc = slc.DataContainer((img_3x4, img_3x4_rgb), "II")
     dc_res = trf(dc)
 
-    img1, img2, img3 = dc_res.data
+    img1, img2 = dc_res.data
 
     assert len(img1.shape) == 3
     assert img1.shape[-1] == 1
 
     assert len(img2.shape) == 3
-    assert img2.shape[-1] == 1
-
-    assert len(img3.shape) == 3
-    assert img3.shape[-1] == 3
+    assert img2.shape[-1] == 3
 
 
 def test_padding_cant_be_float():
