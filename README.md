@@ -3,7 +3,6 @@
 [![PyPI version](https://badge.fury.io/py/solt.svg)](https://badge.fury.io/py/solt)
 [![CI](https://github.com/Oulu-IMEDS/solt/actions/workflows/ci.yaml/badge.svg?branch=master&event=push)](https://github.com/Oulu-IMEDS/solt/actions/workflows/ci.yaml)
 [![codecov](https://codecov.io/gh/Oulu-IMEDS/solt/branch/master/graph/badge.svg?token=tEqWMIZSrW)](https://codecov.io/gh/Oulu-IMEDS/solt)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/0deaebc6804a4b7185e6ed3cf27c0836)](https://www.codacy.com/gh/Oulu-IMEDS/solt/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Oulu-IMEDS/solt&amp;utm_campaign=Badge_Grade)
 [![License](http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE.md)
 [![DOI](https://zenodo.org/badge/143310844.svg)](https://zenodo.org/badge/latestdoi/143310844)
 
