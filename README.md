@@ -8,14 +8,13 @@
 [![DOI](https://zenodo.org/badge/143310844.svg)](https://zenodo.org/badge/latestdoi/143310844)
 
 ## Description
-Data augmentation libarary for Deep Learning, which supports images, segmentation masks, labels and keypoints. 
+A data augmentation library for Deep Learning that supports images, segmentation masks, labels, and keypoints. 
 Furthermore, SOLT is fast and has OpenCV in its backend. 
-Full auto-generated docs and 
-examples are available here: [https://oulu-imeds.github.io/solt/](https://oulu-imeds.github.io/solt/).
+Full auto-generated docs and examples are available at[https://oulu-imeds.github.io/solt/](https://oulu-imeds.github.io/solt/).
 
 ## Features
 
-- Support of Images, masks and keypoints for all the transforms (including multiple items at the time)
+- Support of Images, masks, and keypoints for all the transforms (including multiple items at the time)
 - Fast and PyTorch-integrated
 - Convenient and flexible serialization API
 - Excellent documentation
@@ -67,7 +66,7 @@ pip install git+https://github.com/MIPT-Oulu/solt
 ## Benchmark
 
 We propose a fair benchmark based on the refactored version of the one proposed by albumentations 
-team, but here, we also convert the results into a PyTorch tensor and do the ImageNet normalization. The
+team. Still, here, we also convert the results into a PyTorch tensor and do the ImageNet normalization. The
 following numbers support a realistic and honest comparison between 
 the libraries (number of images per second, the higher - the better):
 
@@ -93,13 +92,13 @@ Follow the guidelines described [here](CONTRIBUTING.md).
 
 ## Author
 Aleksei Tiulpin, 
-Research Unit of Medical Imaging, 
-Physics and Technology, 
-University of Oulu, Finalnd.
+Research Unit of Health Sciences and Technology
+Faculty of Medicine 
+University of Oulu, Finland.
 
 ## How to cite
 If you use SOLT and cite it in your research, please, 
-don't hesitate to sent an email to Aleksei Tiulpin. 
+don't hesitate to send an email to Aleksei Tiulpin. 
 All the papers that use SOLT are listed [here](PAPERS.md). 
 
 ```
